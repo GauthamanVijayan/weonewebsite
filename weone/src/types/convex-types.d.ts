@@ -46,6 +46,7 @@ declare module "convex/server" {
 // Satisfies imports used in the Angular client code.
 declare module "convex/browser" {
     export class ConvexClient {
+        constructor(config: { address: string } | string); 
         query: (name: any, args: any) => Promise<any>;
         mutation: (name: any, args: any) => Promise<any>;
         // Include other methods your Angular code uses

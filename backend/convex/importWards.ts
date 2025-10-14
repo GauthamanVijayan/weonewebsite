@@ -4,6 +4,19 @@ import { api } from "./_generated/api";
 import { Readable } from "stream";
 import csv from "csv-parser";
 
+
+type CsvRow = {
+    // Assuming the CSV headers match these keys as strings:
+    wardName: string;
+    localBodyName: string;
+    localBodyType: string;
+    district: string;
+    subdistrict: string;
+    zone: string;
+    state: string;
+    [key: string]: any;  
+};
+
 export const importFromCsv = action({
   handler: async (ctx) => {
     // PASTE YOUR CSV DATA INSIDE THE BACKTICKS
@@ -19499,26 +19512,26 @@ Sl.No,State,Zone,District,Sub District,P/M/C,Name of Local Body,Name Of Ward,
     const records: any[] = [];
     const stream = Readable.from(csvData.trim());
 
-    await new Promise<void>((resolve, reject) => {
-      stream
-        .pipe(csv())
-        .on("data", (row) => {
-          // This maps your specific CSV headers to the database schema fields
-          records.push({
-            wardName: row["Name Of Ward"],
-            localBodyName: row["Name of Local Body"],
-            localBodyType: row["P/M/C"],
-            district: row["District"],
-            subdistrict: row["Sub District"],
-            zone: row["Zone"],
-            state: row["State"],
-            // We'll set a default of 1 available volunteer. You can change this.
-            availableVolunteers: 1, 
-          });
-        })
-        .on("end", () => resolve())
-        .on("error", reject);
-    });
+await new Promise<void>((resolve, reject) => {
+    stream
+      .pipe(csv())
+      // 🎯 THE CORRECT FIX: Use the precise CsvRow type
+      .on("data", (row: CsvRow) => { 
+        // This maps your specific CSV headers to the database schema fields
+        records.push({
+          wardName: row["Name Of Ward"],
+          localBodyName: row["Name of Local Body"],
+          localBodyType: row["P/M/C"],
+          district: row["District"],
+          subdistrict: row["Sub District"],
+          zone: row["Zone"],
+          state: row["State"],
+          availableVolunteers: 1, 
+        });
+      })
+      .on("end", () => resolve())
+      .on("error", reject);
+  });
 
     console.log(`Parsed ${records.length} records. Starting database import...`);
     const batchSize = 500;
