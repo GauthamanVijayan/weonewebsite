@@ -2,7 +2,12 @@
 
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
+import { Query } from "convex/server"; // Import Query if available, otherwise rely on 'any'
 
+// --- Type Definitions for Strict Mode Fixes ---
+
+// Define the shape of a Ward document as retrieved from the DB
+// (Ensure this matches your 'wards' table schema exactly)
 type WardDocument = {
   wardName: string;
   localBodyName: string;
@@ -12,10 +17,18 @@ type WardDocument = {
   zone: string;
   state: string;
   availableVolunteers: number;
-  _id: any; // Include standard Convex fields
+  _id: any;
   _creationTime: number;
 };
-// This is your existing mutation for importing data. It remains unchanged.
+
+// Define the argument type for the main filtering query
+type GetWardsArgs = {
+  subdistrict?: string;
+  localBodyType?: string;
+  searchText?: string;
+};
+
+// --- Mutation (Unchanged) ---
 export const insertBatch = mutation({
   args: {
     batch: v.array(
@@ -44,40 +57,65 @@ export const insertBatch = mutation({
 
 /**
  * 1. Get Unique Zones
- * FIX: Returns '_id' instead of 'id' to match the Zone interface.
  */
 export const getZones = query({
   handler: async (ctx) => {
-    const allWards = await ctx.db.query("wards").collect();
-    const uniqueZones = [...new Set(allWards.map((ward) => ward.zone))];
-    return uniqueZones.map((zoneName, index) => ({ _id: `zone-${index}`, name: zoneName }));
+    // Explicitly cast to WardDocument array
+    const allWards = (await ctx.db.query("wards").collect()) as WardDocument[];
+    // Explicitly type 'ward' in the map callback
+    const uniqueZones = [
+      ...new Set(allWards.map((ward: WardDocument) => ward.zone)),
+    ];
+    return uniqueZones.map((zoneName, index) => ({
+      _id: `zone-${index}`,
+      name: zoneName,
+    }));
   },
 });
 
 // Returns unique districts for a given zone
 export const getDistrictsByZone = query({
   args: { zone: v.optional(v.string()) },
-  handler: async (ctx, { zone }) => {
+  // FIX: Explicitly type the destructured arguments in the handler signature
+  handler: async (ctx, { zone }: { zone?: string }) => {
     if (!zone) return [];
-    const wardsInZone = await ctx.db.query("wards").withIndex("by_zone", (q) => q.eq("zone", zone)).collect();
-    const uniqueDistricts = [...new Set(wardsInZone.map((ward) => ward.district))];
-    return uniqueDistricts.map((districtName, index) => ({ _id: `district-${index}`, name: districtName, zoneId: zone }));
+    // FIX: Type 'q' as 'any' or 'Query<any>'
+    const wardsInZone = await ctx.db
+      .query("wards")
+      .withIndex("by_zone", (q: any) => q.eq("zone", zone))
+      .collect();
+    // Explicitly type 'ward' in the map callback
+    const uniqueDistricts = [
+      ...new Set(wardsInZone.map((ward: WardDocument) => ward.district)),
+    ];
+    return uniqueDistricts.map((districtName, index) => ({
+      _id: `district-${index}`,
+      name: districtName,
+      zoneId: zone,
+    }));
   },
 });
 
 // NEW: Returns unique subdistricts for a given district
 export const getSubdistrictsByDistrict = query({
   args: { district: v.optional(v.string()) },
-  handler: async (ctx, { district }) => {
+  // FIX: Explicitly type the destructured arguments
+  handler: async (ctx, { district }: { district?: string }) => {
     if (!district) return [];
-    const wardsInDistrict = await ctx.db.query("wards").withIndex("by_district", (q) => q.eq("district", district)).collect();
-    const uniqueSubdistricts = [...new Set(wardsInDistrict.map((ward) => ward.subdistrict))];
-    
-    
+    // FIX: Type 'q' as 'any' or 'Query<any>'
+    const wardsInDistrict = await ctx.db
+      .query("wards")
+      .withIndex("by_district", (q: any) => q.eq("district", district))
+      .collect();
+    // Explicitly type 'ward' in the map callback
+    const uniqueSubdistricts = [
+      ...new Set(wardsInDistrict.map((ward: WardDocument) => ward.subdistrict)),
+    ];
+
     return uniqueSubdistricts.map((subdistrictName, index) => ({
       _id: `subdistrict-${index}`,
       name: subdistrictName,
-      type: 'P', 
+      type: "P",
       districtId: district,
     }));
   },
@@ -85,7 +123,8 @@ export const getSubdistrictsByDistrict = query({
 
 export const getWardsBySubdistrict = query({
   args: { subdistrict: v.optional(v.string()) },
-  handler: async (ctx, { subdistrict }) => {
+  // FIX: Explicitly type the destructured arguments
+  handler: async (ctx, { subdistrict }: { subdistrict?: string }) => {
     if (!subdistrict) {
       console.log("No subdistrict provided — returning empty array");
       return [];
@@ -93,16 +132,23 @@ export const getWardsBySubdistrict = query({
 
     console.log("Fetching wards for subdistrict:", subdistrict);
 
-    const wardsFromDB = await ctx.db
+    const wardsFromDB = (await ctx.db
       .query("wards")
-      .filter(q => q.eq(q.field("subdistrict"), subdistrict))
-      .collect();
+      // FIX: Type 'q' as 'any' (for filter)
+      .filter((q: any) => q.eq(q.field("subdistrict"), subdistrict))
+      .collect()) as WardDocument[]; // Cast collect result
 
     console.log("Raw wards fetched from DB:", wardsFromDB);
 
     // Map the database fields to the frontend Ward interface
-    const mappedWards = wardsFromDB.map((ward) => {
-      const typeCode = ward.localBodyType?.charAt(0)?.toUpperCase() as 'P' | 'M' | 'C' | undefined;
+    // FIX: Explicitly type 'ward' in the map callback
+    const mappedWards = wardsFromDB.map((ward: WardDocument) => {
+      // Use optional chaining carefully, ensuring localBodyType is present before charAt
+      const typeCode = ward.localBodyType?.charAt(0)?.toUpperCase() as
+        | "P"
+        | "M"
+        | "C"
+        | undefined;
 
       console.log("Mapping ward:", {
         wardName: ward.wardName,
@@ -117,7 +163,7 @@ export const getWardsBySubdistrict = query({
         localBodyId: ward.localBodyName,
         localBodyName: ward.localBodyName,
         localBodyType: typeCode,
-        type: typeCode === 'P' ? 'Rural' : 'Urban' as 'Urban' | 'Rural',
+        type: (typeCode === "P" ? "Rural" : "Urban") as "Urban" | "Rural",
         districtName: ward.district,
         zoneName: ward.zone,
       };
@@ -130,77 +176,97 @@ export const getWardsBySubdistrict = query({
 
 export const getWardsByLocalBody = query({
   args: { localBody: v.optional(v.string()) },
-  handler: async (ctx, { localBody }) => {
+  // FIX: Explicitly type the destructured arguments
+  handler: async (ctx, { localBody }: { localBody?: string }) => {
     if (!localBody) return [];
-    
-    const wardsFromDB = await ctx.db
+
+    const wardsFromDB = (await ctx.db
       .query("wards")
-      .withIndex("by_localBody", (q) => q.eq("localBodyName", localBody))
-      .collect();
+      // FIX: Type 'q' as 'any' (for withIndex)
+      .withIndex("by_localBody", (q: any) => q.eq("localBodyName", localBody))
+      .collect()) as WardDocument[]; // Cast collect result
 
     // Map the database fields to the exact structure the frontend Ward interface needs
-    return wardsFromDB.map((ward, index) => {
-        // --- FIX IS HERE ---
-        // Explicitly define the type based on your business logic
-        const wardType: 'Urban' | 'Rural' = ward.localBodyType === 'P' ? 'Rural' : 'Urban';
+    // FIX: Explicitly type 'ward' and 'index' in the map callback
+    return wardsFromDB.map((ward: WardDocument, index: number) => {
+      // Explicitly define the type based on your business logic
+      const wardType: "Urban" | "Rural" =
+        ward.localBodyType === "P" ? "Rural" : "Urban";
 
-        return {
-            _id: ward._id.toString(),
-            wardName: ward.wardName,
-            localBodyId: `localbody-${index}`, // Construct a stable ID
-            localBodyName: ward.localBodyName,
-            localBodyType: ward.localBodyType as "P" | "M" | "C",
-            type: wardType, // Use the correctly typed variable
-            districtName: ward.district,
-            zoneName: ward.zone,
-        };
+      return {
+        _id: ward._id.toString(),
+        wardName: ward.wardName,
+        localBodyId: `localbody-${index}`,
+        localBodyName: ward.localBodyName,
+        localBodyType: ward.localBodyType as "P" | "M" | "C",
+        type: wardType,
+        districtName: ward.district,
+        zoneName: ward.zone,
+      };
     });
   },
 });
 
+/**
+ * The unified query function that was causing the errors.
+ */
 export const getWards = query({
   args: {
     subdistrict: v.optional(v.string()),
     localBodyType: v.optional(v.string()),
     searchText: v.optional(v.string()),
   },
-  handler: async (ctx, { subdistrict, localBodyType, searchText }) => {
+  // FIX 1: Explicitly type the destructured arguments in the handler
+  handler: async (
+    ctx,
+    { subdistrict, localBodyType, searchText }: GetWardsArgs
+  ) => {
     // 1. Don't run the query if a subdistrict isn't selected yet.
     if (!subdistrict) {
       return [];
     }
 
     // 2. Start by fetching all wards for the selected subdistrict.
-       let wards: WardDocument[] = await ctx.db // 👈 Explicitly type the array here
+    let wards: WardDocument[] = (await ctx.db
       .query("wards")
-      .withIndex("by_subdistrict", q => q.eq("subdistrict", subdistrict))
-      .collect() as WardDocument[]; // 👈 Cast the result
-
+      // FIX 2: Explicitly type 'q' as 'any'
+      .withIndex("by_subdistrict", (q: any) => q.eq("subdistrict", subdistrict))
+      .collect()) as WardDocument[];
 
     // 3. Apply the Local Body Type filter on the backend.
-    if (localBodyType && localBodyType !== 'All') {
-      wards = wards.filter((ward: WardDocument) => ward.localBodyType.charAt(0).toUpperCase() === localBodyType);
+    if (localBodyType && localBodyType !== "All") {
+      // FIX 3: Explicitly type 'ward' in the filter callback
+      wards = wards.filter(
+        (ward: WardDocument) =>
+          ward.localBodyType.charAt(0).toUpperCase() === localBodyType
+      );
     }
 
     // 4. Apply the Search filter on the backend.
     if (searchText) {
       const search = searchText.toLowerCase();
-      wards = wards.filter(ward =>
-        ward.wardName.toLowerCase().includes(search) ||
-        ward.localBodyName.toLowerCase().includes(search)
+      // FIX 4: Explicitly type 'ward' in the filter callback
+      wards = wards.filter(
+        (ward: WardDocument) =>
+          ward.wardName.toLowerCase().includes(search) ||
+          ward.localBodyName.toLowerCase().includes(search)
       );
     }
 
     // 5. Map the final, filtered results to the frontend interface shape.
-    return wards.map((ward:any) => {
-      const typeCode = ward.localBodyType.charAt(0).toUpperCase() as 'P' | 'M' | 'C';
+    // FIX 5: Use WardDocument type instead of 'any'
+    return wards.map((ward: WardDocument) => {
+      const typeCode = ward.localBodyType.charAt(0).toUpperCase() as
+        | "P"
+        | "M"
+        | "C";
       return {
         _id: ward._id.toString(),
         wardName: ward.wardName,
         localBodyId: ward.localBodyName,
         localBodyName: ward.localBodyName,
         localBodyType: typeCode,
-        type: (typeCode === 'P' ? 'Rural' : 'Urban') as 'Urban' | 'Rural',
+        type: (typeCode === "P" ? "Rural" : "Urban") as "Urban" | "Rural",
         districtName: ward.district,
         zoneName: ward.zone,
       };
