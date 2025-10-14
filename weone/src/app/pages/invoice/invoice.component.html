@@ -1,0 +1,74 @@
+@if (invoiceData(); as invoice) {
+    <div class="invoice-page">
+        <div class="invoice-card">
+            <div class="invoice-header">
+                <div class="company-details">
+                    <div class="logo-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 2L2 7V17L12 22L22 17V7L12 2Z" stroke="white" stroke-width="2" stroke-linejoin="round"/>
+                            <path d="M12 22V12" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M2 7L12 12L22 7" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                    <h2>{{ invoice.company.name }}</h2>
+                    <span>{{ invoice.company.address }}</span>
+                    <span>{{ invoice.company.location }}</span>
+                </div>
+
+                <div class="invoice-meta">
+                    <h1>INVOICE</h1>
+                    <div class="meta-item"><span>DATE</span> <span>{{ invoice.date | date: 'dd/MM/yyyy' }}</span></div>
+                    <div class="meta-item"><span>INVOICE #</span> <span>{{ invoice.invoiceNumber }}</span></div>
+                    <div class="meta-item"><span>STATUS</span> <span class="status-badge" [ngClass]="invoice.status">{{ invoice.status }}</span></div>
+                </div>
+            </div>
+
+            <div class="bill-to-section">
+                <h4>BILL TO</h4>
+                <span>{{ invoice.billTo.name }}</span>
+                <span>{{ invoice.billTo.email }}</span>
+            </div>
+
+            <div class="invoice-table-container">
+                <table class="invoice-table">
+                    <thead>
+                        <tr>
+                            <th>Description</th>
+                            <th>Quantity</th>
+                            <th>Unit Price</th>
+                            <th>Line Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for(item of invoice.items; track item.description) {
+                            <tr>
+                                <td>{{ item.description }}</td>
+                                <td>{{ item.quantity }}</td>
+                                <td>{{ item.unitPrice | currency:'INR' }}</td>
+                                <td>{{ item.lineTotal | currency:'INR' }}</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="invoice-summary">
+                <div class="notes">
+                    <h4>NOTES</h4>
+                    <p>Thank you for your generous contribution to community development.</p>
+                </div>
+                <div class="totals">
+                    <div class="total-item"><span>SUBTOTAL</span> <span>{{ invoice.subtotal | currency:'INR' }}</span></div>
+                    <div class="total-item"><span>GST (18%)</span> <span>{{ invoice.gst | currency:'INR' }}</span></div>
+                    <div class="total-item grand-total"><span>TOTAL</span> <span>{{ invoice.total | currency:'INR' }}</span></div>
+                </div>
+            </div>
+
+            <div class="invoice-actions">
+                <p-button label="Print Invoice" icon="pi pi-print" (onClick)="printInvoice()"></p-button>
+            </div>
+        </div>
+    </div>
+} @else if (loading()) {
+    <p>Loading invoice...</p>
+}

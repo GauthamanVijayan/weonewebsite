@@ -1,0 +1,113 @@
+/* Footer Styles */
+.footer {
+  background: white;
+  padding: var(--space-12) 0 var(--space-8);
+  border-top: 1px solid var(--glass-border);
+}
+
+.footer-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 var(--space-8);
+}
+
+.footer-content {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: var(--space-8);
+  align-items: center;
+  margin-bottom: var(--space-8);
+}
+
+.footer-brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-family: "Poppins", sans-serif;
+  font-weight: 700;
+  font-size: var(--font-xl);
+  color: var(--text-primary);
+}
+
+.footer-brand .logo-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-sm, 6px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.footer-nav {
+  display: flex;
+  gap: var(--space-8);
+  list-style: none;
+}
+
+.footer-nav a {
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: var(--transition-smooth);
+  font-weight: 500;
+}
+
+.footer-nav a:hover {
+  color: var(--text-primary);
+}
+
+.footer-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: var(--space-8);
+  border-top: 1px solid var(--glass-border);
+  flex-wrap: wrap;
+  gap: var(--space-4);
+}
+
+.governance-stats {
+  color: var(--text-secondary);
+  font-size: var(--font-sm);
+  font-weight: 500;
+}
+
+.governance-stats span {
+  color: var(--trust-green);
+  font-weight: 600;
+}
+
+.copyright {
+  color: var(--text-secondary);
+  font-size: var(--font-sm);
+}
+
+/* Responsive adjustments for the footer */
+@media (max-width: 768px) {
+    .footer-content {
+        grid-template-columns: 1fr;
+        text-align: center;
+        gap: var(--space-4);
+    }
+    .footer-nav {
+        justify-content: center;
+    }
+    .footer-bottom {
+        flex-direction: column;
+        text-align: center;
+    }
+    .footer-container {
+        padding: 0 var(--space-4);
+    }
+}
+
+:host ::ng-deep .footer-brand .logo-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    img {
+        // Use the same width as the header for consistency
+        width: 6rem;
+        height: auto;
+    }
+}

@@ -1,0 +1,37 @@
+# ===================================================================
+# WEONE-MEAN - ROOT .gitignore
+# ===================================================================
+
+# -------------------------
+# General Ignores
+# -------------------------
+# Node dependencies (very important)
+node_modules/
+npm-debug.log*
+yarn-error.log
+
+# Operating System files
+.DS_Store
+Thumbs.db
+
+# IDE/Editor folders
+.vscode/
+.idea/
+
+# -------------------------
+# Environment & Secret Files (CRITICAL FOR SECURITY)
+# -------------------------
+.env.local
+.env
+
+# -------------------------
+# Angular Project Ignores (inside /weone/)
+# -------------------------
+/weone/dist/
+/weone/.angular/cache/
+
+# -------------------------
+# Convex Backend Ignores (inside /backend/)
+# -------------------------
+# The node_modules and .env.local in the backend are
+# already covered by the general rules above.

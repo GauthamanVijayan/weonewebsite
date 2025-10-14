@@ -1,0 +1,24 @@
+:host {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-24) var(--space-8);
+}
+
+.thank-you-card {
+    max-width: 600px;
+    text-align: center;
+    background: var(--primary-bg);
+    padding: var(--space-12);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-xl);
+    border: 1px solid var(--glass-border);
+
+    .icon-container {
+        font-size: 4rem;
+        color: var(--trust-green);
+        margin-bottom: var(--space-6);
+    }
+    h2 { font-size: var(--font-3xl); }
+    p { color: var(--text-secondary); margin-bottom: var(--space-8); }
+}

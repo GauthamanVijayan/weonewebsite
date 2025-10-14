@@ -1,0 +1,31 @@
+/* This is the menu theme updated with your blue/teal logo colors */
+.layout-primarycolor-menu {
+    /* Logo text color on the menu */
+    --logo-color: #ffffff;
+
+    /* Menu background using the gradient from your logo */
+    --menu-bg: linear-gradient(135deg, #2aabe2 0%, #26b0d5 50%, #22b4a7 100%);
+
+    /* Text and icon colors for main menu items (on the gradient) */
+    --root-menuitem-text-color: #ffffff;
+    --menuitem-text-color: #ffffff;
+    --menuitem-icon-color: #ffffff;
+
+    /* Hover color for main menu items */
+    --menuitem-hover-bg-color: rgba(255, 255, 255, 0.1);
+
+    /* Text color for items in a popup submenu (on a light background) */
+    --popup-submenu-item-text-color: #1e293b;
+
+    /* Icon color for items in a popup submenu */
+    --popup-submenu-item-icon-color: #2aabe2;
+
+    /* Hover color for items in a popup submenu */
+    --popup-submenu-item-hover-bg-color: #f7fafc;
+}
+
+/* This ensures that even if a dark mode is triggered, the menu still uses your logo's theme */
+.layout-dark.layout-primarycolor-menu,
+.layout-dim.layout-primarycolor-menu {
+    --menu-bg: linear-gradient(135deg, #2aabe2 0%, #26b0d5 50%, #22b4a7 100%);
+}

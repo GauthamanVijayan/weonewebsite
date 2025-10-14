@@ -1,0 +1,65 @@
+<div class="layout-topbar">
+    <a routerLink="/" class="layout-topbar-logo">
+        <div class="logo-icon">
+            <img src="assets/images/logo.jpeg" alt="WeOne Logo" />
+        </div>
+    </a>
+
+    <button
+        #menubutton
+        type="button"
+        class="p-link layout-menu-button layout-topbar-button"
+        (click)="onMenuButtonClick()"
+    >
+        <i class="pi pi-bars"></i>
+    </button>
+
+    <div
+        #topbarmenu
+        class="layout-topbar-menu"
+        [ngClass]="{
+            'layout-topbar-menu-mobile-active':
+                layoutService.layoutState().staticMenuMobileActive
+        }"
+    >
+        <ul class="weone-menu">
+            <li>
+                
+                    <a routerLink="/"
+                    routerLinkActive="active-link"
+                    (click)="closeMobileMenu()"
+                >
+                    Home
+                </a>
+            </li>
+            
+            <li>
+                
+                   <a routerLink="/about"
+                    routerLinkActive="active-link"
+                    (click)="closeMobileMenu()"
+                >
+                    About
+                </a>
+            </li>
+            <li>
+                
+                   <a routerLink="/insights"
+                    routerLinkActive="active-link"
+                    (click)="closeMobileMenu()"
+                >
+                    Insights
+                </a>
+            </li>
+            <li>
+                <a
+                    routerLink="/sponsor"
+                    class="cta-button"
+                    (click)="closeMobileMenu()"
+                >
+                    Sponsor a Ward
+                </a>
+            </li>
+        </ul>
+    </div>
+</div>

@@ -1,0 +1,19 @@
+<div class="approval-page">
+    <div class="login-card">
+        <div class="logo-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L2 7V17L12 22L22 17V7L12 2Z" stroke="white" stroke-width="2" stroke-linejoin="round"/><path d="M12 22V12" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M2 7L12 12L22 7" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <h2>Admin Access</h2>
+        <p>Enter your registered email to receive a secure login link.</p>
+
+        <div class="form-group">
+            <input pInputText type="email" placeholder="admin@weone.com" [(ngModel)]="email" />
+        </div>
+        
+        <p-button label="Send Magic Link" [loading]="loading()" (onClick)="sendLink()"></p-button>
+
+        @if(message()){
+            <p class="message">{{ message() }}</p>
+        }
+    </div>
+</div>

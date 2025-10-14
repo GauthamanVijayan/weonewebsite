@@ -1,0 +1,892 @@
+:host {
+    display: block;
+}
+
+// ==========================================
+// ANIMATION SYSTEM
+// ==========================================
+[appScrollAnimate]:not(.weone-animate-visible) {
+    opacity: 0;
+    transform: translateY(30px);
+}
+
+[appScrollAnimate] {
+    transition:
+        opacity 0.6s ease-out,
+        transform 0.6s ease-out;
+}
+
+[appScrollAnimate].weone-animate-visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+// ==========================================
+// HERO SECTION
+// ==========================================
+.weone-sponsor-hero {
+    min-height: 60vh;
+    display: flex;
+    align-items: center;
+    background: var(--secondary-bg); // CHANGED
+    position: relative;
+    overflow: hidden;
+    padding: 120px 0 80px 0;
+
+    &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 600px;
+        height: 600px;
+        background: radial-gradient(
+            circle,
+            rgba(42, 171, 226, 0.08) 0%,
+            // CHANGED
+            transparent 70%
+        );
+        border-radius: 50%;
+    }
+}
+
+.weone-hero-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 2rem;
+    width: 100%;
+}
+
+.weone-hero-content {
+    max-width: 800px;
+    text-align: center;
+    margin: 0 auto;
+    position: relative;
+    z-index: 2;
+}
+
+.weone-hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--primary-bg);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--glass-border); // CHANGED
+    padding: 0.5rem 1.5rem;
+    border-radius: 50px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--trust-blue); // CHANGED
+    margin-bottom: 1.5rem;
+}
+
+.weone-badge-dot {
+    width: 8px;
+    height: 8px;
+    background: var(--trust-blue); // CHANGED
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%,
+    100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+.weone-hero-title {
+    font-family: 'Poppins', sans-serif;
+    font-size: clamp(2.5rem, 5vw, 4rem);
+    font-weight: 700;
+    line-height: 1.1;
+    margin-bottom: 1.5rem;
+    background: var(--accent-gradient); // CHANGED
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.weone-hero-subtitle {
+    font-size: 1.25rem;
+    color: var(--text-secondary); // CHANGED
+    line-height: 1.6;
+    margin-bottom: 3rem;
+    max-width: 700px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.weone-hero-stats {
+    display: flex;
+    gap: 2rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 3rem;
+}
+
+.weone-stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1.5rem;
+    background: var(--primary-bg);
+    border-radius: 16px;
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--glass-border); // CHANGED
+    min-width: 180px;
+}
+
+.weone-stat-number {
+    font-family: 'Poppins', sans-serif;
+    font-size: 1.875rem;
+    font-weight: 700;
+    color: var(--trust-blue); // CHANGED
+}
+
+.weone-stat-label {
+    font-size: 0.875rem;
+    color: var(--text-secondary); // CHANGED
+    text-align: center;
+}
+
+// ==========================================
+// SECTIONS
+// ==========================================
+.weone-section {
+    padding: 6rem 0;
+}
+
+.weone-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 2rem;
+}
+
+.weone-section-header {
+    text-align: center;
+    margin-bottom: 4rem;
+}
+
+.weone-section-title {
+    font-family: 'Poppins', sans-serif;
+    font-size: clamp(2rem, 4vw, 3rem);
+    font-weight: 700;
+    margin-bottom: 1rem;
+    background: var(--accent-gradient); // CHANGED
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.weone-section-subtitle {
+    font-size: 1.125rem;
+    color: var(--text-secondary); // CHANGED
+    max-width: 600px;
+    margin: 0 auto;
+    line-height: 1.6;
+}
+
+// ==========================================
+// INTRO SECTION
+// ==========================================
+.weone-intro-section {
+    background: var(--secondary-bg); // CHANGED
+}
+
+.weone-intro-content {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.weone-intro-text {
+    font-size: 1.125rem;
+    color: var(--text-secondary); // CHANGED
+    line-height: 1.8;
+    margin-bottom: 1.5rem;
+
+    strong {
+        color: var(--text-primary); // CHANGED
+        font-weight: 600;
+    }
+}
+
+// ==========================================
+// WHY MATTERS SECTION
+// ==========================================
+.weone-why-matters-section {
+    background: var(--primary-bg);
+}
+
+.weone-benefits-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 2rem;
+    margin-top: 3rem;
+}
+
+.weone-benefit-card {
+    background: var(--primary-bg);
+    padding: 2rem;
+    border-radius: 20px;
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--glass-border); // CHANGED
+    text-align: center;
+    transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+
+    &:hover {
+        transform: translateY(-8px);
+        box-shadow: var(--shadow-lg);
+        border-color: rgba(42, 171, 226, 0.3); // CHANGED
+    }
+
+    h3 {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--text-primary); // CHANGED
+        margin-bottom: 1rem;
+    }
+
+    p {
+        color: var(--text-secondary); // CHANGED
+        line-height: 1.6;
+    }
+}
+
+.weone-benefit-icon {
+    width: 70px;
+    height: 70px;
+    background: var(--accent-gradient); // CHANGED
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.5rem;
+    color: white;
+    font-size: 2rem;
+    box-shadow: 0 4px 12px rgba(42, 171, 226, 0.3); // CHANGED
+
+    i {
+        font-size: 2rem;
+    }
+}
+
+// ==========================================
+// BONUS SECTION
+// ==========================================
+.weone-bonus-section {
+    background: linear-gradient(135deg, #eff8ff 0%, #eaf6fc 100%); // CHANGED
+}
+
+.weone-bonus-highlight {
+    background: var(--primary-bg);
+    border-radius: 24px;
+    padding: 3rem;
+    box-shadow: var(--shadow-xl);
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 2rem;
+    align-items: center;
+    border: 2px solid rgba(42, 171, 226, 0.2); // CHANGED
+
+    @media (max-width: 768px) {
+        grid-template-columns: 1fr;
+        text-align: center;
+    }
+}
+
+.weone-bonus-icon {
+    width: 100px;
+    height: 100px;
+    background: var(--accent-gradient); // CHANGED
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 3rem;
+    box-shadow: 0 8px 24px rgba(42, 171, 226, 0.4); // CHANGED
+    flex-shrink: 0;
+
+    @media (max-width: 768px) {
+        margin: 0 auto;
+    }
+}
+
+.weone-bonus-content {
+    h3 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 1rem;
+    }
+
+    p {
+        font-size: 1.125rem;
+        color: var(--text-secondary);
+        line-height: 1.6;
+        margin-bottom: 1.5rem;
+
+        strong {
+            color: var(--trust-blue); // CHANGED
+        }
+    }
+}
+
+.weone-bonus-list {
+    list-style: none;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 0.75rem;
+
+    li {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--text-secondary);
+        font-size: 1rem;
+
+        i {
+            color: var(--trust-blue); // CHANGED
+            font-size: 1.25rem;
+        }
+    }
+}
+
+// ==========================================
+// TOOL SECTION
+// ==========================================
+.weone-tool-section {
+    background: var(--secondary-bg); // CHANGED
+    position: relative;
+}
+
+.weone-tool-layout {
+     display: grid;
+    grid-template-columns: 1fr 400px;
+    gap: 3rem;
+    align-items: start;
+    position: relative; // Add this
+    isolation: isolate; // Add this - creates new stacking context
+
+    @media (max-width: 1024px) {
+        grid-template-columns: 1fr;
+    }
+}
+
+.weone-tool-main {
+    width: 100%;
+    position: relative;
+    z-index: 10;
+}
+
+.weone-section-header-small {
+    margin-bottom: 2rem;
+
+    h3 {
+        font-family: 'Poppins', sans-serif;
+        font-size: 1.875rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 0.5rem;
+    }
+
+    p {
+        font-size: 1.125rem;
+        color: var(--text-secondary);
+        line-height: 1.6;
+    }
+}
+
+.weone-filter-section {
+    background: var(--primary-bg);
+    border-radius: 20px;
+    padding: 2rem;
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--glass-border); // CHANGED
+    margin-bottom: 2rem;
+}
+
+.weone-filter-controls {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+}
+
+.weone-filter-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+
+    label {
+        font-weight: 600;
+        font-size: 0.875rem;
+        color: var(--text-primary);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+}
+
+.weone-table-wrapper {
+    background: var(--primary-bg);
+    border-radius: 20px;
+    padding: 1.5rem;
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--glass-border); // CHANGED
+}
+
+// PrimeNG Table Customization
+:host ::ng-deep {
+    .weone-wards-table {
+        .p-datatable-thead > tr > th {
+            background: var(--secondary-bg);
+            color: var(--text-primary);
+            font-weight: 600;
+            padding: 1rem;
+            border: none;
+            border-bottom: 2px solid var(--glass-border);
+        }
+
+        .p-datatable-tbody > tr > td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .p-datatable-tbody > tr:hover {
+            background: var(--secondary-bg);
+        }
+
+        .p-paginator {
+            background: transparent;
+            border: none;
+            padding: 1rem 0 0;
+        }
+    }
+
+    .p-select-panel {
+        z-index: 1100 !important;
+    }
+}
+
+.weone-ward-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+
+    strong {
+        color: var(--text-primary);
+        font-size: 1rem;
+    }
+
+    small {
+        color: var(--text-muted);
+        font-size: 0.75rem;
+    }
+}
+
+.weone-badge {
+    display: inline-flex;
+    padding: 0.25rem 0.75rem;
+    border-radius: 50px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+
+    &.weone-badge-urban {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+
+    &.weone-badge-rural {
+        background: #d1fae5;
+        color: #065f46;
+    }
+}
+
+.weone-empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--text-muted);
+
+    i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+
+    p {
+        font-size: 1.125rem;
+    }
+}
+
+// ==========================================
+// SIDEBAR
+// ==========================================
+.weone-tool-sidebar {
+    position: relative;
+    top: 100px;
+    display: flex;
+    flex-direction: column;
+    z-index: 1;
+    gap: 2rem;
+
+    @media (max-width: 1024px) {
+        position: static;
+        z-index: auto;
+    }
+}
+
+.weone-sidebar-card {
+    background: var(--primary-bg);
+    border-radius: 20px;
+    padding: 2rem;
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--glass-border);
+
+    h4 {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid var(--glass-border);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+
+        i {
+            color: var(--trust-blue); // CHANGED
+        }
+    }
+}
+
+.weone-form-group {
+    margin-bottom: 1.5rem;
+
+    &:last-child {
+        margin-bottom: 0;
+    }
+
+    label {
+        display: block;
+        font-weight: 600;
+        font-size: 0.875rem;
+        color: var(--text-primary);
+        margin-bottom: 0.5rem;
+    }
+}
+
+// ==========================================
+// CART STYLES
+// ==========================================
+.weone-cart-card {
+    border: 2px solid var(--trust-blue); // CHANGED
+    background: linear-gradient(135deg, #eff8ff 0%, #ffffff 100%); // CHANGED
+}
+
+.weone-empty-cart {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--text-muted);
+
+    i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+
+    p {
+        font-size: 1.125rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+
+    small {
+        font-size: 0.875rem;
+    }
+}
+
+.weone-cart-items {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    max-height: 400px;
+    overflow-y: auto;
+    padding-right: 0.5rem;
+
+    &::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    &::-webkit-scrollbar-track {
+        background: var(--secondary-bg);
+        border-radius: 10px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background: var(--trust-blue); // CHANGED
+        border-radius: 10px;
+    }
+}
+
+.weone-cart-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 1rem;
+    background: var(--primary-bg);
+    border-radius: 12px;
+    border: 1px solid var(--glass-border);
+    gap: 1rem;
+}
+
+.weone-cart-item-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    flex: 1;
+
+    strong {
+        color: var(--text-primary);
+        font-size: 1rem;
+    }
+
+    small {
+        color: var(--text-muted);
+        font-size: 0.75rem;
+    }
+}
+
+.weone-cart-item-count {
+    display: inline-flex;
+    padding: 2px 0.5rem;
+    background: var(--secondary-bg);
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--trust-blue); // CHANGED
+    margin-top: 0.25rem;
+}
+
+.weone-cart-item-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.5rem;
+}
+
+.weone-cart-item-price {
+    font-weight: 700;
+    color: var(--trust-blue); // CHANGED
+    font-size: 1.125rem;
+}
+
+.weone-cart-remove {
+    background: none;
+    border: none;
+    color: #dc2626;
+    cursor: pointer;
+    padding: 0.25rem;
+    border-radius: 4px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+
+    &:hover {
+        background: #fee2e2;
+    }
+
+    i {
+        font-size: 0.875rem;
+    }
+}
+
+.weone-cart-summary {
+    border-top: 2px solid var(--glass-border);
+    padding-top: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.weone-summary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+    color: var(--text-secondary);
+    font-size: 1rem;
+
+    &.weone-summary-total {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--glass-border);
+    }
+}
+
+.weone-summary-bonus {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    padding: 1rem;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: 1rem;
+
+    i {
+        font-size: 1.5rem;
+        color: #f59e0b;
+    }
+
+    div {
+        flex: 1;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+
+        strong {
+            color: #92400e;
+            font-size: 1rem;
+        }
+
+        span {
+            color: #f59e0b;
+            font-weight: 700;
+            font-size: 1.125rem;
+        }
+    }
+}
+
+:host ::ng-deep .weone-checkout-btn {
+    background: var(--accent-gradient) !important; // CHANGED
+    border: none !important;
+    box-shadow: 0 4px 12px rgba(42, 171, 226, 0.3) !important; // CHANGED
+
+    &:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(42, 171, 226, 0.4) !important; // CHANGED
+    }
+
+    &:disabled {
+        opacity: 0.5 !important;
+        cursor: not-allowed !important;
+    }
+}
+
+// ==========================================
+// DIALOG STYLES
+// ==========================================
+.weone-dialog-content {
+    padding: 1rem 0;
+}
+
+.weone-ward-summary {
+    background: var(--secondary-bg);
+    padding: 1rem;
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+    display: flex;
+    justify-content: space-around;
+    gap: 1.5rem;
+}
+
+.weone-ward-summary-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.weone-label {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.weone-value {
+    font-size: 1rem;
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.weone-dialog-form {
+    label {
+        display: block;
+        font-weight: 600;
+        font-size: 0.875rem;
+        color: var(--text-primary);
+        margin-bottom: 0.75rem;
+    }
+}
+
+.weone-cost-preview {
+    background: var(--secondary-bg);
+    padding: 1rem;
+    border-radius: 12px;
+    margin-top: 1.5rem;
+}
+
+.weone-cost-item {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+    color: var(--text-secondary);
+
+    &.weone-cost-total {
+        color: var(--text-primary);
+        font-size: 1.125rem;
+        padding-top: 0.75rem;
+        margin-top: 0.75rem;
+        border-top: 2px solid var(--glass-border);
+
+        strong {
+            color: var(--trust-blue); // CHANGED
+        }
+    }
+
+    strong {
+        font-weight: 700;
+    }
+}
+
+:host ::ng-deep {
+    .p-select-panel,
+    .p-dropdown-panel {
+        z-index: 1200 !important; // Higher than sidebar z-index: 2
+    }
+    
+    // Also fix the overlay to ensure proper stacking
+    .p-component-overlay {
+        z-index: 1199 !important;
+    }
+}
+
+:host ::ng-deep {
+
+    // Style the small "Sponsor" button in the table
+    .p-datatable .p-button {
+        background: var(--trust-blue);
+        border: none;
+        
+        &:hover {
+            background: var(--accent-gradient);
+        }
+    }
+
+    // Ensure text is always white on the main CTA buttons
+    .weone-checkout-btn .p-button-label,
+    .p-dialog .p-button:not(.p-button-secondary) .p-button-label {
+        color: white !important;
+    }
+}

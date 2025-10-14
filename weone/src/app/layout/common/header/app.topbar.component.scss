@@ -1,0 +1,204 @@
+/* Topbar Logo Sizing */
+:host ::ng-deep .layout-topbar .layout-topbar-logo .logo-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    img {
+        width: 6rem !important;
+    height: auto!important;
+    }
+}
+
+/* Desktop Menu Styles */
+.layout-topbar-menu {
+    display: flex;
+    align-items: center;
+}
+
+.weone-menu {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+
+    li {
+        margin: 0;
+        padding: 0;
+    }
+
+    a {
+        text-decoration: none;
+        color: var(--text-secondary);
+        font-weight: 500;
+        transition: color 0.2s;
+        position: relative;
+        padding-bottom: 0.5rem;
+        display: inline-block;
+
+        &:hover {
+            color: var(--trust-blue);
+        }
+
+        &.active-link {
+            color: var(--trust-blue);
+            font-weight: 600;
+
+            &::after {
+                content: '';
+                position: absolute;
+                bottom: 0;
+                left: 0;
+                width: 100%;
+                height: 2px;
+                background: var(--trust-blue);
+            }
+        }
+    }
+
+   .cta-button {
+    background: var(--accent-gradient);
+    color: white !important;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(42, 171, 226, 0.3);
+
+    &::after {
+        display: none; // Remove underline from CTA
+    }
+
+    &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(42, 171, 226, 0.4);
+    }
+}
+}
+
+/* Hamburger Menu Button - Hidden on Desktop */
+.layout-menu-button {
+    display: none;
+    background: none;
+    border: none;
+    color: var(--text-primary);
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0.5rem;
+    margin-right: 1rem;
+    transition: color 0.2s;
+
+    &:hover {
+        color: var(--trust-blue);
+    }
+
+    i {
+        font-size: 1.5rem;
+    }
+}
+
+/* Mobile Responsive Styles */
+/* Mobile Responsive Styles */
+@media (max-width: 991px) {
+    /* Show hamburger button on mobile */
+    .layout-menu-button {
+        display: flex !important;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* Mobile Menu Container */
+    .layout-topbar-menu {
+        position: fixed;
+        top: 70px;
+        left: 0;
+        right: 0;
+        width: 100%;
+        background: var(--primary-bg);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        padding: 1rem;
+        z-index: 999;
+        transform: translateY(-100%);
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        max-height: calc(100vh - 70px);
+        overflow-y: auto;
+
+        /* Show menu when active */
+        &.layout-topbar-menu-mobile-active {
+            transform: translateY(0);
+            opacity: 1;
+            visibility: visible;
+        }
+    }
+
+    /* Stack menu items vertically */
+    .weone-menu {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0;
+        width: 100%;
+
+        li {
+            width: 100%;
+        }
+
+        a {
+            display: block;
+            width: 100%;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+
+            &.active-link::after {
+                display: none;
+            }
+
+            &:hover {
+                background: var(--secondary-bg);
+            }
+        }
+
+        .cta-button {
+            text-align: center;
+            margin-top: 0.5rem;
+            padding: 1rem 1.5rem;
+
+            // ADDED - Override hover styles for mobile
+            &:hover {
+                color: white !important; // Keep text white
+                background: var(--accent-gradient) !important; // Keep gradient background
+                transform: none; // Disable lift animation
+                box-shadow: 0 2px 8px rgba(42, 171, 226, 0.3); // Keep original shadow
+            }
+        }
+    }
+}
+
+/* Ensure topbar stays on top */
+:host ::ng-deep .layout-topbar {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    background: var(--primary-bg);
+}
+
+/* Desktop - Hide hamburger */
+@media (min-width: 992px) {
+    .layout-menu-button {
+        display: none !important;
+    }
+
+    .layout-topbar-menu {
+        display: flex !important;
+        position: static !important;
+        transform: none !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+    }
+}
