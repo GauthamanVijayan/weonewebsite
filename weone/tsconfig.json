@@ -21,7 +21,6 @@
         "paths": {
             "@/*": ["src/app/*"],
             "convex/*": ["../backend/convex/*"],
-           "convex/values": ["src/types/convex-values.d.ts"] 
         }
     },
     "angularCompilerOptions": {
