@@ -19,10 +19,11 @@
         "module": "ES2022",
         "baseUrl": "./",
         "paths": {
-            "@/*": [
-                "src/app/*"
-            ],
-            "convex/*": ["../backend/convex/*"]
+            "@/*": ["src/app/*"],
+            "convex/*": ["../backend/convex/*"],
+            "convex/values": ["../backend/node_modules/convex/values"],
+            "convex/server": ["../backend/node_modules/convex/server"],
+            "convex": ["../backend/node_modules/convex"]
         }
     },
     "angularCompilerOptions": {
