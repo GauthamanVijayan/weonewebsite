@@ -4,7 +4,7 @@ import { Injectable, signal, inject } from '@angular/core';
 import { ConvexClient } from 'convex/browser';
 import { environment } from 'src/environments/environment';
 import { Zone, District, LocalBody, Ward } from '../interfaces/sponsor.interface';
-import { api } from '../../../../../backend/convex/_generated/api';
+import { api } from 'convex/_generated/api';
 
 @Injectable({
   providedIn: 'root'
