@@ -1,6 +1,6 @@
 // in backend/convex/wards.ts
 
-import { query, mutation } from "./_generated/server";
+import { query, mutation, QueryCtx } from "./_generated/server";
 import { v } from "convex/values";
 import { Query } from "convex/server"; // Import Query if available, otherwise rely on 'any'
 
@@ -177,7 +177,7 @@ export const getWardsBySubdistrict = query({
 export const getWardsByLocalBody = query({
   args: { localBody: v.optional(v.string()) },
   // FIX: Explicitly type the destructured arguments
-  handler: async (ctx, { localBody }: { localBody?: string }) => {
+  handler: async (ctx: QueryCtx, { localBody }: { localBody?: string })  => {
     if (!localBody) return [];
 
     const wardsFromDB = (await ctx.db
@@ -210,6 +210,7 @@ export const getWardsByLocalBody = query({
 /**
  * The unified query function that was causing the errors.
  */
+
 export const getWards = query({
   args: {
     subdistrict: v.optional(v.string()),
@@ -218,7 +219,7 @@ export const getWards = query({
   },
   // FIX 1: Explicitly type the destructured arguments in the handler
   handler: async (
-    ctx,
+    ctx: QueryCtx,
     { subdistrict, localBodyType, searchText }: GetWardsArgs
   ) => {
     // 1. Don't run the query if a subdistrict isn't selected yet.
