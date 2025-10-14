@@ -3,6 +3,18 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 
+type WardDocument = {
+  wardName: string;
+  localBodyName: string;
+  localBodyType: string;
+  district: string;
+  subdistrict: string;
+  zone: string;
+  state: string;
+  availableVolunteers: number;
+  _id: any; // Include standard Convex fields
+  _creationTime: number;
+};
 // This is your existing mutation for importing data. It remains unchanged.
 export const insertBatch = mutation({
   args: {
@@ -159,14 +171,15 @@ export const getWards = query({
     }
 
     // 2. Start by fetching all wards for the selected subdistrict.
-    let wards = await ctx.db
+       let wards: WardDocument[] = await ctx.db // 👈 Explicitly type the array here
       .query("wards")
       .withIndex("by_subdistrict", q => q.eq("subdistrict", subdistrict))
-      .collect();
+      .collect() as WardDocument[]; // 👈 Cast the result
+
 
     // 3. Apply the Local Body Type filter on the backend.
     if (localBodyType && localBodyType !== 'All') {
-      wards = wards.filter(ward => ward.localBodyType.charAt(0).toUpperCase() === localBodyType);
+      wards = wards.filter((ward: WardDocument) => ward.localBodyType.charAt(0).toUpperCase() === localBodyType);
     }
 
     // 4. Apply the Search filter on the backend.
@@ -179,7 +192,7 @@ export const getWards = query({
     }
 
     // 5. Map the final, filtered results to the frontend interface shape.
-    return wards.map((ward) => {
+    return wards.map((ward:any) => {
       const typeCode = ward.localBodyType.charAt(0).toUpperCase() as 'P' | 'M' | 'C';
       return {
         _id: ward._id.toString(),
