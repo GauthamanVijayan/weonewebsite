@@ -1,6 +1,6 @@
 // in backend/convex/wards.ts
 
-import { query, mutation, QueryCtx } from "./_generated/server";
+import { query, mutation, QueryCtx, MutationCtx } from "./_generated/server";
 import { v } from "convex/values";
 // Removed unused import: import { Query } from "convex/server"; 
 
@@ -18,6 +18,18 @@ type WardDocument = {
   availableVolunteers: number;
   _id: any; 
   _creationTime: number;
+};
+type InsertBatchArgs = {
+  batch: {
+    wardName: string;
+    localBodyName: string;
+    localBodyType: string;
+    district: string;
+    subdistrict: string;
+    zone: string;
+    state: string;
+    availableVolunteers: number;
+  }[];
 };
 
 // Define the argument type for the main filtering query
@@ -43,13 +55,14 @@ export const insertBatch = mutation({
       })
     ),
   },
-  // If this was a mutation, we would use MutationCtx
-  handler: async (ctx, { batch }) => {
+  // FIX: Explicitly type ctx as MutationCtx and args as InsertBatchArgs
+  handler: async (ctx: MutationCtx, { batch }: InsertBatchArgs) => { 
     for (const ward of batch) {
       await ctx.db.insert("wards", ward);
     }
   },
 });
+
 
 // ===================================================================
 // FULLY TYPED QUERY FUNCTIONS
@@ -73,6 +86,7 @@ export const getZones = query({
     }));
   },
 });
+
 
 // Returns unique districts for a given zone
 export const getDistrictsByZone = query({
@@ -102,7 +116,7 @@ export const getDistrictsByZone = query({
 export const getSubdistrictsByDistrict = query({
   args: { district: v.optional(v.string()) },
   // FIX: 'ctx' is explicitly typed as QueryCtx.
-  handler: async (ctx: QueryCtx, { district }: { district?: string }) => { // 👈 FIX for Line 103 (approximately)
+  handler: async (ctx: QueryCtx, { district }: { district?: string }) => { 
     if (!district) return [];
     // FIX: Type 'q' as 'any' for the index callback.
     const wardsInDistrict = (await ctx.db
@@ -124,10 +138,11 @@ export const getSubdistrictsByDistrict = query({
   },
 });
 
+
 export const getWardsBySubdistrict = query({
   args: { subdistrict: v.optional(v.string()) },
   // FIX: 'ctx' is explicitly typed as QueryCtx.
-  handler: async (ctx: QueryCtx, { subdistrict }: { subdistrict?: string }) => { // 👈 FIX for Line 127 (approximately)
+  handler: async (ctx: QueryCtx, { subdistrict }: { subdistrict?: string }) => { 
     if (!subdistrict) {
       console.log("No subdistrict provided — returning empty array");
       return [];
@@ -176,6 +191,7 @@ export const getWardsBySubdistrict = query({
     return mappedWards;
   },
 });
+
 
 export const getWardsByLocalBody = query({
   args: { localBody: v.optional(v.string()) },
