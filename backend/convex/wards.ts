@@ -179,7 +179,7 @@ export const getWards = query({
     }
 
     // 5. Map the final, filtered results to the frontend interface shape.
-    return wards.map((ward) => {
+    return wards.map((ward:any) => {
       const typeCode = ward.localBodyType.charAt(0).toUpperCase() as 'P' | 'M' | 'C';
       return {
         _id: ward._id.toString(),
