@@ -307,7 +307,7 @@ export const insertImportBatch = internalMutation({
     ),
   },
   // This uses MutationCtx and can access ctx.db
-  handler: async (ctx: MutationCtx, { batch }) => { 
+  handler: async (ctx: MutationCtx,  { batch }: InsertBatchArgs) => { 
     for (const ward of batch) {
       await ctx.db.insert("wards", ward);
     }
