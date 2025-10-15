@@ -10,7 +10,8 @@
         "src/main.ts"
     ],
     "include": [
-        "src/**/*.d.ts"
+        "src/**/*.d.ts",
+        "src/**/*.ts" 
     ],
     "exclude": [
     "../backend/convex/wards.ts",
