@@ -52,9 +52,17 @@ declare module "convex/browser" {
         // Include other methods your Angular code uses
     }
 }
-
+declare module "csv-parser" {
+    // We assume the default export is a function
+    export default function csv(options?: any): any;
+}
 // --- Module Declaration for base 'convex' (for the generated API) ---
 // This ensures that the compiler is satisfied when you import the 'api' object.
 declare module "convex" {
     export const api: any;
+}
+
+declare module "stream" {
+    import { Readable as NodeReadable } from 'node:stream';
+    export const Readable: typeof NodeReadable;
 }

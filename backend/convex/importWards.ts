@@ -1,5 +1,5 @@
 "use node";
-import { action } from "./_generated/server";
+import { action ,ActionCtx, mutation} from "./_generated/server";
 import { api } from "./_generated/api";
 import { Readable } from "stream";
 import csv from "csv-parser";
@@ -17,8 +17,20 @@ type CsvRow = {
     [key: string]: any;  
 };
 
+type RecordBatch = {
+    wardName: string;
+    localBodyName: string;
+    localBodyType: string;
+    district: string;
+    subdistrict: string;
+    zone: string;
+    state: string;
+    availableVolunteers: number;
+};
+
 export const importFromCsv = action({
-  handler: async (ctx) => {
+   handler: async (ctx: ActionCtx) => {
+    const records: RecordBatch[] = [];
     // PASTE YOUR CSV DATA INSIDE THE BACKTICKS
     const csvData = `
 Sl.No,State,Zone,District,Sub District,P/M/C,Name of Local Body,Name Of Ward,
@@ -19509,7 +19521,6 @@ Sl.No,State,Zone,District,Sub District,P/M/C,Name of Local Body,Name Of Ward,
 
 `;
 
-    const records: any[] = [];
     const stream = Readable.from(csvData.trim());
 
 await new Promise<void>((resolve, reject) => {

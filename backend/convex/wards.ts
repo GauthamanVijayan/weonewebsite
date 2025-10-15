@@ -1,8 +1,7 @@
 // in backend/convex/wards.ts
 
-import { query, mutation, QueryCtx, MutationCtx } from "./_generated/server";
+import { query, mutation, QueryCtx, MutationCtx , internalMutation} from "./_generated/server";
 import { v } from "convex/values";
-// Removed unused import: import { Query } from "convex/server"; 
 
 // --- Type Definitions for Strict Mode Fixes ---
 
@@ -290,5 +289,27 @@ export const getWards = query({
         zoneName: ward.zone,
       };
     });
+  },
+});
+export const insertImportBatch = internalMutation({
+  args: {
+    batch: v.array(
+      v.object({
+        wardName: v.string(),
+        localBodyName: v.string(),
+        localBodyType: v.string(),
+        district: v.string(),
+        subdistrict: v.string(),
+        zone: v.string(),
+        state: v.string(),
+        availableVolunteers: v.number(),
+      })
+    ),
+  },
+  // This uses MutationCtx and can access ctx.db
+  handler: async (ctx: MutationCtx, { batch }) => { 
+    for (const ward of batch) {
+      await ctx.db.insert("wards", ward);
+    }
   },
 });
