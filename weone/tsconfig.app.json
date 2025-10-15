@@ -15,6 +15,7 @@
     "exclude": [
     "../backend/convex/wards.ts",
     "../backend/convex/schema.ts",
+    "../backend/convex/_generated/**/*",
     "../backend/convex/_generated/api.js" 
   ]
 }
