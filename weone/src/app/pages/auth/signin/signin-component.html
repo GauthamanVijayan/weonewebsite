@@ -1,12 +1,59 @@
-<div class="approval-page">
-    <div class="login-card">
-        <div class="logo-icon">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L2 7V17L12 22L22 17V7L12 2Z" stroke="white" stroke-width="2" stroke-linejoin="round"/><path d="M12 22V12" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M2 7L12 12L22 7" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </div>
-        <h2>Admin Access</h2>
+<div class="login-container">
+  <div class="login-card" [class.loading]="isLoading()">
+    <div class="login-header">
+      <a routerLink="/" class="logo">
+        <img src="assets/images/logo.jpeg" alt="WeOne Logo" />
+      </a>
+      <h2>Welcome Back</h2>
+      <p>Please enter your credentials to sign in.</p>
+    </div>
 
-        <div id="clerk-sign-in-container">
-            </div>
+    <form (ngSubmit)="onLogin()">
+      <div class="weone-form-group">
+        <label for="email">Email Address</label>
+        <input
+          id="email"
+          type="email"
+          pInputText
+          [(ngModel)]="email"
+          name="email"
+          placeholder="your@email.com"
+          [style]="{ width: '100%' }"
+          required
+        />
+      </div>
 
+      <div class="weone-form-group">
+        <label for="password">Password</label>
+        <input
+          id="password"
+          type="password"
+          pInputText
+          [(ngModel)]="password"
+          name="password"
+          placeholder="••••••••"
+          [style]="{ width: '100%' }"
+          required
+        />
+      </div>
+
+      @if (errorMessage()) {
+        <div class="error-message">
+          <i class="pi pi-exclamation-triangle"></i>
+          <span>{{ errorMessage() }}</span>
         </div>
+      }
+
+      <p-button
+        label="Sign In"
+        type="submit"
+        [loading]="isLoading()"
+        styleClass="w-full"
+      />
+    </form>
+
+    <div class="login-footer">
+      <a href="#">Forgot Password?</a>
+    </div>
+  </div>
 </div>

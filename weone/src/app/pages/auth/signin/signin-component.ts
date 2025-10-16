@@ -1,56 +1,59 @@
-import {
-    Component,
-    ChangeDetectionStrategy,
-    signal,
-    inject
-} from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { InputTextModule } from 'primeng/inputtext';
-import { ButtonModule } from 'primeng/button';
-import { Router } from '@angular/router';
-import { AuthService } from '../../services/auth.service';
-import { ClerkSignInComponent } from 'ngx-clerk';
-import { AfterViewInit } from '@angular/core';
+import { AuthService } from "@/pages/services/auth.service";
+import { CommonModule } from "@angular/common";
+import { Component, ChangeDetectionStrategy, inject, signal } from "@angular/core";
+import { FormsModule } from "@angular/forms";
+import { Router } from "@angular/router";
+import { ButtonModule } from "primeng/button";
+import { InputTextModule } from "primeng/inputtext";
 
 @Component({
     selector: 'app-approval',
     standalone: true,
     // We only import CommonModule and ClerkSignInComponent,
     // removing the need for FormsModule, InputTextModule, and ButtonModule here.
-    imports: [CommonModule, ClerkSignInComponent],
+    imports: [CommonModule,
+    FormsModule,
+    ButtonModule,
+    InputTextModule,
+    ],
     templateUrl: './signin-component.html',
     styleUrl: './signin-component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class SigninComponent implements AfterViewInit {
-    private router = inject(Router); // We don't need these since Clerk handles the form, but keep them for template compatibility
+export class LoginComponent {
+  // --- Injections ---
+  private authService = inject(AuthService);
+  private router = inject(Router);
 
-    email = signal('');
-    loading = signal(false);
-    message = signal('');
+  // --- State Signals ---
+  email = signal('');
+  password = signal('');
+  isLoading = signal(false);
+  errorMessage = signal<string | null>(null);
 
-    ngAfterViewInit(): void {
-        // 🎯 FIX: Render the Vanilla Clerk Sign-In component into a container div
-        this.renderClerkSignIn();
+  /**
+   * Handles the login form submission.
+   */
+  async onLogin(): Promise<void> {
+    this.isLoading.set(true);
+    this.errorMessage.set(null);
+
+    try {
+      // Call the login method from your AuthService
+      const result = await this.authService.login(this.email(), this.password());
+      
+      if (result.success) {
+        // On successful login, navigate to the user's profile page
+        this.router.navigate(['/profile']);
+      } else {
+        this.errorMessage.set(result.message || 'An unknown error occurred.');
+      }
+    } catch (error: any) {
+      // Handle unexpected errors
+      console.error('Login failed:', error);
+      this.errorMessage.set(error.message || 'Failed to connect to the server.');
+    } finally {
+      this.isLoading.set(false);
     }
-
-    private renderClerkSignIn(): void {
-        // This function checks for the global Clerk object and mounts the Sign-In UI
-        const container = document.getElementById('clerk-sign-in-container');
-        const clerk = (window as any).Clerk;
-
-        if (container && clerk && clerk.mountSignIn) {
-            clerk.mountSignIn({
-                mountElement: container,
-                // Redirect the user to the root after successful sign-in
-                afterSignInUrl: '/',
-                afterSignUpUrl: '/' // Keep this for completeness, even if not used
-            });
-        } else {
-            console.warn('Clerk object not found or mount container missing.');
-        }
-    }
-
-    // NOTE: The original logic in the template must be removed/disabled.
+  }
 }

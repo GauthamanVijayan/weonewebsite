@@ -8,7 +8,7 @@ import { SponsorWardComponent } from './pages/sponsor-ward/sponsor-ward.componen
 import { ThankYouComponent } from './pages/thank-you/thank-you.component';
 import { AppLayoutComponent } from './layout/main/app.layout.component';
 import { ProfileComponent } from './pages/auth/profile/user-profile.component';
-import { SigninComponent } from './pages/auth/signin/signin-component';
+import { LoginComponent } from './pages/auth/signin/signin-component';
 
 export const routes: Routes = [
     {
@@ -29,7 +29,7 @@ export const routes: Routes = [
     },
     {
         path: 'signin', // The hidden page for the client
-        component: SigninComponent
+        component: LoginComponent
     },
    
     {

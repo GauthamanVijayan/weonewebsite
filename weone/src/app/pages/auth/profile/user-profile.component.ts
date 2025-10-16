@@ -1,21 +1,16 @@
-// in weone/src/app/pages/profile/profile.component.ts
-
-import { Component, inject, OnInit, signal } from '@angular/core';
-import { CommonModule, DatePipe, CurrencyPipe } from '@angular/common';
-import { firstValueFrom, Observable } from 'rxjs'; // For reactive data handling
-import { toSignal } from '@angular/core/rxjs-interop'; // 👈 ADD THIS IMPORT
-
-
-// 🎯 USE YOUR SERVICES 🎯
-import { ClerkUserButtonComponent } from 'ngx-clerk'; // Use the ngx-clerk component
-
-// --- PrimeNG Imports ---
-import { TableModule } from 'primeng/table';
-import { ButtonModule } from 'primeng/button';
-import { TagModule } from 'primeng/tag';
 import { AuthService } from '@/pages/services/auth.service';
+import { SecureConvexService } from '@/pages/services/secure-convex.service';
 import { ConvexService } from '@/pages/services/sponsor.service';
+import { CommonModule, DatePipe, CurrencyPipe } from '@angular/common';
+import { Component, OnInit, inject, signal, Signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { ButtonModule } from 'primeng/button';
+import { TableModule } from 'primeng/table';
 
+interface UserProfile {
+    firstName: string;
+    email: string;
+}
 @Component({
     selector: 'app-profile',
     standalone: true,
@@ -25,74 +20,39 @@ import { ConvexService } from '@/pages/services/sponsor.service';
         CurrencyPipe,
         TableModule,
         ButtonModule,
-        ClerkUserButtonComponent, // Correct component from ngx-clerk
-        TagModule
     ],
+
     templateUrl: './profile.component.html',
     styleUrl: './profile.component.scss'
 })
+
+// 🎯 IMPLEMENT OnInit
 export class ProfileComponent implements OnInit {
-    // --- Services ---
-    private authService = inject(AuthService);
-    private convexService = inject(ConvexService);
-
-    // --- Component State (Signals) ---
-    // Use signals for better reactivity and template binding
-    public sponsorships = signal<any[]>([]); // Data signal
-    public isLoadingSponsorships = signal(true);
-    public isCancelling = signal(false);
-
-    // 🎯 FIX: Expose Auth State as a Signal for the Template
-    // We use toSignal to convert the AuthService observable into an Angular Signal.
-    public user = toSignal(this.authService.user$, { initialValue: null });
-
-    constructor() {
-        // Automatically fetch data when the component initializes
-        // We will call this in ngOnInit instead of the constructor.
-    }
-
+    // --- Injections ---
+    public authService = inject(AuthService);
+    private convex = inject(ConvexService);
+    private secureConvex = inject(SecureConvexService);
+    // 🎯 FIX 1: Convert user$ Observable from AuthService to a Signal
+    public sponsorships = this.secureConvex.sponsorships;
+    public sponsorshipsLoading = this.secureConvex.sponsorshipsLoading;
+    public isCancelling = signal(false); // Keep local for button state
+    public user: Signal<UserProfile | null> = toSignal(this.authService.user$, {
+        // We use a safe, empty object as the initial value to prevent 'undefined' issues,
+        // and the Signal type itself is now explicitly declared.
+        initialValue: null
+    }) as Signal<UserProfile | null>;
     ngOnInit(): void {
-        // We defer the fetch until ngOnInit to ensure services are fully initialized.
-        this.fetchSponsorships();
-    }
-
-    async fetchSponsorships() {
-        // Ensure this only runs if the user is authenticated.
-        const isAuthenticated = await firstValueFrom(
-            this.authService.isSignedIn$
-        );
-        if (!isAuthenticated) {
-            this.sponsorships.set([]);
-            this.isLoadingSponsorships.set(false);
-            return;
-        }
-
-        this.isLoadingSponsorships.set(true);
-        try {
-            // 🎯 CORRECT CALL: Use the service method
-            const data = await this.convexService.getMySponsorships();
-            this.sponsorships.set(data);
-        } catch (error) {
-            console.error('Failed to load sponsorships:', error);
-            this.sponsorships.set([]);
-        } finally {
-            this.isLoadingSponsorships.set(false);
-        }
+        this.secureConvex.loadMySponsorships(); // 🎯 Calls the secure load method
     }
 
     async onCancel(sponsorshipId: string) {
         if (confirm('Are you sure you want to cancel this sponsorship?')) {
             this.isCancelling.set(true);
             try {
-                await this.convexService.cancelSponsorship(sponsorshipId);
-
-                // Refresh the data immediately after the mutation
-                this.fetchSponsorships();
+                await this.secureConvex.cancelSponsorship(sponsorshipId); // 🎯 Calls the secure mutation
+                this.secureConvex.loadMySponsorships();
             } catch (error) {
-                console.error('Failed to cancel sponsorship:', error);
-                alert(
-                    'There was an error canceling your sponsorship. Please try again.'
-                );
+                // ... error handling ...
             } finally {
                 this.isCancelling.set(false);
             }

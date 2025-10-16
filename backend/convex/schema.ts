@@ -34,6 +34,8 @@ export default defineSchema({
       v.literal("active"),
       v.literal("expired")
     ),
+    sponsorshipDurationMonths: v.number(),
+    singleSponsoredWardId: v.optional(v.id("wards")),
     cart: v.array(v.any()),
     userId: v.string(),
     startDate: v.optional(v.number()), // NEW: Sponsorship start date

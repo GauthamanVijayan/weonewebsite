@@ -1,25 +1,75 @@
-// in weone/src/app/pages/profile/profile.component.scss
+/* File: profile-page.component.scss */
 
 :host {
-  display: block;
+    display: block;
+    background-color: #f4f7f9; // A light background for the whole page
+    min-height: 100vh;
 }
 
-.profile-page .weone-container {
-  max-width: 1000px; // A slightly narrower container for a profile page
+.weone-section {
+    padding: 2rem 0;
 }
 
+.weone-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+}
+
+/* 1. Style the Profile Header */
 .profile-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start; // Align items to the top
-  margin-bottom: 3rem;
-  padding-bottom: 2rem;
-  border-bottom: 1px solid var(--glass-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid #dee2e6;
 }
 
-// Clerk's user button uses custom properties for styling
-:host ::ng-deep clerk-user-button {
-  --user-button-text-color: var(--text-primary);
-  --user-button-box-shadow: var(--shadow-md);
-  --user-button-box-shadow--hover: var(--shadow-lg);
+.header-content {
+    .weone-hero-title {
+        font-size: 2rem;
+        font-weight: 600;
+        margin: 0 0 0.5rem 0;
+        color: #333;
+    }
+    .weone-hero-subtitle {
+        font-size: 1.1rem;
+        color: #6c757d;
+        margin: 0;
+    }
+}
+
+/* 2. Style the Table Wrapper */
+.weone-table-wrapper {
+    background: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    padding: 1rem;
+    overflow: hidden;
+}
+
+/* 3. (Optional) Custom Tweaks for the PrimeNG Table */
+/* You can override PrimeNG styles here if needed */
+:host ::ng-deep .weone-wards-table {
+    .p-datatable-thead > tr > th {
+        background-color: #f8f9fa;
+        color: #495057;
+        font-weight: 600;
+    }
+
+    .p-datatable-tbody > tr {
+        &:hover {
+            background-color: #f1f3f5;
+        }
+    }
+
+    /* Style the cancel button in the table */
+    .p-button.p-button-danger.p-button-text {
+        color: #dc3545 !important;
+
+        &:hover {
+            background: rgba(220, 53, 69, 0.1) !important;
+        }
+    }
 }

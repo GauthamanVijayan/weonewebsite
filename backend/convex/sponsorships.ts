@@ -10,17 +10,21 @@ import { Id } from "./_generated/dataModel";
 
 // Define the shape of a Cart Item used in the mutation args
 type CartItem = {
-    ward: { _id: Id<"wards"> };
-    // Include any other required fields for a cart item object
-    [key: string]: any; 
+  ward: { _id: Id<"wards"> };
+  // Include any other required fields for a cart item object
+  [key: string]: any;
 };
 
 // Define the argument type for createSponsorship
 type CreateSponsorshipArgs = {
-    sponsorName: string;
-    sponsorEmail: string;
-    totalAmount: number;
-    cart: CartItem[];
+  sponsorName: string;
+  sponsorEmail: string;
+  totalAmount: number;
+  cart: CartItem[];
+  // 🎯 NEW ARGUMENT: Duration in months (from frontend input)
+  sponsorshipDurationMonths: number;
+  // 🎯 NEW OPTIONAL ARGUMENT: Single Ward ID if sponsoring the entire month for one ward
+  singleSponsoredWardId?: Id<"wards">;
 };
 
 // --- END Type Definitions ---
@@ -34,21 +38,25 @@ export const createSponsorship = mutation({
     sponsorName: v.string(),
     sponsorEmail: v.string(),
     totalAmount: v.number(),
-    cart: v.array(v.any()), // The cart items from the frontend
+    cart: v.array(v.any()),
+    // 🎯 NEW ARGUMENT: Duration in months
+    sponsorshipDurationMonths: v.number(),
+    // 🎯 NEW OPTIONAL ARGUMENT: Single Ward ID
+    singleSponsoredWardId: v.optional(v.id("wards")),
   },
-  // 🎯 FIX: Explicitly type ctx as MutationCtx and args using CreateSponsorshipArgs
-  handler: async (ctx: MutationCtx, args: CreateSponsorshipArgs): Promise<Id<"sponsorships">> => {
+  handler: async (
+    ctx: MutationCtx,
+    args: CreateSponsorshipArgs
+  ): Promise<Id<"sponsorships">> => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
       throw new Error("You must be logged in to create a sponsorship.");
     }
-    
     const sponsorshipId = await ctx.db.insert("sponsorships", {
       ...args,
       status: "pending",
-      userId: identity.subject, // Link the sponsorship to the logged-in user
+      userId: identity.subject,
     });
-    
     return sponsorshipId;
   },
 });
@@ -58,29 +66,34 @@ export const createSponsorship = mutation({
  */
 export const processSponsorship = mutation({
   args: { sponsorshipId: v.id("sponsorships") },
-  // 🎯 FIX: Explicitly type ctx as MutationCtx and the destructured argument
-  handler: async (ctx: MutationCtx, { sponsorshipId }: { sponsorshipId: Id<"sponsorships"> }) => {
-    // 🎯 FIX: Type the fetched sponsorship record
-    const sponsorship = await ctx.db.get(sponsorshipId) as (CreateSponsorshipArgs & { userId: string; cart: CartItem[]; }) | null;
-    
+  handler: async (
+    ctx: MutationCtx,
+    { sponsorshipId }: { sponsorshipId: Id<"sponsorships"> }
+  ) => {
+    const sponsorship = (await ctx.db.get(sponsorshipId)) as
+      | (CreateSponsorshipArgs & { userId: string; cart: CartItem[] })
+      | null;
     if (!sponsorship) {
       throw new Error("Sponsorship not found");
     }
 
-    const now = Date.now();
-    const endDate = now + 30 * 24 * 60 * 60 * 1000; 
-
-    // 1. Update the sponsorship record to "active"
+    const now = Date.now(); // 🎯 FIX: Calculate endDate based on the new sponsorshipDurationMonths field
+    const durationMs =
+      sponsorship.sponsorshipDurationMonths * 30 * 24 * 60 * 60 * 1000;
+    const endDate = now + durationMs; // 1. Update the sponsorship record to "active"
     await ctx.db.patch(sponsorshipId, {
       status: "active",
       startDate: now,
       endDate: endDate,
-    });
+    }); // 2. Lock each ward that was part of this sponsorship
 
-    // 2. Lock each ward that was part of this sponsorship
-    for (const item of sponsorship.cart) { // sponsorship.cart is now typed as CartItem[]
-      // The ward ID is stored in the cart item
-      const wardId = item.ward._id as Id<"wards">; // item.ward is now typed
+    // Check if the entire sponsorship was for a single ward (e.g., full month sponsorship)
+    const itemsToLock = sponsorship.singleSponsoredWardId
+      ? [{ ward: { _id: sponsorship.singleSponsoredWardId } }]
+      : sponsorship.cart;
+
+    for (const item of itemsToLock) {
+      const wardId = item.ward._id as Id<"wards">;
       await ctx.db.patch(wardId, {
         isSponsored: true,
         sponsoredUntil: endDate,
@@ -90,21 +103,25 @@ export const processSponsorship = mutation({
     return { success: true };
   },
 });
-
 /**
  * Allows a user to cancel their own active sponsorship, releasing the lock on the wards.
  */
 export const cancelSponsorship = mutation({
   args: { sponsorshipId: v.id("sponsorships") },
   // 🎯 FIX: Explicitly type ctx as MutationCtx and the destructured argument
-  handler: async (ctx: MutationCtx, { sponsorshipId }: { sponsorshipId: Id<"sponsorships"> }) => {
+  handler: async (
+    ctx: MutationCtx,
+    { sponsorshipId }: { sponsorshipId: Id<"sponsorships"> }
+  ) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
       throw new Error("You must be logged in to cancel a sponsorship.");
     }
 
     // 🎯 FIX: Type the fetched sponsorship record
-    const sponsorship = await ctx.db.get(sponsorshipId) as (CreateSponsorshipArgs & { userId: string; cart: CartItem[]; }) | null;
+    const sponsorship = (await ctx.db.get(sponsorshipId)) as
+      | (CreateSponsorshipArgs & { userId: string; cart: CartItem[] })
+      | null;
 
     if (!sponsorship) {
       throw new Error("Sponsorship not found.");
@@ -121,7 +138,8 @@ export const cancelSponsorship = mutation({
     });
 
     // 2. "Unlock" each ward that was part of this sponsorship
-    for (const item of sponsorship.cart) { // sponsorship.cart is now typed
+    for (const item of sponsorship.cart) {
+      // sponsorship.cart is now typed
       const wardId = item.ward._id as Id<"wards">;
       await ctx.db.patch(wardId, {
         isSponsored: false,

@@ -32,14 +32,14 @@
         "rxjs": "~7.8.0",
         "tailwindcss-primeui": "^0.6.1",
         "tslib": "^2.3.0",
-        "zone.js": "~0.15.0",
-        "ngx-clerk": "^0.2.0"
+        "zone.js": "~0.15.0"
     },
     "devDependencies": {
         "@angular-devkit/build-angular": "^20",
         "@angular/cli": "^20",
         "@angular/compiler-cli": "^20",
         "@types/jasmine": "~5.1.0",
+        "@types/node": "^20.0.0",
         "autoprefixer": "^10.4.20",
         "eslint": "^9.14.0",
         "eslint-config-prettier": "^9.1.0",
@@ -55,7 +55,6 @@
         "postcss": "^8.5.6",
         "prettier": "^3.0.0",
         "tailwindcss": "^4.1.11",
-        "typescript": "~5.8.3",
-        "@types/node": "^20.0.0"
+        "typescript": "~5.8.3"
     }
 }

@@ -36,6 +36,8 @@ export interface CartItem {
   executivesSponsored: number;
   monthlyRate: number;
   costPerMonth: number;
+  startDate: Date;
+  endDate: Date;
 }
 
 export interface SponsorType {
