@@ -1,0 +1,18 @@
+# netlify.toml (at the root of your monorepo)
+
+[build]
+  # 🎯 Base directory: Where Netlify runs npm install and the build command (the 'weone' folder).
+  base = "weone"
+  
+  # Build Command: Includes the necessary flag for ngx-clerk compatibility.
+  command = "npm install --legacy-peer-deps && npm run build"
+  
+  # Publish Directory: The final location of the index.html file, relative to the 'base' directory.
+  # This targets the physical path: weone/dist/apollo-ng/browser/
+  publish = "dist/apollo-ng/browser"
+
+[[redirects]]
+  # CRITICAL: Ensures Angular's client-side routing works, preventing 404s on deep links.
+  from = "/*"
+  to = "/index.html"
+  status = 200
