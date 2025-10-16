@@ -30,13 +30,12 @@ export class AuthService {
 
     // Public Observable for component visibility/state management.
     public isSignedIn$: Observable<boolean> = this.clerkService.session$.pipe(
-        map((session) => !!session && session.status === 'active')
+        map((session:any) => !!session && session.status === 'active')
     );
 
     // Public Observable for retrieving user profile data.
     public user$: Observable<UserResource | null | undefined> =
-        this.clerkService.user$;
-
+(this.clerkService.user$ as Observable<UserResource | null | undefined>);
     /**
      * Fetches the JWT token required by the Convex backend for authenticated calls.
      * * @param templateName The name of the JWT template configured in Clerk (default: 'convex').
