@@ -1,15 +1,5 @@
 {
-   "builds": [
-    {
-      "src": "weone/package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "installCommand": "npm install --legacy-peer-deps",
-        "buildCommand": "npm run build --output-path dist/apollo-ng/browser" , 
-        "outputDirectory": "dist/apollo-ng/browser" 
-      }
-    }
-  ],
+  
     "routes": [
         {
             "src": "/[^.]+",
