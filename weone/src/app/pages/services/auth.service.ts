@@ -1,16 +1,16 @@
+
 import { Injectable, inject } from '@angular/core';
 import { ClerkService, UserResource } from 'ngx-clerk';
-import { Observable } from 'rxjs';
-import { filter, map, first } from 'rxjs/operators';
-import { firstValueFrom } from 'rxjs';
+import { Observable, firstValueFrom, first } from 'rxjs';
+import { filter, map } from 'rxjs/operators';
 
 interface ClientSignInAPI {
     signIn: {
         create: (params: any) => Promise<any>;
         prepareEmailLinkFlow: (params: any) => Promise<any>;
-        [key: string]: any;
+        [key: string]: any; // Allows other methods/properties
     };
-    [key: string]: any;
+    [key: string]: any; // Allows other methods on the root object (like signOut)
 }
 
 @Injectable({
@@ -19,41 +19,40 @@ interface ClientSignInAPI {
 export class AuthService {
     private clerkService = inject(ClerkService);
 
-    // Observable that provides the raw Clerk instance when fully loaded.
-    // We use this for methods like getToken() and signOut().
- public clerkLoaded$: Observable<any> = this.clerkService.clerk$.pipe(
-    filter((clerk: any) => !!clerk && clerk.isLoaded), 
-    map((clerk: any) => clerk)
-  );
-
-    // Public Observable for component visibility/state management.
-    public isSignedIn$: Observable<boolean> = this.clerkService.session$.pipe(
-        map((session:any) => !!session && session.status === 'active')
+    // 🎯 clerkLoaded$: Observable that emits the raw Clerk instance when available.
+    // Asserted with 'any' to bypass strict type definition conflicts (TS2339).
+    public clerkLoaded$: Observable<any> = this.clerkService.clerk$.pipe(
+        filter((clerk: any) => !!clerk && clerk.isLoaded),
+        map((clerk: any) => clerk)
     );
 
-    // Public Observable for retrieving user profile data.
-    public user$: Observable<UserResource | null | undefined> =
-(this.clerkService.user$ as Observable<UserResource | null | undefined>);
+    // 🎯 isSignedIn$: Public Observable for tracking authentication status.
+    // Asserted with 'any' to avoid type errors on 'session.status'.
+    public isSignedIn$: Observable<boolean> = this.clerkService.session$.pipe(
+        map((session: any) => !!session && session.status === 'active')
+    );
+
+    // 🎯 user$: Public Observable for retrieving user profile data.
+    public user$: Observable<UserResource | null | undefined> = this
+        .clerkService.user$ as Observable<UserResource | null | undefined>;
+
     /**
      * Fetches the JWT token required by the Convex backend for authenticated calls.
-     * * @param templateName The name of the JWT template configured in Clerk (default: 'convex').
-     * @returns A promise resolving to the Bearer token string or null if unauthenticated.
      */
     public async getConvexToken(
         templateName: string = 'convex'
     ): Promise<string | null> {
-        // Await the raw Clerk instance to ensure the token method is available.
-        // Use firstValueFrom for a synchronous-like call on the Observable.
+        // Await the raw Clerk instance.
         const clerkInstance = await firstValueFrom(
             this.clerkLoaded$.pipe(first())
         );
 
-        // Check if the instance and session are available before trying to get the token.
+        // Check if the instance and session are available.
         if (!clerkInstance || !clerkInstance.session) {
             return null;
         }
 
-        // Call getToken() on the raw session object, requesting the specific JWT template.
+        // Call getToken() on the raw session object.
         const token = await clerkInstance.session.getToken({
             template: templateName
         });
@@ -84,39 +83,41 @@ export class AuthService {
         }
     }
 
-  public async createMagicLinkSignIn(email: string): Promise<void> {
-    const clerkInstance = await firstValueFrom(
-        this.clerkLoaded$.pipe(first())
-    );
+    /**
+     * Initiates the secure Email Link sign-in flow (custom implementation for styled form).
+     */
+    public async createMagicLinkSignIn(email: string): Promise<void> {
+        const clerkInstance = await firstValueFrom(
+            this.clerkLoaded$.pipe(first())
+        );
 
-    if (!clerkInstance) {
-        throw new Error('Clerk client not loaded.');
-    }
-    
-    // 🎯 FIX: Assert the dynamic client instance to the custom interface.
-    const ClerkClientAPI = ((window as any).Clerk || clerkInstance) as ClientSignInAPI;
-    
-    // 1. Create the new sign-in object
-    // This line now passes compilation because ClerkClientAPI is asserted as having 'signIn'.
-    const signIn = await ClerkClientAPI.signIn.create({
-        identifier: email,
-        strategy: 'email_link',
-        redirectUrl: '/'
-    });
+        if (!clerkInstance) {
+            throw new Error('Clerk client not loaded.');
+        }
 
-    // 2. Request the magic link email to be sent
-    if (signIn?.status === 'needs_identifier' && signIn.identifierId) 
-    {
-        await ClerkClientAPI.signIn.prepareEmailLinkFlow({
-            emailAddressId: signIn.identifierId
+        // 🎯 Apply custom interface assertion to allow sign-in API calls.
+        const ClerkClientAPI = ((window as any).Clerk ||
+            clerkInstance) as ClientSignInAPI;
+
+        // 1. Create the new sign-in object
+        const signIn = await ClerkClientAPI.signIn.create({
+            identifier: email,
+            strategy: 'email_link',
+            redirectUrl: '/'
         });
-        
-    } else if (signIn?.status === 'complete') {
-        return; 
-    } 
-    else {
-        console.error('Clerk Sign-in Status:', signIn?.status, signIn);
-        throw new Error('Could not initiate email link sign-in flow. Check if the user exists.');
+
+        // 2. Request the magic link email to be sent
+        if (signIn?.status === 'needs_identifier' && signIn.identifierId) {
+            await ClerkClientAPI.signIn.prepareEmailLinkFlow({
+                emailAddressId: signIn.identifierId
+            });
+        } else if (signIn?.status === 'complete') {
+            return;
+        } else {
+            console.error('Clerk Sign-in Status:', signIn?.status, signIn);
+            throw new Error(
+                'Could not initiate email link sign-in flow. Check if the user exists.'
+            );
+        }
     }
-}
 }
