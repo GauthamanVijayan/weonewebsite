@@ -32,7 +32,8 @@
         "rxjs": "~7.8.0",
         "tailwindcss-primeui": "^0.6.1",
         "tslib": "^2.3.0",
-        "zone.js": "~0.15.0"
+        "zone.js": "~0.15.0",
+        "ngx-clerk": "^0.2.0"
     },
     "devDependencies": {
         "@angular-devkit/build-angular": "^20",
