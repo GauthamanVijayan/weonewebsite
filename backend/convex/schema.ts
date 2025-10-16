@@ -13,13 +13,30 @@ export default defineSchema({
     subdistrict: v.string(),
     zone: v.string(),
     state: v.string(),
-    
+    isSponsored: v.optional(v.boolean()),
+    sponsoredUntil: v.optional(v.number()),
+
     // Field required by your application
-    availableVolunteers: v.number(), 
+    availableVolunteers: v.number(),
   })
-  .index("by_district", ["district"])
-  .index("by_localBody", ["localBodyName"])
-  .index("by_zone", ["zone"])
-  .index("by_subdistrict", ["subdistrict"]),
-  
+    .index("by_district", ["district"])
+    .index("by_localBody", ["localBodyName"])
+    .index("by_zone", ["zone"])
+    .index("by_subdistrict", ["subdistrict"])
+    .index("by_sponsored_until", ["sponsoredUntil"]),
+
+  sponsorships: defineTable({
+    sponsorName: v.string(),
+    sponsorEmail: v.string(),
+    totalAmount: v.number(),
+    status: v.union(
+      v.literal("pending"),
+      v.literal("active"),
+      v.literal("expired")
+    ),
+    cart: v.array(v.any()),
+    userId: v.string(),
+    startDate: v.optional(v.number()), // NEW: Sponsorship start date
+    endDate: v.optional(v.number()), // NEW: Sponsorship end date
+  }).index("by_userId", ["userId"]),
 });

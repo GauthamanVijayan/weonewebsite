@@ -1,13 +1,14 @@
 
 import { Routes } from '@angular/router';
 import { AboutComponent } from './pages/about/about.component';
-import { ApprovalComponent } from './pages/approval/approval.component';
 import { HomeComponent } from './pages/home/home.component';
 import { InsightsComponent } from './pages/insights/insights.component';
 import { InvoiceComponent } from './pages/invoice/invoice.component';
 import { SponsorWardComponent } from './pages/sponsor-ward/sponsor-ward.component';
 import { ThankYouComponent } from './pages/thank-you/thank-you.component';
 import { AppLayoutComponent } from './layout/main/app.layout.component';
+import { ProfileComponent } from './pages/auth/profile/user-profile.component';
+import { SigninComponent } from './pages/auth/signin/signin-component';
 
 export const routes: Routes = [
     {
@@ -27,7 +28,12 @@ export const routes: Routes = [
         component: InvoiceComponent
     },
     {
-        path: 'approve', // The hidden page for the client
-        component: ApprovalComponent
+        path: 'signin', // The hidden page for the client
+        component: SigninComponent
+    },
+   
+    {
+        path:'userProfile',
+        component:ProfileComponent
     }
 ];

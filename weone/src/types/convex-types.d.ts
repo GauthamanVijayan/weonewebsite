@@ -13,7 +13,11 @@ declare module "convex/values" {
         array: (item: any) => any;
         optional: (validator: any) => any;
         literal: (value: any) => any;
-        union: (validators: any[]) => any;
+        union: <T extends any[]>(...validators: T) => any;
+        boolean: () => any; 
+        union: (...validators: any[]) => any;
+        any: any; // v.any is often used directly as a value, not a function
+        float64: () => any;
     };
 }
 

@@ -1,0 +1,25 @@
+// in weone/src/app/pages/profile/profile.component.scss
+
+:host {
+  display: block;
+}
+
+.profile-page .weone-container {
+  max-width: 1000px; // A slightly narrower container for a profile page
+}
+
+.profile-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start; // Align items to the top
+  margin-bottom: 3rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid var(--glass-border);
+}
+
+// Clerk's user button uses custom properties for styling
+:host ::ng-deep clerk-user-button {
+  --user-button-text-color: var(--text-primary);
+  --user-button-box-shadow: var(--shadow-md);
+  --user-button-box-shadow--hover: var(--shadow-lg);
+}

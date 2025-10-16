@@ -1,0 +1,97 @@
+<section class="weone-section profile-page">
+    <div class="weone-container">
+        <div class="profile-header">
+            <div class="header-content">
+                <div class="weone-hero-badge">
+                    <span class="weone-badge-dot"></span>
+                    My Profile
+                </div>
+                <h1 class="weone-hero-title">
+                    Welcome, {{ user()?.firstName }}
+                </h1>
+                <p class="weone-hero-subtitle">
+                    Manage your active sponsorships and account details below.
+                </p>
+            </div>
+            <clerk-user-button />
+        </div>
+
+        <div class="weone-section-header">
+            <h2 class="weone-section-title">Your Active Sponsorships</h2>
+        </div>
+
+        <div class="weone-table-wrapper">
+            <p-table
+                [value]="sponsorships()"
+                [loading]="isLoadingSponsorships()"
+                styleClass="weone-wards-table"
+                [paginator]="true"
+                [rows]="5"
+                [showCurrentPageReport]="true"
+                currentPageReportTemplate="Showing {first} to {last} of {totalRecords} sponsorships"
+            >
+                <ng-template pTemplate="header">
+                    <tr>
+                        <th style="width: 25%">Sponsored Item(s)</th>
+                        <th style="width: 20%">Total Amount Paid</th>
+                        <th style="width: 15%">Status</th>
+                        <th style="width: 20%">Sponsorship Ends On</th>
+                        <th style="width: 20%">Action</th>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="body" let-sponsorship>
+                    <tr>
+                        <td>
+                            <div class="weone-ward-info">
+                                <strong
+                                    >{{
+                                        sponsorship.cart.length
+                                    }}
+                                    Ward(s)</strong
+                                >
+                                <small>ID: {{ sponsorship._id }}</small>
+                            </div>
+                        </td>
+                        <td>
+                            {{
+                                sponsorship.totalAmount
+                                    | currency: 'INR' : 'symbol' : '1.0-0'
+                            }}
+                        </td>
+                        <td>
+                            <p-tag
+                                [severity]="
+                                    sponsorship.status === 'active'
+                                        ? 'success'
+                                        : 'warn'
+                                "
+                                [value]="sponsorship.status"
+                            ></p-tag>
+                        </td>
+                        <td>{{ sponsorship.endDate | date: 'mediumDate' }}</td>
+                        <td>
+                            <p-button
+                                label="Cancel Sponsorship"
+                                icon="pi pi-times-circle"
+                                [text]="true"
+                                severity="danger"
+                                (onClick)="onCancel(sponsorship._id)"
+                                [loading]="isCancelling()"
+                            />
+                        </td>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="emptymessage">
+                    <tr>
+                        <td colspan="5">
+                            <div class="weone-empty-state">
+                                <i class="pi pi-inbox"></i>
+                                <p>You have no active sponsorships.</p>
+                            </div>
+                        </td>
+                    </tr>
+                </ng-template>
+            </p-table>
+        </div>
+    </div>
+</section>

@@ -62,7 +62,10 @@ export const insertBatch = mutation({
   },
   handler: async (ctx: MutationCtx, { batch }: InsertBatchArgs) => {
     for (const ward of batch) {
-      await ctx.db.insert("wards", ward);
+      await ctx.db.insert("wards", {
+        ...ward,
+        isSponsored: false, // Default to not sponsored
+      });
     }
   },
 });
@@ -85,7 +88,10 @@ export const insertImportBatch = internalMutation({
   },
   handler: async (ctx: MutationCtx, { batch }: InsertBatchArgs) => {
     for (const ward of batch) {
-      await ctx.db.insert("wards", ward);
+      await ctx.db.insert("wards", {
+        ...ward,
+        isSponsored: false, // Default to not sponsored
+      });
     }
   },
 });
@@ -246,27 +252,34 @@ export const getWards = query({
       return [];
     } // 2. Start by fetching all wards for the selected subdistrict.
 
-    let wards: WardDocument[] = (await ctx.db
-      .query("wards")
-      .withIndex("by_subdistrict", (q: any) => q.eq("subdistrict", subdistrict))
-      .collect()) as WardDocument[]; // 3. Apply the Local Body Type filter on the backend.
+    let wards = (await ctx.db // 🎯 FIX: Cast the result immediately for type propagation
+      .query("wards") // 🎯 FIX A: Parameter 'q' implicitly has an 'any' type.
+      .withIndex("by_subdistrict", (q: any) => q.eq("subdistrict", subdistrict)) // 🎯 FIX A: Parameter 'q' implicitly has an 'any' type.
+    .filter(
+    (q: any) =>
+        // 🎯 FIX: Return everything EXCEPT documents where isSponsored is TRUE.
+        // This includes documents where the field is false, undefined, or null.
+        q.neq(q.field("isSponsored"), true) 
+).collect()) as WardDocument[];
 
+    // 3. Apply the Local Body Type filter on the backend.
     if (localBodyType && localBodyType !== "All") {
+      // 🎯 FIX B: Parameter 'ward' implicitly has an 'any' type.
       wards = wards.filter(
         (ward: WardDocument) =>
           ward.localBodyType.charAt(0).toUpperCase() === localBodyType
       );
-    } // 4. Apply the Search filter on the backend.
-
+    }
+    // 4. Apply the Search filter on the backend.
     if (searchText) {
-      const search = searchText.toLowerCase();
+      const search = searchText.toLowerCase(); // 🎯 FIX B: Parameter 'ward' implicitly has an 'any' type.
       wards = wards.filter(
         (ward: WardDocument) =>
           ward.wardName.toLowerCase().includes(search) ||
           ward.localBodyName.toLowerCase().includes(search)
       );
-    } // 5. Map the final, filtered results to the frontend interface shape.
-
+    }
+    // 5. Map the final, filtered results to the frontend interface shape.
     return wards.map((ward: WardDocument) => {
       const typeCode = ward.localBodyType.charAt(0).toUpperCase() as
         | "P"

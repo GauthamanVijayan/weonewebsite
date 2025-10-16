@@ -3,6 +3,7 @@
 import { Injectable, signal, inject } from '@angular/core';
 import { ConvexClient } from 'convex/browser';
 import { environment } from 'src/environments/environment';
+
 import {
     Zone,
     District,
@@ -10,12 +11,14 @@ import {
     Ward
 } from '../interfaces/sponsor.interface';
 import type { api } from 'convex/_generated/api';
+import { AuthService } from './auth.service';
 
 @Injectable({
     providedIn: 'root'
 })
 export class ConvexService {
     private client = inject(ConvexClient); // Loading states
+    private authService = inject(AuthService);
 
     zonesLoading = signal(false);
     districtsLoading = signal(false);
@@ -29,8 +32,44 @@ export class ConvexService {
 
     constructor() {
         this.loadZones();
+              
+
     }
 
+    private async getAuthToken(): Promise<string | null> {
+        // Use the dedicated AuthService to fetch the token
+        return this.authService.getConvexToken();
+    }
+ private async authenticatedCall(name: string, args: any): Promise<any> {
+    const token = await this.authService.getConvexToken();
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+    // Cast the specific method to ensure it accepts 3 arguments.
+    if (name.includes('get')) {
+        // 🎯 FIX: Cast 'this.client.query' to explicitly accept 3 arguments
+        const queryFn = this.client.query as (name: string, args: any, options: { headers: any }) => Promise<any>;
+        return queryFn(name, args, { headers });
+    } else {
+        // 🎯 FIX: Cast 'this.client.mutation' to explicitly accept 3 arguments
+        const mutationFn = this.client.mutation as (name: string, args: any, options: { headers: any }) => Promise<any>;
+        return mutationFn(name, args, { headers });
+    }
+}
+
+    public async getMySponsorships(): Promise<any[]> {
+        // This is a read operation, using the secure wrapper
+        const sponsorships = await this.authenticatedCall(
+            'sponsorships:getMySponsorships',
+            {}
+        );
+        return sponsorships || [];
+    }
+    public async cancelSponsorship(sponsorshipId: string): Promise<any> {
+        // This is a write operation (mutation), using the secure wrapper
+        return this.authenticatedCall('sponsorships:cancelSponsorship', {
+            sponsorshipId
+        });
+    }
     async loadZones() {
         this.zonesLoading.set(true);
         try {
