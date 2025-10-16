@@ -6,8 +6,7 @@
       "config": {
         "installCommand": "npm install --legacy-peer-deps", 
         
-        "buildCommand": "npm run build",
-        "outputDirectory": "weone/dist/apollo-ng/browser" 
+        "buildCommand": "npm run build"
       }
     }
   ],
