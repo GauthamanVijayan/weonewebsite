@@ -2,7 +2,7 @@
   "builds": [
     {
       "src": "weone/package.json",
-      "use": "@vercel/static-build", 
+      "use": "@vercel/static-build",
       "config": {
         "installCommand": "npm install --legacy-peer-deps",
         "buildCommand": "npm run build",
@@ -10,16 +10,9 @@
       }
     }
   ],
-  
   "routes": [
-    {
-      "src": "/[^.]+",
-      "dest": "/index.html" 
-    },
-    {
-      "src": "/",
-      "dest": "/index.html"
-    }
-    
-  ]
+    { "src": "/[^.]+", "dest": "/index.html" }, 
+    { "src": "/", "dest": "/index.html" }      
+  ],
+  "trailingSlash": false
 }
