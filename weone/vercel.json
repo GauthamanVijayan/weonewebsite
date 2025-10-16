@@ -9,6 +9,15 @@
                 "outputDirectory": "dist/apollo-ng/browser"
             }
         }
+    ],
+    "routes": [
+        {
+            "src": "/[^.]+",
+            "dest": "/index.html"
+        },
+        {
+            "src": "/",
+            "dest": "/index.html"
+        }
     ]
-
 }
