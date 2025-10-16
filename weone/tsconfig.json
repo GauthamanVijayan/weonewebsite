@@ -22,6 +22,8 @@
         "paths": {
             "@/*": ["src/app/*"],
             "convex/*": ["../backend/convex/*"],
+            "@clerk/backend": ["./src/types/empty.d.ts"],
+            "@clerk/backend/*": ["./src/types/empty.d.ts"]
         }
     },
     "angularCompilerOptions": {
