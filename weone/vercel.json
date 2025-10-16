@@ -1,16 +1,5 @@
 {
-    "builds": [
-        {
-            "src": "weone/package.json",
-            "use": "@vercel/static-build",
-            "config": {
-                "installCommand": "npm install --legacy-peer-deps",
-                "outputDirectory": "weone/public",
-                "buildCommand": "npm run build"
-                
-            }
-        }
-    ],
+   
     "routes": [
         {
             "src": "/[^.]+",
