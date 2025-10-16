@@ -20,7 +20,14 @@ declare module "convex/values" {
         float64: () => any;
     };
 }
-
+declare module "@clerk/backend" {
+    // Declare the types and factory function that Angular cannot find.
+    export type ClerkClient = any;
+    export type ClerkOptions = any;
+    export const createClerkClient: any;
+    
+    // NOTE: This assumes the Node environment is resolving the actual code.
+}
 // --- Module Declaration for 'convex/server' ---
 // Satisfies imports for query, mutation, QueryCtx, MutationCtx, etc.
 declare module "convex/server" {
@@ -69,4 +76,16 @@ declare module "convex" {
 declare module "stream" {
     import { Readable as NodeReadable } from 'node:stream';
     export const Readable: typeof NodeReadable;
+}
+
+declare global {
+    namespace NodeJS {
+        interface ProcessEnv {
+            [key: string]: string | undefined;
+            CLERK_SECRET_KEY: string; // Add your specific required env var
+        }
+    }
+    const process: {
+        env: NodeJS.ProcessEnv;
+    };
 }
