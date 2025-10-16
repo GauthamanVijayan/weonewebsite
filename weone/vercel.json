@@ -5,8 +5,9 @@
             "use": "@vercel/static-build",
             "config": {
                 "installCommand": "npm install --legacy-peer-deps",
-                "outputDirectory": "dist/apollo-ng/browser",
+                "outputDirectory": "weone/dist",
                 "buildCommand": "npm run build"
+                
             }
         }
     ],
