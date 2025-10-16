@@ -2,7 +2,6 @@ import { Injectable, inject } from '@angular/core';
 import { ClerkService, UserResource } from 'ngx-clerk';
 import { Observable } from 'rxjs';
 import { filter, map, first } from 'rxjs/operators';
-import { Clerk } from '@clerk/types';
 import { firstValueFrom } from 'rxjs';
 
 interface ClientSignInAPI {
@@ -22,11 +21,10 @@ export class AuthService {
 
     // Observable that provides the raw Clerk instance when fully loaded.
     // We use this for methods like getToken() and signOut().
-    private clerkLoaded$: Observable<Clerk> = this.clerkService.clerk$.pipe(
-        // Filters out null/undefined values until Clerk is initialized.
-        filter((clerk) => !!clerk && clerk.loaded),
-        map((clerk) => clerk as Clerk)
-    );
+ public clerkLoaded$: Observable<any> = this.clerkService.clerk$.pipe(
+    filter((clerk: any) => !!clerk && clerk.isLoaded), 
+    map((clerk: any) => clerk)
+  );
 
     // Public Observable for component visibility/state management.
     public isSignedIn$: Observable<boolean> = this.clerkService.session$.pipe(
