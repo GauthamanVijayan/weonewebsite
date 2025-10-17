@@ -1,17 +1,22 @@
 {
-  "builds": [
-    {
-      "src": "weone/package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "installCommand": "cd weone && npm install --legacy-peer-deps",
-        "buildCommand": "npm run build",
-        "outputDirectory": "dist/apollo-ng/browser" 
-      }
-    }
-  ],
-  "routes": [
-    { "src": "/[^.]+", "dest": "/index.html" }, 
-    { "src": "/", "dest": "/index.html" }      
-  ]
+    "builds": [
+        {
+            "src": "weone/package.json",
+            "use": "@vercel/static-build",
+            "config": {
+                "buildCommand": "cd weone && npm install --legacy-peer-deps && npm run build",
+                "outputDirectory": "dist/apollo-ng/browser"
+            }
+        }
+    ],
+    "routes": [
+        {
+            "src": "/[^.]+",
+            "dest": "/index.html"
+        },
+        {
+            "src": "/",
+            "dest": "/index.html"
+        }
+    ]
 }
