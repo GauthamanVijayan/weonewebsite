@@ -14,7 +14,8 @@ import { InputTextModule } from 'primeng/inputtext';
 import { Select } from 'primeng/select';
 import { SelectButtonModule } from 'primeng/selectbutton';
 import { TableModule } from 'primeng/table';
-import { DatePickerModule, DatePicker } from 'primeng/datepicker';import {
+import { DatePickerModule, DatePicker } from 'primeng/datepicker';
+import {
     Zone,
     District,
     LocalBody,
@@ -30,19 +31,19 @@ import { DialogModule } from 'primeng/dialog';
     selector: 'app-sponsor-ward',
     standalone: true,
     imports: [
-    CommonModule,
-    FormsModule,
-    CurrencyPipe,
-    TableModule,
-    ButtonModule,
-    Select,
-    DialogModule,
-    InputNumberModule,
-    InputTextModule,
-    SelectButtonModule,
-    ScrollAnimateDirective,
-    DatePicker
-],
+        CommonModule,
+        FormsModule,
+        CurrencyPipe,
+        TableModule,
+        ButtonModule,
+        Select,
+        DialogModule,
+        InputNumberModule,
+        InputTextModule,
+        SelectButtonModule,
+        ScrollAnimateDirective,
+        DatePicker
+    ],
     templateUrl: './sponsor-ward.component.html',
     styleUrl: './sponsor-ward.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush
@@ -50,7 +51,7 @@ import { DialogModule } from 'primeng/dialog';
 export class SponsorWardComponent {
     // Inject Convex Service
     convex = inject(ConvexService);
-
+    private readonly RATE_PER_EXECUTIVE = 15000;
     // ==========================================
     // SIGNALS - Selection State
     // ==========================================
@@ -66,11 +67,46 @@ export class SponsorWardComponent {
         { label: 'Corporation', value: 'C' }
     ]);
 
+    bulkSelectedExecutivesTotal = computed(() => {
+        const selectedCount = this.selectedWards().length;
+        // We assume the user wants 1 executive per ward initially if the dialog hasn't been opened.
+        return selectedCount * this.bulkSponsoredExecutivesCount();
+    });
+    bulkSelectionCost = computed(() => {
+        return this.bulkSelectedExecutivesTotal() * this.RATE_PER_EXECUTIVE;
+    });
+    cartExecutivesTotal = computed(() => {
+        return this.cartItems().reduce(
+            (sum, item) => sum + item.executivesSponsored,
+            0
+        );
+    });
+    bulkMaxExecutives = computed(() => {
+        const wards = this.selectedWards();
+        if (wards.length === 0) {
+            return 5; // Default to highest possible value when nothing is selected
+        }
+
+        // Get the maximum allowed executive count for every selected ward
+        const maxValues = wards.map((ward) =>
+            this.getMaxExecutives(ward.localBodyType as 'P' | 'M' | 'C')
+        );
+
+        // Return the minimum value from the resulting array (the most restrictive constraint)
+        return Math.min(...maxValues);
+    });
     isBulkSponsorDialogVisible = signal(false);
     bulkSponsoredExecutivesCount = signal(1);
     bulkSponsorshipStartDate = signal<Date | null>(null);
-    bulkSponsorshipEndDate = signal<Date | null>(null);
-    // ==========================================
+    bulkSponsorshipEndDate = computed<Date | null>(() => {
+        const startDate = this.bulkSponsorshipStartDate();
+        const months = this.bulkSponsorshipMonths();
+        if (!startDate || months < 1) return null;
+
+        const endDate = new Date(startDate);
+        endDate.setMonth(startDate.getMonth() + months);
+        return endDate;
+    }); // ==========================================
     // COMPUTED - Data from Service
     // ==========================================
     zones = this.convex.zones;
@@ -86,6 +122,10 @@ export class SponsorWardComponent {
     wards = this.convex.wards;
     wardsLoading = this.convex.wardsLoading;
     searchText = signal('');
+    cartMessage = signal<string | null>(null);
+    cartMessageTimeout: any = null;
+    sponsorshipMonths = signal(1);
+    bulkSponsorshipMonths = signal(1);
 
     // ==========================================
     // SIGNALS - Sponsor Form
@@ -96,20 +136,20 @@ export class SponsorWardComponent {
     today = new Date();
 
     minEndDate = computed(() => {
-    const startDate = this.sponsorshipStartDate();
-    if (!startDate) return this.today;
-    // Set minimum end date to be 1 month after the start date
-    const minDate = new Date(startDate);
-    minDate.setMonth(minDate.getMonth() + 1);
-    return minDate;
-  });
-  bulkMinEndDate = computed(() => {
-    const startDate = this.bulkSponsorshipStartDate();
-    if (!startDate) return this.today;
-    const minDate = new Date(startDate);
-    minDate.setMonth(minDate.getMonth() + 1);
-    return minDate;
-  });
+        const startDate = this.sponsorshipStartDate();
+        if (!startDate) return this.today;
+        // Set minimum end date to be 1 month after the start date
+        const minDate = new Date(startDate);
+        minDate.setMonth(minDate.getMonth() + 1);
+        return minDate;
+    });
+    bulkMinEndDate = computed(() => {
+        const startDate = this.bulkSponsorshipStartDate();
+        if (!startDate) return this.today;
+        const minDate = new Date(startDate);
+        minDate.setMonth(minDate.getMonth() + 1);
+        return minDate;
+    });
 
     filteredWards = computed(() => {
         const allWards = this.wards();
@@ -184,8 +224,16 @@ export class SponsorWardComponent {
     selectedWardForSponsorship = signal<Ward | null>(null);
     sponsoredExecutivesCount = signal(1);
     sponsorshipStartDate = signal<Date | null>(null);
-    sponsorshipEndDate = signal<Date | null>(null);
+    sponsorshipEndDate = computed<Date | null>(() => {
+        const startDate = this.sponsorshipStartDate();
+        const months = this.sponsorshipMonths();
+        if (!startDate || months < 1) return null;
 
+        const endDate = new Date(startDate);
+        // CRITICAL FIX: Add months to the date object
+        endDate.setMonth(startDate.getMonth() + months);
+        return endDate;
+    });
     // ==========================================
     // COMPUTED - Max Executives
     // ==========================================
@@ -222,6 +270,21 @@ export class SponsorWardComponent {
     onLocalBodyTypeChange() {
         // This function is just here to trigger the computed signal to re-evaluate.
         // The filtering logic is handled automatically by the `filteredWards` computed signal.
+    }
+
+    onSelectionChange() {
+        // This logic ensures the bulk sponsored executives count does not exceed the limit
+        const currentBulkCount = this.bulkSponsoredExecutivesCount();
+        const maxAllowed = this.bulkMaxExecutives();
+
+        // If the currently set count exceeds the new, more restrictive max, reset it.
+        if (currentBulkCount > maxAllowed) {
+            this.bulkSponsoredExecutivesCount.set(maxAllowed);
+        }
+    }
+
+    clearCart() {
+        this.cartItems.set([]);
     }
     // ==========================================
     // COMPUTED - Cart Calculations
@@ -268,99 +331,153 @@ export class SponsorWardComponent {
         this.selectedSubdistrict.set(null);
         this.convex.clearSubdistricts();
         if (event.value) {
+            // 🎯 FIX: Load subdistricts. The EFFECT will then call loadWards.
             this.convex.loadSubdistrictsByDistrict(event.value.name);
         }
     }
 
-    onSubdistrictChange(event: { value: LocalBody | null }) {
-        this.convex.clearWards();
-    }
+    onSubdistrictChange(event: { value: LocalBody | null }) {}
 
     // ==========================================
     // DIALOG HANDLERS
     // ==========================================
- openVolunteerDialog(ward: Ward) {
-    this.selectedWardForSponsorship.set(ward);
-    this.sponsoredExecutivesCount.set(1);
-    // --- Set default dates ---
-    const startDate = new Date();
-    const endDate = new Date();
-    endDate.setMonth(startDate.getMonth() + 1);
-    this.sponsorshipStartDate.set(startDate);
-    this.sponsorshipEndDate.set(endDate);
-    
-    this.isVolunteerDialogVisible.set(true);
-  }
-addToCart() {
-    const ward = this.selectedWardForSponsorship();
-    const count = this.sponsoredExecutivesCount();
-    const startDate = this.sponsorshipStartDate();
-    const endDate = this.sponsorshipEndDate();
+    openVolunteerDialog(ward: Ward) {
+        this.selectedWardForSponsorship.set(ward);
+        this.sponsoredExecutivesCount.set(1);
+        // --- Set default dates ---
+        const startDate = new Date();
+        const endDate = new Date();
+        this.sponsorshipStartDate.set(startDate);
+        this.sponsorshipMonths.set(1);
+        this.isVolunteerDialogVisible.set(true);
+        this.isVolunteerDialogVisible.set(true);
+    }
+    addToCart() {
+        const ward = this.selectedWardForSponsorship();
+        const count = this.sponsoredExecutivesCount();
+        const startDate = this.sponsorshipStartDate();
+        const endDate = this.sponsorshipEndDate();
 
-    if (!ward || count < 1 || !startDate || !endDate) return;
+        if (!ward || count < 1 || !startDate || !endDate) return;
 
-    const newItem: CartItem = {
-      ward,
-      executivesSponsored: count,
-      monthlyRate: 15000,
-      costPerMonth: count * 15000,
-      startDate,
-      endDate,
-    };
+        const newItem: CartItem = {
+            ward,
+            executivesSponsored: count,
+            monthlyRate: 15000,
+            costPerMonth: count * 15000,
+            startDate,
+            endDate
+        };
+        const action = this.upsertCartItem(newItem);
+        // Use a helper function to add/update item in cart
+        this.cartMessage.set(
+            action === 'updated'
+                ? `Updated: ${newItem.ward.wardName} now sponsors ${newItem.executivesSponsored} executive(s).`
+                : `Added: ${newItem.ward.wardName} has been added to your cart.`
+        );
 
-    // Use a helper function to add/update item in cart
-    this.upsertCartItem(newItem);
-    this.isVolunteerDialogVisible.set(false);
-  }
-openBulkSponsorDialog() {
-      // Set default dates
-      const startDate = new Date();
-      const endDate = new Date();
-      endDate.setMonth(startDate.getMonth() + 1);
-      this.bulkSponsorshipStartDate.set(startDate);
-      this.bulkSponsorshipEndDate.set(endDate);
-      this.bulkSponsoredExecutivesCount.set(1);
-      this.isBulkSponsorDialogVisible.set(true);
-  }
+        // Clear message after 4 seconds
+        clearTimeout(this.cartMessageTimeout);
+        this.cartMessageTimeout = setTimeout(
+            () => this.cartMessage.set(null),
+            4000
+        );
 
-  addSelectedWardsToCart() {
-    const wards = this.selectedWards();
-    const count = this.bulkSponsoredExecutivesCount();
-    const startDate = this.bulkSponsorshipStartDate();
-    const endDate = this.bulkSponsorshipEndDate();
+        this.isVolunteerDialogVisible.set(false);
+    }
+    openBulkSponsorDialog() {
+        // Set default dates
+        const startDate = new Date();
+        const endDate = new Date();
+        endDate.setMonth(startDate.getMonth() + 1);
+        this.bulkSponsorshipStartDate.set(startDate);
+        this.bulkSponsoredExecutivesCount.set(1);
+        this.bulkSponsorshipMonths.set(1);
+        this.isBulkSponsorDialogVisible.set(true);
+    }
 
-    if (wards.length === 0 || count < 1 || !startDate || !endDate) return;
+    selectAllWardsInZone() {
+        const selectedZone = this.selectedZone();
+        if (selectedZone) {
+            // Since loadDistrictsByZone is triggered, we can assume the subsequent data load is needed.
+            // For simplicity, we filter all current wards (which are already filtered by the current selection)
+            // In a real app, this would query the *entire* database for the Zone.
+            const wardsInZone = this.wards().filter(
+                (ward) => ward.zoneName === selectedZone.name
+            );
+            this.selectedWards.set(wardsInZone);
+            this.onSelectionChange(); // Trigger consistency check
+        }
+    }
 
-    wards.forEach(ward => {
-      const newItem: CartItem = {
-        ward,
-        executivesSponsored: count,
-        monthlyRate: 15000,
-        costPerMonth: count * 15000,
-        startDate,
-        endDate,
-      };
-      this.upsertCartItem(newItem);
-    });
+    selectAllWardsInDistrict() {
+        const selectedDistrict = this.selectedDistrict();
+        if (selectedDistrict) {
+            // Filter current list by district name
+            const wardsInDistrict = this.wards().filter(
+                (ward) => ward.districtName === selectedDistrict.name
+            );
+            this.selectedWards.set(wardsInDistrict);
+            this.onSelectionChange();
+        }
+    }
 
-    this.isBulkSponsorDialogVisible.set(false);
-    this.selectedWards.set([]); // Clear selection after adding to cart
-  }
+    selectAllWardsInSubdistrict() {
+        const selectedSubdistrict = this.selectedSubdistrict();
+        if (selectedSubdistrict) {
+            // Use the already filtered wards list (which should contain all wards for the selected subdistrict)
+            // Note: filteredWards() uses search/type filters, so we set the selection to the currently displayed list.
+            this.selectedWards.set(this.filteredWards());
+            this.onSelectionChange();
+        }
+    }
 
-  private upsertCartItem(newItem: CartItem) {
-    this.cartItems.update(currentItems => {
-      const existingIndex = currentItems.findIndex(item => item.ward._id === newItem.ward._id);
-      if (existingIndex > -1) {
-        // Update existing item
-        const updatedItems = [...currentItems];
-        updatedItems[existingIndex] = newItem;
-        return updatedItems;
-      } else {
-        // Add new item
-        return [...currentItems, newItem];
-      }
-    });
-  }
+    addSelectedWardsToCart() {
+        const wards = this.selectedWards();
+        const count = this.bulkSponsoredExecutivesCount();
+        const startDate = this.bulkSponsorshipStartDate();
+        const endDate = this.bulkSponsorshipEndDate();
+
+        if (wards.length === 0 || count < 1 || !startDate || !endDate) return;
+
+        wards.forEach((ward) => {
+            const newItem: CartItem = {
+                ward,
+                executivesSponsored: count,
+                monthlyRate: 15000,
+                costPerMonth: count * 15000,
+                startDate,
+                endDate
+            };
+            this.upsertCartItem(newItem);
+        });
+
+        this.isBulkSponsorDialogVisible.set(false);
+        this.selectedWards.set([]); // Clear selection after adding to cart
+    }
+
+    private upsertCartItem(newItem: CartItem): 'added' | 'updated' {
+        // 👈 Change return type
+        let action: 'added' | 'updated' = 'added';
+
+        this.cartItems.update((currentItems) => {
+            const existingIndex = currentItems.findIndex(
+                (item) => item.ward._id === newItem.ward._id
+            );
+
+            if (existingIndex > -1) {
+                // Update existing item
+                const updatedItems = [...currentItems];
+                updatedItems[existingIndex] = newItem;
+                action = 'updated'; // 👈 Set flag
+                return updatedItems;
+            } else {
+                // Add new item
+                return [...currentItems, newItem];
+            }
+        });
+        return action; // 👈 Return the action taken
+    }
     removeFromCart(wardId: string) {
         this.cartItems.update((items) =>
             items.filter((item) => item.ward._id !== wardId)
@@ -370,28 +487,27 @@ openBulkSponsorDialog() {
     // ==========================================
     // PAYMENT HANDLER
     // ==========================================
-proceedToPayment() {
-    // ...
-    const paymentData = {
-      // ... (sponsor info)
-      items: this.cartItems().map(item => ({
-        wardId: item.ward._id,
-        wardName: item.ward.wardName,
-        // ... (other ward details)
-        executivesSponsored: item.executivesSponsored,
-        costPerMonth: item.costPerMonth,
-        // --- ADDED DATES ---
-        sponsorshipStartDate: item.startDate.toISOString(),
-        sponsorshipEndDate: item.endDate.toISOString()
-      })),
-      // ... (summary info)
-    };
-    console.log('Processing payment with dates:', paymentData);
-    // ...
-  }
+    proceedToPayment() {
+        // ...
+        const paymentData = {
+            // ... (sponsor info)
+            items: this.cartItems().map((item) => ({
+                wardId: item.ward._id,
+                wardName: item.ward.wardName,
+                // ... (other ward details)
+                executivesSponsored: item.executivesSponsored,
+                costPerMonth: item.costPerMonth,
+                // --- ADDED DATES ---
+                sponsorshipStartDate: item.startDate.toISOString(),
+                sponsorshipEndDate: item.endDate.toISOString()
+            }))
+            // ... (summary info)
+        };
+        console.log('Processing payment with dates:', paymentData);
+        // ...
+    }
 
-  // ... (rest of the component)
-
+    // ... (rest of the component)
 
     // ==========================================
     // UTILITY

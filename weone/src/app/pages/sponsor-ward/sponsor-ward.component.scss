@@ -367,7 +367,7 @@
 }
 
 .weone-tool-layout {
-     display: grid;
+    display: grid;
     grid-template-columns: 1fr 400px;
     gap: 3rem;
     align-items: start;
@@ -865,7 +865,7 @@
     .p-dropdown-panel {
         z-index: 1200 !important; // Higher than sidebar z-index: 2
     }
-    
+
     // Also fix the overlay to ensure proper stacking
     .p-component-overlay {
         z-index: 1199 !important;
@@ -873,12 +873,11 @@
 }
 
 :host ::ng-deep {
-
     // Style the small "Sponsor" button in the table
     .p-datatable .p-button {
         background: var(--trust-blue);
         border: none;
-        
+
         &:hover {
             background: var(--accent-gradient);
         }
@@ -905,6 +904,13 @@
 .weone-selection-info {
     font-weight: 600;
     color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+
+    .pi-check-circle {
+        color: var(--green-500);
+    }
 }
 
 .weone-date-picker-group {
@@ -925,4 +931,42 @@
     strong {
         color: var(--text-primary);
     }
+}
+
+.weone-cart-item-list-container {
+    max-height: 250px; /* Adjust height as needed */
+    overflow-y: auto; /* Enables vertical scrolling */
+    padding-right: 10px; /* Optional: adds space for the scrollbar */
+    margin-bottom: 15px; /* Separates the list from the totals */
+}
+
+.weone-cart-item-list-container .weone-cart-item {
+    /* Ensure items display correctly */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--surface-border);
+}
+
+.weone-bulk-actions-caption {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0;
+    margin-bottom: 0.5rem;
+    border-bottom: 1px solid var(--glass-border);
+}
+
+.weone-cart-intimation {
+    padding: 1rem;
+    border-radius: 12px;
+    background: var(--yellow-100); /* Light background for warning/info */
+    color: var(--yellow-900); /* Dark text color */
+    border: 1px solid var(--yellow-400);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    font-weight: 600;
+    font-size: 0.9rem;
 }
