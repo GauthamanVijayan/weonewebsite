@@ -12,9 +12,10 @@
     "private": true,
     "dependencies": {
         "@angular/animations": "^20",
+        "@angular/build": "^20.3.6",
         "@angular/cdk": "^20.2.7",
         "@angular/common": "^20",
-        "@angular/compiler": "^20",
+        "@angular/compiler": "^20.3.6",
         "@angular/core": "^20",
         "@angular/forms": "^20",
         "@angular/localize": "^20.3.6",
@@ -38,7 +39,7 @@
     "devDependencies": {
         "@angular-devkit/build-angular": "^20",
         "@angular/cli": "^20",
-        "@angular/compiler-cli": "^20",
+        "@angular/compiler-cli": "^20.3.6",
         "@types/jasmine": "~5.1.0",
         "@types/node": "^20.0.0",
         "autoprefixer": "^10.4.20",
