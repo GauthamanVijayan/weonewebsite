@@ -17,6 +17,7 @@
         "@angular/compiler": "^20",
         "@angular/core": "^20",
         "@angular/forms": "^20",
+        "@angular/localize": "^20.3.6",
         "@angular/platform-browser": "^20",
         "@angular/platform-browser-dynamic": "^20",
         "@angular/router": "^20",
