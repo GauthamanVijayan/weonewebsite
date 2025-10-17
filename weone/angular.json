@@ -22,7 +22,8 @@
                         "browser": "src/main.ts",
                         
                         "polyfills": [
-                            "zone.js"
+                            "zone.js",
+                            "node_modules/@angular/localize/fesm2022/init.mjs"
                         ],
                         "tsConfig": "tsconfig.app.json",
                         "inlineStyleLanguage": "scss",
