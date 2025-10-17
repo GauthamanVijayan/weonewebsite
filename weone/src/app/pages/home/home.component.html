@@ -1,37 +1,48 @@
 <section class="hero" id="hero">
     <div class="hero-container">
-        <div class="hero-content animate-on-scroll" #scrollAnimate [class.visible]="visibleElements().has(scrollAnimate)">
-            
-            <h1 class="hero-title">
+        <div
+            class="hero-content animate-on-scroll"
+            #scrollAnimate
+            [class.visible]="visibleElements().has(scrollAnimate)"
+        >
+            <h1 class="hero-title" i18n="Home page hero title">
                 Citizen-Centric<br />
                 Digital Governance<br />
                 for Every Ward
             </h1>
-            <p class="hero-subtitle">
+            <p class="hero-subtitle" i18n="Home page hero subtitle">
                 WeOne bridges the gap between citizens and Local Self Government
                 Institutions across Kerala, enabling real-time, transparent, and
                 participatory public service delivery at the ward level.
             </p>
             <div class="hero-actions">
-                <a href="#impact" class="btn btn-primary smooth-scroll">Explore Impact</a>
-                <a href="#features" class="btn btn-secondary smooth-scroll">Learn More</a>
+                <a href="#impact" class="btn btn-primary smooth-scroll" i18n
+                    >Explore Impact</a
+                >
+                <a href="#features" class="btn btn-secondary smooth-scroll" i18n
+                    >Learn More</a
+                >
             </div>
             <div class="hero-stats">
                 <div class="stat-item">
                     <span class="stat-number">1200+</span>
-                    <span class="stat-label">LSGIs Connected</span>
+                    <span class="stat-label" i18n>LSGIs Connected</span>
                 </div>
                 <div class="stat-item">
                     <span class="stat-number">61</span>
-                    <span class="stat-label">Departments Integrated</span>
+                    <span class="stat-label" i18n>Departments Integrated</span>
                 </div>
                 <div class="stat-item">
                     <span class="stat-number">100%</span>
-                    <span class="stat-label">Ward Coverage</span>
+                    <span class="stat-label" i18n>Ward Coverage</span>
                 </div>
             </div>
         </div>
-        <div class="hero-visual animate-on-scroll" #scrollAnimate [class.visible]="visibleElements().has(scrollAnimate)">
+        <div
+            class="hero-visual animate-on-scroll"
+            #scrollAnimate
+            [class.visible]="visibleElements().has(scrollAnimate)"
+        >
             <div class="weone-ecosystem">
                 <div class="weone-hub">
                     <span class="hub-text">WeOne</span>
@@ -39,27 +50,50 @@
                 </div>
                 <div class="stakeholder-card" data-position="0">
                     <div class="card-icon">👥</div>
-                    <span>Citizens</span>
+                    <span i18n>Citizens</span>
                 </div>
                 <div class="stakeholder-card" data-position="1">
                     <div class="card-icon">🏢</div>
-                    <span>Departments</span>
+                    <span i18n>Departments</span>
                 </div>
                 <div class="stakeholder-card" data-position="2">
                     <div class="card-icon">🏛️</div>
-                    <span>LSGIs</span>
+                    <span i18n>LSGIs</span>
                 </div>
                 <div class="stakeholder-card" data-position="3">
                     <div class="card-icon">🗺️</div>
-                    <span>Wards</span>
+                    <span i18n>Wards</span>
                 </div>
                 <svg class="connection-svg" viewBox="0 0 400 400">
-                    <line class="connection-line" x1="200" y1="200" x2="200" y2="80" />
-                    <line class="connection-line" x1="200" y1="200" x2="320" y2="200" />
-                    <line class="connection-line" x1="200" y1="200" x2="200" y2="320" />
-                    <line class="connection-line" x1="200" y1="200" x2="80" y2="200" />
+                    <line
+                        class="connection-line"
+                        x1="200"
+                        y1="200"
+                        x2="200"
+                        y2="80"
+                    />
+                    <line
+                        class="connection-line"
+                        x1="200"
+                        y1="200"
+                        x2="320"
+                        y2="200"
+                    />
+                    <line
+                        class="connection-line"
+                        x1="200"
+                        y1="200"
+                        x2="200"
+                        y2="320"
+                    />
+                    <line
+                        class="connection-line"
+                        x1="200"
+                        y1="200"
+                        x2="80"
+                        y2="200"
+                    />
                 </svg>
-                
             </div>
         </div>
     </div>
@@ -67,42 +101,90 @@
 
 <section class="impact-section" id="impact">
     <div class="section-container">
-        <div class="section-header animate-on-scroll" #scrollAnimate [class.visible]="visibleElements().has(scrollAnimate)">
-            <h2 class="section-title">Transformational Impact Across Kerala</h2>
-            <p class="section-subtitle">
-                WeOne creates unprecedented impact across administrative efficiency, citizen empowerment, and economic development through real-time digital governance.
+        <div
+            class="section-header animate-on-scroll"
+            #scrollAnimate
+            [class.visible]="visibleElements().has(scrollAnimate)"
+        >
+            <h2 class="section-title" i18n>
+                Transformational Impact Across Kerala
+            </h2>
+            <p class="section-subtitle" i18n>
+                WeOne creates unprecedented impact across administrative
+                efficiency, citizen empowerment, and economic development
+                through real-time digital governance.
             </p>
         </div>
         <div class="impact-grid">
-            <div class="impact-card animate-on-scroll" #scrollAnimate [class.visible]="visibleElements().has(scrollAnimate)">
+            <div
+                class="impact-card animate-on-scroll"
+                #scrollAnimate
+                [class.visible]="visibleElements().has(scrollAnimate)"
+            >
                 <div class="impact-icon">⚡</div>
-                <h3 class="impact-title">Administrative Efficiency</h3>
-                <p class="impact-description">Real-time coordination across 61 departments and 1200+ LSGIs...</p>
+                <h3 class="impact-title" i18n>Administrative Efficiency</h3>
+                <p class="impact-description" i18n>
+                    Real-time coordination across 61 departments and 1200+
+                    LSGIs...
+                </p>
             </div>
-            <div class="impact-card animate-on-scroll" #scrollAnimate [class.visible]="visibleElements().has(scrollAnimate)">
+            <div
+                class="impact-card animate-on-scroll"
+                #scrollAnimate
+                [class.visible]="visibleElements().has(scrollAnimate)"
+            >
                 <div class="impact-icon">👥</div>
-                <h3 class="impact-title">Citizen Empowerment</h3>
-                <p class="impact-description">Direct communication between departments and citizens...</p>
+                <h3 class="impact-title" i18n>Citizen Empowerment</h3>
+                <p class="impact-description" i18n>
+                    Direct communication between departments and citizens...
+                </p>
             </div>
-            <div class="impact-card animate-on-scroll" #scrollAnimate [class.visible]="visibleElements().has(scrollAnimate)">
+            <div
+                class="impact-card animate-on-scroll"
+                #scrollAnimate
+                [class.visible]="visibleElements().has(scrollAnimate)"
+            >
                 <div class="impact-icon">📈</div>
-                <h3 class="impact-title">Economic Development</h3>
-                <p class="impact-description">Boosts Own Source Revenue through improved visibility of trade...</p>
+                <h3 class="impact-title" i18n>Economic Development</h3>
+                <p class="impact-description" i18n>
+                    Boosts Own Source Revenue through improved visibility of
+                    trade...
+                </p>
             </div>
-            <div class="impact-card animate-on-scroll" #scrollAnimate [class.visible]="visibleElements().has(scrollAnimate)">
+            <div
+                class="impact-card animate-on-scroll"
+                #scrollAnimate
+                [class.visible]="visibleElements().has(scrollAnimate)"
+            >
                 <div class="impact-icon">🏛️</div>
-                <h3 class="impact-title">Local Governance</h3>
-                <p class="impact-description">Every ward becomes a digitally visible, self-governing unit...</p>
+                <h3 class="impact-title" i18n>Local Governance</h3>
+                <p class="impact-description" i18n>
+                    Every ward becomes a digitally visible, self-governing
+                    unit...
+                </p>
             </div>
-            <div class="impact-card animate-on-scroll" #scrollAnimate [class.visible]="visibleElements().has(scrollAnimate)">
+            <div
+                class="impact-card animate-on-scroll"
+                #scrollAnimate
+                [class.visible]="visibleElements().has(scrollAnimate)"
+            >
                 <div class="impact-icon">🎯</div>
-                <h3 class="impact-title">Policy & Planning</h3>
-                <p class="impact-description">Real-time performance tracking and citizen feedback enable fine-grained policy design...</p>
+                <h3 class="impact-title" i18n>Policy & Planning</h3>
+                <p class="impact-description" i18n>
+                    Real-time performance tracking and citizen feedback enable
+                    fine-grained policy design...
+                </p>
             </div>
-            <div class="impact-card animate-on-scroll" #scrollAnimate [class.visible]="visibleElements().has(scrollAnimate)">
+            <div
+                class="impact-card animate-on-scroll"
+                #scrollAnimate
+                [class.visible]="visibleElements().has(scrollAnimate)"
+            >
                 <div class="impact-icon">🔄</div>
-                <h3 class="impact-title">Digital Transformation</h3>
-                <p class="impact-description">Integrates legacy systems into a unified platform...</p>
+                <h3 class="impact-title" i18n>Digital Transformation</h3>
+                <p class="impact-description" i18n>
+                    Integrates legacy systems into a unified platform...
+                </p>
             </div>
         </div>
     </div>
@@ -110,37 +192,75 @@
 
 <section class="features-section" id="features">
     <div class="section-container">
-        <div class="section-header animate-on-scroll" #scrollAnimate [class.visible]="visibleElements().has(scrollAnimate)">
-            <h2 class="section-title">Revolutionizing Government Response</h2>
-            <p class="section-subtitle">
-                Five core capabilities that transform how Kerala's government serves its citizens...
+        <div
+            class="section-header animate-on-scroll"
+            #scrollAnimate
+            [class.visible]="visibleElements().has(scrollAnimate)"
+        >
+            <h2 class="section-title" i18n>
+                Revolutionizing Government Response
+            </h2>
+            <p class="section-subtitle" i18n>
+                Five core capabilities that transform how Kerala's government
+                serves its citizens...
             </p>
         </div>
         <div class="features-grid">
-            <div class="feature-card animate-on-scroll" #scrollAnimate [class.visible]="visibleElements().has(scrollAnimate)">
+            <div
+                class="feature-card animate-on-scroll"
+                #scrollAnimate
+                [class.visible]="visibleElements().has(scrollAnimate)"
+            >
                 <div class="feature-icon">⚡</div>
-                <h3 class="feature-title">Real-Time Responsiveness</h3>
-                <p class="feature-description">Instant information flow enables faster decisions...</p>
+                <h3 class="feature-title" i18n>Real-Time Responsiveness</h3>
+                <p class="feature-description" i18n>
+                    Instant information flow enables faster decisions...
+                </p>
             </div>
-            <div class="feature-card animate-on-scroll" #scrollAnimate [class.visible]="visibleElements().has(scrollAnimate)">
+            <div
+                class="feature-card animate-on-scroll"
+                #scrollAnimate
+                [class.visible]="visibleElements().has(scrollAnimate)"
+            >
                 <div class="feature-icon">🔗</div>
-                <h3 class="feature-title">Breaking Departmental Silos</h3>
-                <p class="feature-description">Unified citizen view ensures coordinated support...</p>
+                <h3 class="feature-title" i18n>Breaking Departmental Silos</h3>
+                <p class="feature-description" i18n>
+                    Unified citizen view ensures coordinated support...
+                </p>
             </div>
-            <div class="feature-card animate-on-scroll" #scrollAnimate [class.visible]="visibleElements().has(scrollAnimate)">
+            <div
+                class="feature-card animate-on-scroll"
+                #scrollAnimate
+                [class.visible]="visibleElements().has(scrollAnimate)"
+            >
                 <div class="feature-icon">🎯</div>
-                <h3 class="feature-title">Hyperlocal Personalization</h3>
-                <p class="feature-description">Targeted messaging ensures the right content reaches the right person...</p>
+                <h3 class="feature-title" i18n>Hyperlocal Personalization</h3>
+                <p class="feature-description" i18n>
+                    Targeted messaging ensures the right content reaches the
+                    right person...
+                </p>
             </div>
-            <div class="feature-card animate-on-scroll" #scrollAnimate [class.visible]="visibleElements().has(scrollAnimate)">
+            <div
+                class="feature-card animate-on-scroll"
+                #scrollAnimate
+                [class.visible]="visibleElements().has(scrollAnimate)"
+            >
                 <div class="feature-icon">📊</div>
-                <h3 class="feature-title">Department Empowerment</h3>
-                <p class="feature-description">Real-time dashboards and bidirectional communication...</p>
+                <h3 class="feature-title" i18n>Department Empowerment</h3>
+                <p class="feature-description" i18n>
+                    Real-time dashboards and bidirectional communication...
+                </p>
             </div>
-            <div class="feature-card animate-on-scroll" #scrollAnimate [class.visible]="visibleElements().has(scrollAnimate)">
+            <div
+                class="feature-card animate-on-scroll"
+                #scrollAnimate
+                [class.visible]="visibleElements().has(scrollAnimate)"
+            >
                 <div class="feature-icon">🌐</div>
-                <h3 class="feature-title">Transparent Democracy</h3>
-                <p class="feature-description">Citizens can comment, react, and report in real-time...</p>
+                <h3 class="feature-title" i18n>Transparent Democracy</h3>
+                <p class="feature-description" i18n>
+                    Citizens can comment, react, and report in real-time...
+                </p>
             </div>
         </div>
     </div>

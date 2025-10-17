@@ -1,19 +1,29 @@
 <section class="hero insights-hero" id="hero">
     <div class="hero-container">
         <div class="hero-content">
-            <div class="hero-badge" appScrollAnimate>
+            <div class="hero-badge" appScrollAnimate i18n>
                 ⚡ Real-time Analytics
             </div>
-            <h1 class="hero-title" appScrollAnimate [animationDelay]="100">
+            <h1
+                class="hero-title"
+                appScrollAnimate
+                [animationDelay]="100"
+                i18n="Insights page hero title"
+            >
                 Platform Insights<br />
                 Governance Analytics
             </h1>
-            <p class="hero-subtitle" appScrollAnimate [animationDelay]="200">
+            <p
+                class="hero-subtitle"
+                appScrollAnimate
+                [animationDelay]="200"
+                i18n="Insights page hero subtitle"
+            >
                 Explore real-time data on citizen engagement, departmental
                 performance, and public service delivery across all Local Self
                 Government Institutions.
             </p>
-            <p class="disclaimer" appScrollAnimate [animationDelay]="300">
+            <p class="disclaimer" appScrollAnimate [animationDelay]="300" i18n>
                 * All figures shown are estimated projections to demonstrate
                 platform capabilities.
             </p>
@@ -26,7 +36,7 @@
                     [animationDelay]="100"
                 >
                     <div class="metric-value">5M+</div>
-                    <div class="metric-label">Citizens Reached (Est.)</div>
+                    <div class="metric-label" i18n>Citizens Reached (Est.)</div>
                 </div>
                 <div
                     class="metric-preview-card"
@@ -34,7 +44,7 @@
                     [animationDelay]="200"
                 >
                     <div class="metric-value">98.2%</div>
-                    <div class="metric-label">Service Uptake (Est.)</div>
+                    <div class="metric-label" i18n>Service Uptake (Est.)</div>
                 </div>
                 <div
                     class="metric-preview-card"
@@ -42,19 +52,18 @@
                     [animationDelay]="300"
                 >
                     <div class="metric-value">1200+</div>
-                    <div class="metric-label">LSGIs Active (Est.)</div>
+                    <div class="metric-label" i18n>LSGIs Active (Est.)</div>
                 </div>
             </div>
         </div>
     </div>
 </section>
 
-<!-- Core Platform Metrics -->
 <section class="section metrics-section" id="metrics">
     <div class="container">
         <div class="section-header" appScrollAnimate>
-            <h2 class="section-title">Live Platform Metrics</h2>
-            <p class="section-subtitle">
+            <h2 class="section-title" i18n>Live Platform Metrics</h2>
+            <p class="section-subtitle" i18n>
                 Data-driven transparency, providing actionable insights for
                 officials and citizens alike.
             </p>
@@ -63,8 +72,8 @@
             <div class="metric-card" appScrollAnimate [animationDelay]="100">
                 <div class="metric-icon">👥</div>
                 <div class="metric-value">5M+</div>
-                <div class="metric-label">Total Citizen Reach (Est.)</div>
-                <div class="metric-description">
+                <div class="metric-label" i18n>Total Citizen Reach (Est.)</div>
+                <div class="metric-description" i18n>
                     Projected verified citizens across Kerala's digital
                     governance network
                 </div>
@@ -72,24 +81,24 @@
             <div class="metric-card" appScrollAnimate [animationDelay]="200">
                 <div class="metric-icon">🎯</div>
                 <div class="metric-value">89.5%</div>
-                <div class="metric-label">Engagement Rate (Est.)</div>
-                <div class="metric-description">
+                <div class="metric-label" i18n>Engagement Rate (Est.)</div>
+                <div class="metric-description" i18n>
                     Active daily participation in civic discussions and updates
                 </div>
             </div>
             <div class="metric-card" appScrollAnimate [animationDelay]="300">
                 <div class="metric-icon">🚀</div>
                 <div class="metric-value">1,500+</div>
-                <div class="metric-label">Active Schemes (Est.)</div>
-                <div class="metric-description">
+                <div class="metric-label" i18n>Active Schemes (Est.)</div>
+                <div class="metric-description" i18n>
                     Government schemes accessible through the platform
                 </div>
             </div>
             <div class="metric-card" appScrollAnimate [animationDelay]="400">
                 <div class="metric-icon">✅</div>
                 <div class="metric-value">94%</div>
-                <div class="metric-label">Citizen Satisfaction (Est.)</div>
-                <div class="metric-description">
+                <div class="metric-label" i18n>Citizen Satisfaction (Est.)</div>
+                <div class="metric-description" i18n>
                     Overall satisfaction with digital service delivery
                 </div>
             </div>
@@ -97,12 +106,11 @@
     </div>
 </section>
 
-<!-- Administrative Coverage -->
 <section class="section coverage-section">
     <div class="container">
         <div class="section-header" appScrollAnimate>
-            <h2 class="section-title">Administrative Coverage</h2>
-            <p class="section-subtitle">
+            <h2 class="section-title" i18n>Administrative Coverage</h2>
+            <p class="section-subtitle" i18n>
                 Complete digital integration across Kerala's governance
                 structure
             </p>
@@ -110,29 +118,31 @@
         <div class="coverage-grid">
             <div class="coverage-card" appScrollAnimate [animationDelay]="100">
                 <div class="coverage-number">1200+</div>
-                <div class="coverage-label">LSGIs Connected (Est.)</div>
-                <div class="coverage-detail">
+                <div class="coverage-label" i18n>LSGIs Connected (Est.)</div>
+                <div class="coverage-detail" i18n>
                     Corporations, Municipalities, and Panchayats
                 </div>
             </div>
             <div class="coverage-card" appScrollAnimate [animationDelay]="200">
                 <div class="coverage-number">61</div>
-                <div class="coverage-label">Departments Integrated (Est.)</div>
-                <div class="coverage-detail">
+                <div class="coverage-label" i18n>
+                    Departments Integrated (Est.)
+                </div>
+                <div class="coverage-detail" i18n>
                     Seamless inter-departmental coordination
                 </div>
             </div>
             <div class="coverage-card" appScrollAnimate [animationDelay]="300">
                 <div class="coverage-number">15,000+</div>
-                <div class="coverage-label">Wards Covered (Est.)</div>
-                <div class="coverage-detail">
+                <div class="coverage-label" i18n>Wards Covered (Est.)</div>
+                <div class="coverage-detail" i18n>
                     100% ward-level digital visibility
                 </div>
             </div>
             <div class="coverage-card" appScrollAnimate [animationDelay]="400">
                 <div class="coverage-number">14</div>
-                <div class="coverage-label">Districts Active (Est.)</div>
-                <div class="coverage-detail">
+                <div class="coverage-label" i18n>Districts Active (Est.)</div>
+                <div class="coverage-detail" i18n>
                     Complete statewide implementation
                 </div>
             </div>
@@ -140,62 +150,64 @@
     </div>
 </section>
 
-<!-- Real-time Impact -->
 <section class="section impact-section">
     <div class="container">
         <div class="section-header" appScrollAnimate>
-            <h2 class="section-title">Real-Time Impact</h2>
-            <p class="section-subtitle">
+            <h2 class="section-title" i18n>Real-Time Impact</h2>
+            <p class="section-subtitle" i18n>
                 Transforming governance through instant information flow
             </p>
         </div>
         <div class="impact-grid">
             <div class="impact-card" appScrollAnimate [animationDelay]="100">
                 <div class="impact-icon">⚡</div>
-                <h3>Response Time</h3>
+                <h3 i18n>Response Time</h3>
                 <div class="impact-stat">2.5 hours</div>
-                <p class="impact-desc">
+                <p class="impact-desc" i18n>
                     Average response time for citizen queries (Est.)
                 </p>
             </div>
             <div class="impact-card" appScrollAnimate [animationDelay]="200">
                 <div class="impact-icon">📊</div>
-                <h3>Data Processing</h3>
+                <h3 i18n>Data Processing</h3>
                 <div class="impact-stat">1M+</div>
-                <p class="impact-desc">Data points processed daily (Est.)</p>
+                <p class="impact-desc" i18n>
+                    Data points processed daily (Est.)
+                </p>
             </div>
             <div class="impact-card" appScrollAnimate [animationDelay]="300">
                 <div class="impact-icon">💼</div>
-                <h3>Jobs Created</h3>
+                <h3 i18n>Jobs Created</h3>
                 <div class="impact-stat">12K+</div>
-                <p class="impact-desc">
+                <p class="impact-desc" i18n>
                     Digital employment opportunities (Est.)
                 </p>
             </div>
             <div class="impact-card" appScrollAnimate [animationDelay]="400">
                 <div class="impact-icon">🏪</div>
-                <h3>Local Businesses</h3>
+                <h3 i18n>Local Businesses</h3>
                 <div class="impact-stat">25K+</div>
-                <p class="impact-desc">MSMEs registered on platform (Est.)</p>
+                <p class="impact-desc" i18n>
+                    MSMEs registered on platform (Est.)
+                </p>
             </div>
         </div>
     </div>
 </section>
 
-<!-- Call to Action -->
 <section class="section cta-section">
     <div class="container">
         <div class="cta-content" appScrollAnimate>
-            <h2>Be Part of Kerala's Digital Transformation</h2>
-            <p>
+            <h2 i18n>Be Part of Kerala's Digital Transformation</h2>
+            <p i18n>
                 Support a ward, empower a community, and help build India's most
                 advanced digital governance network.
             </p>
             <div class="cta-buttons">
-                <a href="/sponsor-ward" class="btn btn-primary"
+                <a href="/sponsor-ward" class="btn btn-primary" i18n
                     >Sponsor a Ward</a
                 >
-                <a href="/about" class="btn btn-secondary">Learn More</a>
+                <a href="/about" class="btn btn-secondary" i18n>Learn More</a>
             </div>
         </div>
     </div>
