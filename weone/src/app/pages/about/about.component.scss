@@ -1,4 +1,15 @@
-// NOTE: Global styles like :root, body, html, etc., should be in the main styles.scss
+/* ==========================================
+// CRITICAL: Prevent Horizontal Overflow
+// ========================================== */
+:host {
+    display: block;
+    overflow-x: hidden;
+    width: 100%;
+}
+
+* {
+    box-sizing: border-box !important;
+}
 
 /* Hero Section - About Page Specific */
 .hero {
@@ -9,12 +20,14 @@
     overflow: hidden;
     background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
     padding-top: 100px;
+    width: 100%;
 }
 
 .hero-content {
     position: relative;
     z-index: 2;
     max-width: 800px;
+    width: 100%;
     margin: 0 auto;
     padding: 0 var(--space-8);
     text-align: center;
@@ -47,6 +60,7 @@
     justify-content: center;
     gap: var(--space-8);
     flex-wrap: wrap;
+    width: 100%;
 }
 
 .stat-item {
@@ -57,13 +71,14 @@
     box-shadow: var(--shadow-md);
     border: 1px solid var(--glass-border);
     min-width: 120px;
+    flex: 0 1 auto;
 }
 
 .stat-number {
     display: block;
     font-size: var(--font-3xl);
     font-weight: 700;
-color: #2aabe2;
+    color: #2aabe2;
     font-family: 'Poppins', sans-serif;
     margin-bottom: var(--space-1);
 }
@@ -78,17 +93,23 @@ color: #2aabe2;
 .section {
     padding: var(--space-24) 0;
     position: relative;
+    width: 100%;
+    overflow-x: hidden;
 }
 
 .container {
     max-width: 1200px;
+    width: 100%;
     margin: 0 auto;
     padding: 0 var(--space-8);
+    overflow-x: hidden;
+    margin-bottom: 1rem;
 }
 
 .section-header {
     text-align: center;
     margin-bottom: var(--space-16);
+    width: 100%;
 }
 
 .section-title {
@@ -110,27 +131,64 @@ color: #2aabe2;
     line-height: 1.6;
 }
 
-/* Story Section */
+/* ==========================================
+// Story Section with Image Fix
+// ========================================== */
 .story-section {
     background: var(--secondary-bg);
 }
+
 .story-content {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: var(--space-16);
     align-items: center;
+    width: 100%;
 }
-.story-text h3 {
-    font-size: var(--font-3xl);
-    color: var(--text-primary);
-    margin-bottom: var(--space-6);
-    font-weight: 600;
+
+.story-text {
+    width: 100%;
+    overflow-wrap: break-word;
+    
+    h3 {
+        font-size: var(--font-3xl);
+        color: var(--text-primary);
+        margin-bottom: var(--space-6);
+        font-weight: 600;
+    }
+    
+    p {
+        color: var(--text-secondary);
+        margin-bottom: var(--space-6);
+        line-height: 1.6;
+    }
 }
-.story-text p {
-    color: var(--text-secondary);
-    margin-bottom: var(--space-6);
-    line-height: 1.6;
+
+/* CRITICAL: Image wrapper to prevent overflow */
+.story-image-wrapper {
+    position: relative;
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
+    border-radius: var(--radius-2xl);
+    box-shadow: var(--shadow-xl);
+    background: var(--primary-bg);
+    aspect-ratio: 4 / 3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
 }
+
+.story-image {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    object-position: center;
+    display: block;
+    max-width: 100%;
+}
+
 .story-visual {
     position: relative;
     width: 100%;
@@ -142,6 +200,7 @@ color: #2aabe2;
     justify-content: center;
     box-shadow: var(--shadow-xl);
 }
+
 .story-icon {
     font-size: 4rem;
     color: white;
@@ -150,16 +209,23 @@ color: #2aabe2;
 /* Mission & Values Section */
 .mission-section {
     background: var(--primary-bg);
+    margin-bottom: 1rem;
+    
 }
+
 .mission-content {
     text-align: center;
     margin-bottom: var(--space-16);
+    width: 100%;
 }
+
 .values-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: var(--space-8);
+    width: 100%;
 }
+
 .value-card {
     background: var(--primary-bg);
     padding: var(--space-8);
@@ -168,11 +234,14 @@ color: #2aabe2;
     text-align: center;
     transition: var(--transition-spring);
     border: 1px solid var(--glass-border);
+    width: 100%;
 }
+
 .value-card:hover {
     transform: translateY(-8px) scale(1.02);
     box-shadow: var(--shadow-xl);
 }
+
 .value-icon {
     width: 60px;
     height: 60px;
@@ -185,12 +254,14 @@ color: #2aabe2;
     color: white;
     font-size: 1.5rem;
 }
+
 .value-card h4 {
     font-size: var(--font-2xl);
     color: var(--text-primary);
     margin-bottom: var(--space-4);
     font-weight: 600;
 }
+
 .value-card p {
     color: var(--text-secondary);
     line-height: 1.6;
@@ -200,11 +271,14 @@ color: #2aabe2;
 .stats-section {
     background: var(--secondary-bg);
 }
+
 .stats-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: var(--space-8);
+    width: 100%;
 }
+
 .stat-card {
     text-align: center;
     padding: var(--space-8) var(--space-4);
@@ -213,17 +287,21 @@ color: #2aabe2;
     box-shadow: var(--shadow-md);
     border: 1px solid var(--glass-border);
     transition: var(--transition-smooth);
+    width: 100%;
 }
+
 .stat-card:hover {
     transform: translateY(-4px);
     box-shadow: var(--shadow-xl);
 }
+
 .stat-card .stat-number {
     font-size: var(--font-4xl);
     font-weight: 700;
     color: var(--trust-green);
     margin-bottom: var(--space-2);
 }
+
 .stat-card .stat-label {
     color: var(--text-secondary);
     font-size: var(--font-base);
@@ -236,24 +314,147 @@ color: #2aabe2;
     transform: translateY(30px);
     transition: var(--transition-smooth);
 }
+
 .animate-in.visible,
 .animate-counter.visible {
     transform: translateY(0);
 }
 
-/* Responsive */
+/* ==========================================
+// Responsive Media Queries
+// ========================================== */
+@media (max-width: 1024px) {
+    .story-content {
+        gap: var(--space-12);
+    }
+}
+
 @media (max-width: 768px) {
-    .story-content,
+    .hero {
+        min-height: auto;
+        padding: 120px 0 80px;
+    }
+    
+    .hero-content {
+        padding: 0 var(--space-6);
+    }
+    
+    .hero-stats {
+        gap: var(--space-6);
+    }
+    
+    .container {
+        padding: 0 var(--space-6);
+    }
+    
+    .story-content {
+        grid-template-columns: 1fr;
+        gap: var(--space-8);
+    }
+    
+    .story-image-wrapper {
+        max-height: 400px;
+    }
+    
     .values-grid,
     .stats-grid {
         grid-template-columns: 1fr;
     }
+    
     .stats-grid {
         grid-template-columns: repeat(2, 1fr);
     }
 }
+
+@media (max-width: 640px) {
+    .hero-content {
+        padding: 0 var(--space-4);
+    }
+    
+    .container {
+        padding: 0 var(--space-4);
+    }
+    
+    .section {
+        padding: var(--space-16) 0;
+    }
+    
+    .hero-stats {
+        gap: var(--space-4);
+    }
+    
+    .stat-item {
+        min-width: 100px;
+        padding: var(--space-3);
+    }
+    
+    .stat-number {
+        font-size: var(--font-2xl);
+    }
+    
+    .story-image-wrapper {
+        aspect-ratio: 16 / 9;
+        max-height: 300px;
+    }
+    
+    .value-card {
+        padding: var(--space-6);
+    }
+}
+
 @media (max-width: 480px) {
+    .hero h1 {
+        font-size: clamp(1.875rem, 8vw, 2.5rem);
+    }
+    
+    .hero-tagline {
+        font-size: var(--font-base);
+    }
+    
+    .hero-stats {
+        flex-direction: column;
+        gap: var(--space-3);
+    }
+    
+    .stat-item {
+        width: 100%;
+        min-width: 0;
+    }
+    
+    .story-image-wrapper {
+        aspect-ratio: 1;
+        max-height: 250px;
+    }
+    
     .stats-grid {
         grid-template-columns: 1fr;
     }
+}
+
+@media (max-width: 380px) {
+    .hero-content,
+    .container {
+        padding: 0 var(--space-3);
+    }
+    
+    .section {
+        padding: var(--space-12) 0;
+    }
+    
+    .story-image-wrapper {
+        max-height: 200px;
+    }
+    
+    .value-card {
+        padding: var(--space-4);
+    }
+}
+
+/* ==========================================
+// Ensure Images Never Overflow
+// ========================================== */
+img {
+    max-width: 100% !important;
+    height: auto !important;
+    display: block;
 }

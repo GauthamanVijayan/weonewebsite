@@ -16,15 +16,11 @@
             <div class="weone-hero-stats">
                 <div class="weone-stat-item">
                     <span class="weone-stat-number">₹15,000</span>
-                    <span class="weone-stat-label" i18n
-                        >Per Correspondent/Month</span
-                    >
+                    <span class="weone-stat-label" i18n>Per Correspondent/Month</span>
                 </div>
                 <div class="weone-stat-item">
                     <span class="weone-stat-number">3X</span>
-                    <span class="weone-stat-label" i18n
-                        >Wallet Bonus Value</span
-                    >
+                    <span class="weone-stat-label" i18n>Wallet Bonus Value</span>
                 </div>
                 <div class="weone-stat-item">
                     <span class="weone-stat-number">100%</span>
@@ -72,11 +68,7 @@
         </div>
 
         <div class="weone-benefits-grid">
-            <div
-                class="weone-benefit-card"
-                appScrollAnimate
-                [animationDelay]="0"
-            >
+            <div class="weone-benefit-card" appScrollAnimate [animationDelay]="0">
                 <div class="weone-benefit-icon">
                     <i class="pi pi-briefcase"></i>
                 </div>
@@ -86,11 +78,7 @@
                     dignified livelihoods while serving their communities.
                 </p>
             </div>
-            <div
-                class="weone-benefit-card"
-                appScrollAnimate
-                [animationDelay]="100"
-            >
+            <div class="weone-benefit-card" appScrollAnimate [animationDelay]="100">
                 <div class="weone-benefit-icon">
                     <i class="pi pi-users"></i>
                 </div>
@@ -101,11 +89,7 @@
                     level.
                 </p>
             </div>
-            <div
-                class="weone-benefit-card"
-                appScrollAnimate
-                [animationDelay]="200"
-            >
+            <div class="weone-benefit-card" appScrollAnimate [animationDelay]="200">
                 <div class="weone-benefit-icon">
                     <i class="pi pi-comments"></i>
                 </div>
@@ -115,11 +99,7 @@
                     government bodies becomes a reality.
                 </p>
             </div>
-            <div
-                class="weone-benefit-card"
-                appScrollAnimate
-                [animationDelay]="300"
-            >
+            <div class="weone-benefit-card" appScrollAnimate [animationDelay]="300">
                 <div class="weone-benefit-icon"><i class="pi pi-flag"></i></div>
                 <h3 i18n>Strengthens Digital India</h3>
                 <p i18n>
@@ -170,6 +150,7 @@
 <section class="weone-section weone-tool-section">
     <div class="weone-container">
         <div class="weone-tool-layout">
+            <!-- MAIN CONTENT AREA -->
             <div class="weone-tool-main">
                 <div class="weone-section-header-small" appScrollAnimate>
                     <h3 i18n>Select Wards to Sponsor</h3>
@@ -213,7 +194,6 @@
                                 [style]="{ width: '100%' }"
                                 appendTo="body"
                             />
-                          
                         </div>
 
                         <div class="weone-filter-item">
@@ -242,9 +222,7 @@
                         </div>
 
                         <div class="weone-filter-item">
-                            <label for="localBodyType" i18n
-                                >Filter by Type</label
-                            >
+                            <label for="localBodyType" i18n>Filter by Type</label>
                             <p-select
                                 inputId="localBodyType"
                                 [options]="localBodyTypeOptions()"
@@ -256,19 +234,14 @@
                     </div>
                 </div>
 
-                <div
-                    class="weone-bulk-actions"
-                    *ngIf="selectedWards().length > 0"
-                >
+                <div class="weone-bulk-actions" *ngIf="selectedWards().length > 0">
                     <div class="weone-bulk-summary-bar">
                         <span>
                             {{ selectedWards().length }} Wards Selected (Total
                             Est. Cost:
                             <strong>{{
-                                bulkSelectionCost()
-                                    | currency: 'INR' : 'symbol' : '1.0-0'
-                            }}</strong
-                            >)
+                                bulkSelectionCost() | currency: 'INR' : 'symbol' : '1.0-0'
+                            }}</strong>)
                         </span>
 
                         <p-button
@@ -279,6 +252,7 @@
                         ></p-button>
                     </div>
                 </div>
+
                 <div class="weone-table-wrapper" appScrollAnimate>
                     <p-table
                         [value]="filteredWards()"
@@ -295,23 +269,30 @@
                     >
                         <ng-template pTemplate="header">
                             <tr>
+                                <th colspan="6">
+                                    <div class="p-input-icon-left w-full">
+                                        <i class="pi pi-search"></i>
+                                        <input
+                                            pInputText
+                                            type="text"
+                                            [ngModel]="searchText()"
+                                            (ngModelChange)="searchText.set($event)"
+                                            placeholder="Search by Ward or Local Body..."
+                                            i18n-placeholder
+                                            class="w-full"
+                                        />
+                                    </div>
+                                </th>
+                            </tr>
+                            <tr>
                                 <th style="width: 4rem">
                                     <p-tableHeaderCheckbox />
                                 </th>
-                                <input
-                                    pInputText
-                                    type="text"
-                                    [ngModel]="searchText()"
-                                    (ngModelChange)="searchText.set($event)"
-                                    placeholder="Search by Ward or Local Body..."
-                                    i18n-placeholder
-                                    class="w-full"
-                                />
-                                <th style="width: 30%" i18n>Ward Name</th>
-                                <th style="width: 15%" i18n>Type</th>
-                                <th style="width: 20%" i18n>Local Body</th>
-                                <th style="width: 15%" i18n>Max Executives</th>
-                                <th style="width: 20%" i18n>Action</th>
+                                <th i18n>Ward Name</th>
+                                <th i18n>Type</th>
+                                <th i18n>Local Body</th>
+                                <th i18n>Max Executives</th>
+                                <th i18n>Action</th>
                             </tr>
                         </ng-template>
                         <ng-template pTemplate="body" let-ward>
@@ -319,18 +300,10 @@
                                 <td><p-tableCheckbox [value]="ward" /></td>
                                 <td>{{ ward.wardName }}</td>
                                 <td>{{ ward.type }}</td>
+                                <td>{{ getLocalBodyTypeLabel(ward.localBodyType) }}</td>
                                 <td>
-                                    {{
-                                        getLocalBodyTypeLabel(
-                                            ward.localBodyType
-                                        )
-                                    }}
-                                </td>
-                                <td>
-                                    <strong>{{
-                                        getMaxExecutives(ward.localBodyType)
-                                    }}</strong
-                                    >&nbsp;<small i18n>Executive(s)</small>
+                                    <strong>{{ getMaxExecutives(ward.localBodyType) }}</strong>
+                                    &nbsp;<small i18n>Executive(s)</small>
                                 </td>
                                 <td>
                                     <p-button
@@ -360,7 +333,15 @@
                 </div>
             </div>
 
+            <!-- SIDEBAR AREA -->
             <div class="weone-tool-sidebar">
+                @if (cartMessage()) {
+                    <div class="weone-cart-intimation" appScrollAnimate [animationDelay]="0">
+                        <i class="pi pi-info-circle"></i>
+                        {{ cartMessage() }}
+                    </div>
+                }
+
                 <div class="weone-sidebar-card" appScrollAnimate>
                     <h4 i18n>Your Details</h4>
                     <div class="weone-form-group">
@@ -374,9 +355,7 @@
                     </div>
                     <div class="weone-form-group">
                         <label for="sponsorName">{{
-                            sponsorType() === 'company'
-                                ? 'Company Name'
-                                : 'Full Name'
+                            sponsorType() === 'company' ? 'Company Name' : 'Full Name'
                         }}</label>
                         <input
                             id="sponsorName"
@@ -402,29 +381,7 @@
                     </div>
                 </div>
 
-                @if (cartMessage()) {
-                    <div
-                        class="weone-cart-intimation"
-                        appScrollAnimate
-                        [animationDelay]="0"
-                    >
-                        <i class="pi pi-info-circle"></i>
-                        {{ cartMessage() }}
-                    </div>
-                }
-
-                <div class="weone-sidebar-card" appScrollAnimate></div>
-
-                <div
-                    class="weone-sidebar-card weone-cart-card"
-                    appScrollAnimate
-                    [animationDelay]="100"
-                ></div>
-                <div
-                    class="weone-sidebar-card weone-cart-card"
-                    appScrollAnimate
-                    [animationDelay]="100"
-                >
+                <div class="weone-sidebar-card weone-cart-card" appScrollAnimate [animationDelay]="100">
                     <h4 i18n>
                         <i class="pi pi-shopping-cart"></i> Sponsorship Cart
                     </h4>
@@ -437,22 +394,13 @@
                         </div>
                     } @else {
                         <div class="weone-cart-item-list-container">
-                            <div
-                                class="weone-cart-item"
-                                *ngFor="let item of cartItems()"
-                            >
+                            <div class="weone-cart-item" *ngFor="let item of cartItems()">
                                 <div class="weone-cart-item-details">
                                     <span>{{ item.ward.wardName }}</span>
-                                    <small
-                                        >Execs: {{ item.executivesSponsored }} |
-                                        {{
-                                            item.costPerMonth
-                                                | currency
-                                                    : 'INR'
-                                                    : 'symbol'
-                                                    : '1.0-0'
-                                        }}</small
-                                    >
+                                    <small>
+                                        Execs: {{ item.executivesSponsored }} |
+                                        {{ item.costPerMonth | currency: 'INR' : 'symbol' : '1.0-0' }}
+                                    </small>
                                 </div>
                                 <p-button
                                     icon="pi pi-times"
@@ -482,35 +430,21 @@
                             </div>
                             <div class="weone-summary-row">
                                 <span i18n>Subtotal</span>
-                                <span>{{
-                                    subtotal()
-                                        | currency: 'INR' : 'symbol' : '1.0-0'
-                                }}</span>
+                                <span>{{ subtotal() | currency: 'INR' : 'symbol' : '1.0-0' }}</span>
                             </div>
                             <div class="weone-summary-row">
                                 <span i18n>GST (18%)</span>
-                                <span>{{
-                                    gst() | currency: 'INR' : 'symbol' : '1.0-0'
-                                }}</span>
+                                <span>{{ gst() | currency: 'INR' : 'symbol' : '1.0-0' }}</span>
                             </div>
                             <div class="weone-summary-row weone-summary-total">
                                 <span i18n>Total</span>
-                                <span>{{
-                                    total()
-                                        | currency: 'INR' : 'symbol' : '1.0-0'
-                                }}</span>
+                                <span>{{ total() | currency: 'INR' : 'symbol' : '1.0-0' }}</span>
                             </div>
                             <div class="weone-summary-bonus">
                                 <i class="pi pi-gift"></i>
                                 <div class="weone-bonus-details">
                                     <strong i18n>Wallet Bonus</strong>
-                                    <span>{{
-                                        walletBonus()
-                                            | currency
-                                                : 'INR'
-                                                : 'symbol'
-                                                : '1.0-0'
-                                    }}</span>
+                                    <span>{{ walletBonus() | currency: 'INR' : 'symbol' : '1.0-0' }}</span>
                                 </div>
                             </div>
                         </div>
@@ -528,181 +462,171 @@
                 </div>
             </div>
         </div>
+
+        <!-- DIALOGS - Outside the layout grid -->
+        <p-dialog
+            [header]="'Sponsor ' + selectedWardForSponsorship()?.wardName"
+            [(visible)]="isVolunteerDialogVisible"
+            [modal]="true"
+            [draggable]="false"
+            [resizable]="false"
+        >
+            <div class="weone-dialog-content">
+                <div class="weone-ward-summary">
+                    <div class="weone-ward-summary-item">
+                        <span class="weone-label">Local Body Type:</span>
+                        <span class="weone-badge weone-badge-lsgd">{{
+                            getLocalBodyTypeLabel(selectedWardForSponsorship()?.localBodyType!)
+                        }}</span>
+                    </div>
+                    <div class="weone-ward-summary-item">
+                        <span class="weone-label">Max Executives:</span>
+                        <span class="weone-value">{{ maxExecutives() }}</span>
+                    </div>
+                </div>
+
+                <div class="weone-dialog-form">
+                    <div class="weone-form-group">
+                        <label for="executiveCount">Number of Executives to Sponsor</label>
+                        <p-inputNumber
+                            inputId="executiveCount"
+                            [(ngModel)]="sponsoredExecutivesCount"
+                            [min]="1"
+                            [max]="maxExecutives()"
+                            [showButtons]="true"
+                            buttonLayout="horizontal"
+                            incrementButtonIcon="pi pi-plus"
+                            decrementButtonIcon="pi pi-minus"
+                        />
+                    </div>
+
+                    <div class="weone-date-picker-group">
+                        <div class="weone-form-group">
+                            <label for="startDate">Sponsorship Start Date</label>
+                            <p-datePicker
+                                inputId="startDate"
+                                [(ngModel)]="sponsorshipStartDate"
+                                [minDate]="today"
+                                dateFormat="dd/mm/yy"
+                                appendTo="body"
+                            />
+                        </div>
+
+                        <div class="weone-form-group">
+                            <label for="durationMonths">Sponsorship Duration (Months)</label>
+                            <p-inputNumber
+                                inputId="durationMonths"
+                                [(ngModel)]="sponsorshipMonths"
+                                [min]="1"
+                                [max]="24"
+                                [showButtons]="true"
+                                buttonLayout="horizontal"
+                                [disabled]="sponsorshipStartDate() === null"
+                            />
+                        </div>
+                    </div>
+
+                    <div class="weone-form-group">
+                        <label>Sponsorship Ends On:</label>
+                        <span class="weone-value">{{ sponsorshipEndDate() | date: 'mediumDate' }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <ng-template pTemplate="footer">
+                <p-button
+                    label="Cancel"
+                    severity="secondary"
+                    [outlined]="true"
+                    (onClick)="isVolunteerDialogVisible.set(false)"
+                />
+                <p-button
+                    label="Add to Cart"
+                    icon="pi pi-shopping-cart"
+                    (onClick)="addToCart()"
+                    [disabled]="!sponsorshipStartDate() || !sponsorshipEndDate()"
+                />
+            </ng-template>
+        </p-dialog>
+
+        <p-dialog
+            header="Sponsor Multiple Wards"
+            [(visible)]="isBulkSponsorDialogVisible"
+            [modal]="true"
+            [draggable]="false"
+            [resizable]="false"
+        >
+            <div class="weone-dialog-content">
+                <div class="weone-bulk-summary">
+                    You are setting the sponsorship details for
+                    <strong>{{ selectedWards().length }} selected wards</strong>.
+                    The maximum executives allowed for this group is
+                    <strong>{{ bulkMaxExecutives() }}</strong>.
+                </div>
+                <div class="weone-dialog-form">
+                    <div class="weone-form-group">
+                        <label for="bulkExecutiveCount">
+                            Number of Executives to Sponsor (per ward)
+                        </label>
+                        <p-inputNumber
+                            inputId="bulkExecutiveCount"
+                            [(ngModel)]="bulkSponsoredExecutivesCount"
+                            [min]="1"
+                            [max]="bulkMaxExecutives()"
+                            [showButtons]="true"
+                            buttonLayout="horizontal"
+                            incrementButtonIcon="pi pi-plus"
+                            decrementButtonIcon="pi pi-minus"
+                        />
+                    </div>
+                    <div class="weone-date-picker-group">
+                        <div class="weone-form-group">
+                            <label for="bulkStartDate">Sponsorship Start Date</label>
+                            <p-datePicker
+                                inputId="bulkStartDate"
+                                [(ngModel)]="bulkSponsorshipStartDate"
+                                [minDate]="today"
+                                dateFormat="dd/mm/yy"
+                                appendTo="body"
+                            />
+                        </div>
+                        <div class="weone-form-group">
+                            <label for="bulkDurationMonths">Sponsorship Duration (Months)</label>
+                            <p-inputNumber
+                                inputId="bulkDurationMonths"
+                                [(ngModel)]="bulkSponsorshipMonths"
+                                [min]="1"
+                                [max]="24"
+                                [showButtons]="true"
+                                buttonLayout="horizontal"
+                                [disabled]="bulkSponsorshipStartDate() === null"
+                            />
+                        </div>
+                    </div>
+                    <div class="weone-form-group">
+                        <label>Sponsorship Ends On:</label>
+                        <span class="weone-value">{{ bulkSponsorshipEndDate() | date: 'mediumDate' }}</span>
+                    </div>
+                </div>
+            </div>
+            <ng-template pTemplate="footer">
+                <p-button
+                    label="Cancel"
+                    severity="secondary"
+                    [outlined]="true"
+                    (onClick)="isBulkSponsorDialogVisible.set(false)"
+                />
+                <p-button
+                    label="Add Selected to Cart"
+                    icon="pi pi-shopping-cart"
+                    (onClick)="addSelectedWardsToCart()"
+                    [disabled]="
+                        !bulkSponsorshipStartDate() ||
+                        !bulkSponsorshipEndDate() ||
+                        bulkSponsoredExecutivesCount() > bulkMaxExecutives()
+                    "
+                />
+            </ng-template>
+        </p-dialog>
     </div>
 </section>
-<p-dialog
-    [header]="'Sponsor ' + selectedWardForSponsorship()?.wardName"
-    [(visible)]="isVolunteerDialogVisible"
-    [modal]="true"
-    [style]="{ width: '450px' }"
-    [draggable]="false"
-    [resizable]="false"
->
-    <div class="weone-dialog-content">
-        <div class="weone-ward-summary">
-            <div class="weone-ward-summary-item">
-                <span class="weone-label">Local Body Type:</span>
-                <span class="weone-badge weone-badge-lsgd">{{
-                    getLocalBodyTypeLabel(
-                        selectedWardForSponsorship()?.localBodyType!
-                    )
-                }}</span>
-            </div>
-            <div class="weone-ward-summary-item">
-                <span class="weone-label">Max Executives:</span>
-                <span class="weone-value">{{ maxExecutives() }}</span>
-            </div>
-        </div>
-
-        <div class="weone-dialog-form">
-            <div class="weone-form-group">
-                <label for="executiveCount"
-                    >Number of Executives to Sponsor</label
-                >
-                <p-inputNumber
-                    inputId="executiveCount"
-                    [(ngModel)]="sponsoredExecutivesCount"
-                    [min]="1"
-                    [max]="maxExecutives()"
-                    [showButtons]="true"
-                    buttonLayout="horizontal"
-                    incrementButtonIcon="pi pi-plus"
-                    decrementButtonIcon="pi pi-minus"
-                    [style]="{ width: '100%' }"
-                />
-            </div>
-
-            <div class="weone-date-picker-group">
-                <div class="weone-form-group">
-                    <label for="startDate">Sponsorship Start Date</label>
-                    <p-datePicker
-                        inputId="startDate"
-                        [(ngModel)]="sponsorshipStartDate"
-                        [minDate]="today"
-                        dateFormat="dd/mm/yy"
-                        [style]="{ width: '100%' }"
-                        appendTo="body"
-                    />
-                </div>
-
-                <div class="weone-form-group">
-                    <label for="durationMonths"
-                        >Sponsorship Duration (Months)</label
-                    >
-                    <p-inputNumber
-                        inputId="durationMonths"
-                        [(ngModel)]="sponsorshipMonths"
-                        [min]="1"
-                        [max]="24"
-                        [showButtons]="true"
-                        buttonLayout="horizontal"
-                        [disabled]="!sponsorshipStartDate()"
-                        [style]="{ width: '100%' }"
-                    />
-                </div>
-            </div>
-
-            <div class="weone-form-group">
-                <label>Sponsorship Ends On:</label>
-                <span class="weone-value">{{
-                    sponsorshipEndDate() | date: 'mediumDate'
-                }}</span>
-            </div>
-        </div>
-    </div>
-
-    <ng-template pTemplate="footer">
-        <p-button
-            label="Cancel"
-            severity="secondary"
-            [outlined]="true"
-            (onClick)="isVolunteerDialogVisible.set(false)"
-        />
-        <p-button
-            label="Add to Cart"
-            icon="pi pi-shopping-cart"
-            (click)="addToCart()"
-            [disabled]="!sponsorshipStartDate() || !sponsorshipEndDate()"
-        />
-    </ng-template>
-</p-dialog>
-
-<p-dialog
-    header="Sponsor Multiple Wards"
-    [(visible)]="isBulkSponsorDialogVisible"
-    [modal]="true"
-    [style]="{ width: '500px' }"
-    [draggable]="false"
-    [resizable]="false"
->
-    <div class="weone-dialog-content">
-        <div class="weone-bulk-summary">
-            You are setting the sponsorship details for
-            <strong>{{ selectedWards().length }} selected wards</strong>. The
-            maximum executives allowed for this group is
-            <strong>{{ bulkMaxExecutives() }}</strong
-            >.
-        </div>
-        <div class="weone-dialog-form">
-            <div class="weone-form-group">
-                <label for="bulkExecutiveCount"
-                    >Number of Executives to Sponsor (per ward)</label
-                >
-                <p-inputNumber
-                    inputId="bulkExecutiveCount"
-                    [(ngModel)]="bulkSponsoredExecutivesCount"
-                    [min]="1"
-                    [max]="bulkMaxExecutives()"
-                    [showButtons]="true"
-                    buttonLayout="horizontal"
-                    incrementButtonIcon="pi pi-plus"
-                    decrementButtonIcon="pi pi-minus"
-                    [style]="{ width: '100%' }"
-                />
-            </div>
-            <div class="weone-date-picker-group">
-                <div class="weone-form-group">
-                    <label for="bulkStartDate">Sponsorship Start Date</label>
-                    <p-datePicker
-                        inputId="bulkStartDate"
-                        [(ngModel)]="bulkSponsorshipStartDate"
-                        [minDate]="today"
-                        dateFormat="dd/mm/yy"
-                        [style]="{ width: '100%' }"
-                        appendTo="body"
-                    />
-                </div>
-                <div class="weone-form-group">
-                    <label for="bulkEndDate">Sponsorship End Date</label>
-                    <p-datePicker
-                        inputId="bulkEndDate"
-                        [ngModel]="bulkSponsorshipEndDate()"
-                        [minDate]="bulkMinEndDate()"
-                        [disabled]="true"
-                        dateFormat="dd/mm/yy"
-                        [style]="{ width: '100%' }"
-                        appendTo="body"
-                    />
-                </div>
-            </div>
-        </div>
-    </div>
-    <ng-template pTemplate="footer">
-        <p-button
-            label="Cancel"
-            severity="secondary"
-            [outlined]="true"
-            (onClick)="isBulkSponsorDialogVisible.set(false)"
-        />
-        <p-button
-            label="Add Selected to Cart"
-            icon="pi pi-shopping-cart"
-            (onClick)="addSelectedWardsToCart()"
-            [disabled]="
-                !bulkSponsorshipStartDate() ||
-                !bulkSponsorshipEndDate() ||
-                bulkSponsoredExecutivesCount() > bulkMaxExecutives()
-            "
-        />
-    </ng-template>
-</p-dialog>

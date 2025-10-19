@@ -370,18 +370,12 @@ export class SponsorWardComponent {
         };
         const action = this.upsertCartItem(newItem);
         // Use a helper function to add/update item in cart
-        this.cartMessage.set(
-            action === 'updated'
-                ? `Updated: ${newItem.ward.wardName} now sponsors ${newItem.executivesSponsored} executive(s).`
-                : `Added: ${newItem.ward.wardName} has been added to your cart.`
-        );
+ this.showCartMessage(
+        action === 'updated'
+            ? `Updated: ${newItem.ward.wardName} now sponsors ${newItem.executivesSponsored} executive(s).`
+            : `Added: ${newItem.ward.wardName} has been added to your cart.`
+    );
 
-        // Clear message after 4 seconds
-        clearTimeout(this.cartMessageTimeout);
-        this.cartMessageTimeout = setTimeout(
-            () => this.cartMessage.set(null),
-            4000
-        );
 
         this.isVolunteerDialogVisible.set(false);
     }
@@ -432,29 +426,39 @@ export class SponsorWardComponent {
         }
     }
 
-    addSelectedWardsToCart() {
-        const wards = this.selectedWards();
-        const count = this.bulkSponsoredExecutivesCount();
-        const startDate = this.bulkSponsorshipStartDate();
-        const endDate = this.bulkSponsorshipEndDate();
+addSelectedWardsToCart() {
+    const wards = this.selectedWards();
+    const count = this.bulkSponsoredExecutivesCount();
+    const startDate = this.bulkSponsorshipStartDate();
+    const endDate = this.bulkSponsorshipEndDate();
+    
+    // 🎯 FIX 1: Initialize counters to track success
+    let updatedCount = 0;
+    let addedCount = 0;
 
-        if (wards.length === 0 || count < 1 || !startDate || !endDate) return;
+    if (wards.length === 0 || count < 1 || !startDate || !endDate) return;
 
-        wards.forEach((ward) => {
-            const newItem: CartItem = {
-                ward,
-                executivesSponsored: count,
-                monthlyRate: 15000,
-                costPerMonth: count * 15000,
-                startDate,
-                endDate
-            };
-            this.upsertCartItem(newItem);
-        });
+    wards.forEach((ward) => {
+        const newItem: CartItem = { 
+            ward, executivesSponsored: count, monthlyRate: 15000, 
+            costPerMonth: count * 15000, startDate, endDate 
+        };
+        const action = this.upsertCartItem(newItem); 
+        
+      
+        if (action === 'added') {
+            addedCount++;
+        } else {
+            updatedCount++;
+        }
+    });
+    
+    this.showCartMessage(`Cart updated: ${addedCount} wards added, ${updatedCount} updated.`);
 
-        this.isBulkSponsorDialogVisible.set(false);
-        this.selectedWards.set([]); // Clear selection after adding to cart
-    }
+
+    this.isBulkSponsorDialogVisible.set(false);
+    this.selectedWards.set([]); 
+}
 
     private upsertCartItem(newItem: CartItem): 'added' | 'updated' {
         // 👈 Change return type
@@ -524,4 +528,10 @@ export class SponsorWardComponent {
                 return '';
         }
     }
+
+    showCartMessage(message: string) {
+    this.cartMessage.set(message);
+    clearTimeout(this.cartMessageTimeout);
+    this.cartMessageTimeout = setTimeout(() => this.cartMessage.set(null), 4000);
+}
 }
