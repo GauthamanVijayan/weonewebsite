@@ -948,6 +948,14 @@ async proceedToPayment() {
     // 1. Prepare Data
     const totalAmountPaise = this.total() * 100; // Total cost in Rupees, converted to PAISA (critical)
     const sponsorInfo = { name: this.sponsorName(), email: this.sponsorEmail() };
+
+    const finalCartItems = this.cartItems().map(item => ({
+        // Spread all existing properties (ward, executivesSponsored, monthlyRate, etc.)
+        ...item, 
+        // Convert Date objects to ISO string format, which Convex supports
+        startDate: item.startDate.toISOString(),
+        endDate: item.endDate.toISOString(),
+    }));
     
     try {
         // 2. Create Pending Sponsorship Record in Convex (Mutation)
@@ -956,7 +964,7 @@ async proceedToPayment() {
             sponsorName: sponsorInfo.name,
             sponsorEmail: sponsorInfo.email,
             totalAmount: this.total(), // Store total amount in Rupees
-            cart: this.cartItems(),
+            cart: finalCartItems,
             sponsorshipDurationMonths: this.sponsorshipMonths() 
         });
 
