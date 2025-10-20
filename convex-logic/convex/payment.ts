@@ -13,6 +13,7 @@ let razorpay: Razorpay | null = null;
 const keyId = process.env.RAZORPAY_KEY_ID;
 const keySecret = process.env.RAZORPAY_KEY_SECRET;
 
+
 if (keyId && keySecret && keyId.length > 5 && !keyId.includes("YOUR_")) {
     razorpay = new Razorpay({
       key_id: keyId,      
@@ -31,6 +32,8 @@ type CreateOrderArgs = {
 };
 
 export const createRazorpayOrder = action({
+    
+    
   args: {
     sponsorshipId: v.id("sponsorships"),
     amount: v.number(),
@@ -38,10 +41,22 @@ export const createRazorpayOrder = action({
     sponsorEmail: v.string(),
   },
   handler: async (ctx: ActionCtx, args: CreateOrderArgs) => {
+const MAX_INSTANT_PAYMENT_PAISE = 5000000;
+let paymentMethods: any = {};
 
-    if (!razorpay) {
-        throw new Error("Payment service is unavailable due to missing server configuration.");
-    }
+    if (args.amount > MAX_INSTANT_PAYMENT_PAISE) {
+    paymentMethods = {
+        options: {
+            checkout: {
+                method: {
+                    card: 0, upi: 0, // Disable instant payment types
+                    netbanking: 0 
+                }
+            },
+            // Force user to see check/bank transfer options in the modal
+        }
+    };
+}
     const orderOptions = {
         amount: args.amount, // Required in paise
         currency: "INR",
@@ -54,10 +69,10 @@ export const createRazorpayOrder = action({
 
     try {
         // 2. Create the Order on Razorpay's server
-        const order = await razorpay.orders.create(orderOptions);
+        const order = await razorpay?.orders.create(orderOptions);
 
         // 3. Return the Order ID needed by the frontend to open the payment modal
-        return { orderId: order.id, amount: order.amount }; 
+        return { orderId: order?.id, amount: order?.amount }; 
     } catch (error) {
         console.error("Razorpay Order Creation Failed:", error);
         throw new Error("Failed to create payment order.");

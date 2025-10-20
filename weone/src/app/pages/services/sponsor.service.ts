@@ -8,9 +8,11 @@ import {
     Zone,
     District,
     LocalBody,
-    Ward
+    Ward,
+    CartItem
 } from '../interfaces/sponsor.interface';
 import { AuthService } from './auth.service';
+
 
 @Injectable({
     providedIn: 'root'
@@ -35,7 +37,34 @@ export class ConvexService {
     constructor() {
         this.loadZones();
     }
+public async createSponsorship(args: {
+        sponsorName: string;
+        sponsorEmail: string;
+        totalAmount: number;
+        cart: CartItem[];
+        sponsorshipDurationMonths: number;
+    }): Promise<string> {
+        // 🎯 FIX: Expose the createSponsorship Mutation
+        return this.client.mutation('sponsorships:createSponsorship', args);
+    }
 
+    public async createRazorpayOrder(args: {
+        sponsorshipId: string;
+        amount: number;
+        sponsorName: string;
+        sponsorEmail: string;
+    }): Promise<any> {
+        return(this.client as any).action('payment:createRazorpayOrder', args);
+    }
+
+    public async processPaymentSuccess(args: {
+        sponsorshipId: string;
+        paymentId: string;
+        orderId: string;
+        signature: string;
+    }): Promise<any> {
+        return (this.client as any)('sponsorships:processPaymentSuccess', args);
+    }
     async loadZones() {
         this.zonesLoading.set(true);
         try {
@@ -143,4 +172,6 @@ async loadLocalBodies(subdistrict: string, localBodyType: string) {
     clearWards() {
         this.wards.set([]);
     }
+
+    
 }
