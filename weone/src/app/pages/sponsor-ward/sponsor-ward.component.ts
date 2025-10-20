@@ -1009,11 +1009,7 @@ async proceedToPayment() {
         alert("Payment processing failed. Please check your network and console.");
     }
 }
-    // ... (rest of the component)
-
-    // ==========================================
-    // UTILITY
-    // ==========================================
+    
     getLocalBodyTypeLabel(type: 'P' | 'M' | 'C'): string {
         switch (type) {
             case 'P':
