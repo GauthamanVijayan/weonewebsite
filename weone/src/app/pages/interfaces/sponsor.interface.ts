@@ -30,19 +30,29 @@ export interface Ward {
   districtName: string;
   zoneName: string;
 }
-
 export interface CartItem {
-  ward: Ward;
-  executivesSponsored: number;
-  monthlyRate: number;
-  costPerMonth: number;
-  startDate: Date;
-  endDate: Date;
-
-   isBulk?: boolean;
+    ward: Ward;
+    executivesSponsored: number;
+    monthlyRate: number;
+    costPerMonth: number;
+    startDate: Date;
+    endDate: Date;
+    
+    // Bulk properties
+    isBulk?: boolean;
     bulkLevel?: 'state' | 'zone' | 'district' | 'subdistrict' | 'type' | 'localbody';
     bulkIdentifier?: string;
     bulkWardCount?: number;
+    
+    // NEW: Hierarchy tracking for conflict detection
+    hierarchyData?: {
+        state?: string;
+        zone?: string;
+        district?: string;
+        subdistrict?: string;
+        localBodyType?: string;
+        localBodyName?: string;
+    };
 }
 
 export interface SponsorType {

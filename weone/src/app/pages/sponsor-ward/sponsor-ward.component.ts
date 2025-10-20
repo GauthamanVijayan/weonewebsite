@@ -47,7 +47,7 @@ import { ToastModule } from 'primeng/toast';
         DatePicker,
         ToastModule
     ],
-      providers: [MessageService],
+    providers: [MessageService],
     templateUrl: './sponsor-ward.component.html',
     styleUrl: './sponsor-ward.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush
@@ -135,7 +135,13 @@ export class SponsorWardComponent {
 
     stateSummary = signal<any>(null);
     bulkSponsorshipData = signal<{
-        level: 'state' | 'zone' | 'district' |'type' |'subdistrict' | 'localbody';
+        level:
+            | 'state'
+            | 'zone'
+            | 'district'
+            | 'type'
+            | 'subdistrict'
+            | 'localbody';
         identifier: string;
         wardCount: number;
         estimatedCost: number;
@@ -164,66 +170,77 @@ export class SponsorWardComponent {
         minDate.setMonth(minDate.getMonth() + 1);
         return minDate;
     });
-        selectedState = signal<boolean>(false);
+    selectedState = signal<boolean>(false);
 
     // NEW: Computed to check if "Select All" was used
-    bulkSelectionLevel = signal<'state' | 'zone' | 'district' | 'subdistrict' | 'type'|'localbody' | null>(null);
-stateOrZoneSelected = computed(() => {
-    return this.bulkSelectionLevel() === 'state' || this.bulkSelectionLevel() === 'zone';
-});
+    bulkSelectionLevel = signal<
+        | 'state'
+        | 'zone'
+        | 'district'
+        | 'subdistrict'
+        | 'type'
+        | 'localbody'
+        | null
+    >(null);
+    stateOrZoneSelected = computed(() => {
+        return (
+            this.bulkSelectionLevel() === 'state' ||
+            this.bulkSelectionLevel() === 'zone'
+        );
+    });
 
-districtOrAboveSelected = computed(() => {
-    const level = this.bulkSelectionLevel();
-    return level === 'state' || level === 'zone' || level === 'district';
-});
+    districtOrAboveSelected = computed(() => {
+        const level = this.bulkSelectionLevel();
+        return level === 'state' || level === 'zone' || level === 'district';
+    });
 
     // NEW: Check if dropdowns should be disabled
     areDropdownsDisabled = computed(() => {
         return this.bulkSelectionLevel() !== null;
     });
-async selectAllWardsInState() {
-    const summary = await this.convex.client.query('wards:getStateSummary', {});
-    
-    this.bulkSelectionLevel.set('state');
-    this.bulkSponsorshipData.set({
-        level: 'state',
-        identifier: 'Kerala',
-        wardCount: summary.totalWards,
-        estimatedCost: summary.estimatedCost
+    async selectAllWardsInState() {
+        const summary = await this.convex.client.query(
+            'wards:getStateSummary',
+            {}
+        );
+
+        this.bulkSelectionLevel.set('state');
+        this.bulkSponsorshipData.set({
+            level: 'state',
+            identifier: 'Kerala',
+            wardCount: summary.totalWards,
+            estimatedCost: summary.estimatedCost
+        });
+
+        this.selectedWards.set([]);
+    }
+
+    filteredWards = computed(() => {
+        const allWards = this.wards();
+        const search = this.searchText().toLowerCase();
+        const localBody = this.selectedLocalBody();
+
+        let wardsToDisplay = allWards;
+
+        // If a specific local body is selected, filter by it
+        if (localBody) {
+            wardsToDisplay = wardsToDisplay.filter(
+                (ward) => ward.localBodyName === localBody.name
+            );
+        }
+
+        // Apply search filter
+        if (search) {
+            wardsToDisplay = wardsToDisplay.filter(
+                (ward) =>
+                    ward.wardName.toLowerCase().includes(search) ||
+                    ward.localBodyName.toLowerCase().includes(search)
+            );
+        }
+
+        return wardsToDisplay;
     });
-    
-    this.selectedWards.set([]);
-}
-
-
-filteredWards = computed(() => {
-    const allWards = this.wards();
-    const search = this.searchText().toLowerCase();
-    const localBody = this.selectedLocalBody();
-
-    let wardsToDisplay = allWards;
-
-    // If a specific local body is selected, filter by it
-    if (localBody) {
-        wardsToDisplay = wardsToDisplay.filter(
-            (ward) => ward.localBodyName === localBody.name
-        );
-    }
-
-    // Apply search filter
-    if (search) {
-        wardsToDisplay = wardsToDisplay.filter(
-            (ward) =>
-                ward.wardName.toLowerCase().includes(search) ||
-                ward.localBodyName.toLowerCase().includes(search)
-        );
-    }
-
-    return wardsToDisplay;
-});
-    constructor() {
-        
-    }
+    constructor() {}
     sponsorTypeOptions = signal<SponsorType[]>([
         { label: 'Individual', value: 'individual' },
         { label: 'Company', value: 'company' }
@@ -265,11 +282,11 @@ filteredWards = computed(() => {
                 return 1;
         }
     });
-selectAllByTypeLabel = computed(() => {
-    const type = this.selectedLocalBodyType();
-    if (type === 'All') return 'Select All by Type';
-    return `Select All ${this.getLocalBodyTypeLabel(type as any)}s`;
-});
+    selectAllByTypeLabel = computed(() => {
+        const type = this.selectedLocalBodyType();
+        if (type === 'All') return 'Select All by Type';
+        return `Select All ${this.getLocalBodyTypeLabel(type as any)}s`;
+    });
     // Helper to get max executives for any ward
     getMaxExecutives(localBodyType: 'P' | 'M' | 'C'): number {
         switch (localBodyType) {
@@ -284,60 +301,60 @@ selectAllByTypeLabel = computed(() => {
         }
     }
 
-onLocalBodyTypeChange() {
-    console.log('🔄 Type changed:', this.selectedLocalBodyType());
-    
-    this.selectedLocalBody.set(null);
-    this.convex.clearWards();
-    this.convex.localBodies.set([]);
+    onLocalBodyTypeChange() {
+        console.log('🔄 Type changed:', this.selectedLocalBodyType());
 
-    const subdistrict = this.selectedSubdistrict();
-    const type = this.selectedLocalBodyType();
+        this.selectedLocalBody.set(null);
+        this.convex.clearWards();
+        this.convex.localBodies.set([]);
 
-    if (!subdistrict) {
-        console.log('⚠️ No subdistrict selected');
-        return;
+        const subdistrict = this.selectedSubdistrict();
+        const type = this.selectedLocalBodyType();
+
+        if (!subdistrict) {
+            console.log('⚠️ No subdistrict selected');
+            return;
+        }
+
+        if (type !== 'All') {
+            // Load local bodies for the selected type
+            console.log('📥 Loading local bodies for type:', type);
+            this.convex.loadLocalBodies(subdistrict.name, type);
+
+            // Also load wards filtered by type
+            this.convex.loadWards({
+                subdistrict: subdistrict.name,
+                localBodyType: type,
+                searchText: this.searchText()
+            });
+        } else {
+            // Load all wards when type is 'All'
+            console.log('📥 Loading all wards');
+            this.convex.loadWards({
+                subdistrict: subdistrict.name,
+                localBodyType: 'All',
+                searchText: this.searchText()
+            });
+        }
     }
 
-    if (type !== 'All') {
-        // Load local bodies for the selected type
-        console.log('📥 Loading local bodies for type:', type);
-        this.convex.loadLocalBodies(subdistrict.name, type);
-        
-        // Also load wards filtered by type
-        this.convex.loadWards({
-            subdistrict: subdistrict.name,
-            localBodyType: type,
-            searchText: this.searchText()
-        });
-    } else {
-        // Load all wards when type is 'All'
-        console.log('📥 Loading all wards');
-        this.convex.loadWards({
-            subdistrict: subdistrict.name,
-            localBodyType: 'All',
-            searchText: this.searchText()
-        });
-    }
-}
+    onLocalBodyChange(event: { value: LocalBody | null }) {
+        console.log('🏛️ Local body changed:', event.value);
 
-onLocalBodyChange(event: { value: LocalBody | null }) {
-    console.log('🏛️ Local body changed:', event.value);
-    
-    this.convex.clearWards();
-    
-    const localBody = this.selectedLocalBody();
-    const subdistrict = this.selectedSubdistrict();
-    
-    if (localBody && subdistrict) {
-        // Load only wards for this specific local body
-        this.convex.loadWards({
-            subdistrict: subdistrict.name,
-            localBodyType: localBody.type,
-            searchText: this.searchText()
-        });
+        this.convex.clearWards();
+
+        const localBody = this.selectedLocalBody();
+        const subdistrict = this.selectedSubdistrict();
+
+        if (localBody && subdistrict) {
+            // Load only wards for this specific local body
+            this.convex.loadWards({
+                subdistrict: subdistrict.name,
+                localBodyType: localBody.type,
+                searchText: this.searchText()
+            });
+        }
     }
-}
     onSelectionChange() {
         // This logic ensures the bulk sponsored executives count does not exceed the limit
         const currentBulkCount = this.bulkSponsoredExecutivesCount();
@@ -384,18 +401,18 @@ onLocalBodyChange(event: { value: LocalBody | null }) {
     // ==========================================
     // SELECTION HANDLERS
     // ==========================================
-onZoneChange(event: { value: Zone | null }) {
-    this.selectedDistrict.set(null);
-    this.selectedSubdistrict.set(null);
-    this.selectedLocalBodyType.set('All');
-    this.selectedLocalBody.set(null);
-    
-    this.convex.clearDistricts();
-    
-    if (event.value) {
-        this.convex.loadDistrictsByZone(event.value.name);
+    onZoneChange(event: { value: Zone | null }) {
+        this.selectedDistrict.set(null);
+        this.selectedSubdistrict.set(null);
+        this.selectedLocalBodyType.set('All');
+        this.selectedLocalBody.set(null);
+
+        this.convex.clearDistricts();
+
+        if (event.value) {
+            this.convex.loadDistrictsByZone(event.value.name);
+        }
     }
-}
     selectAllWardsInLocalBody() {
         const selectedLocalBody = this.selectedLocalBody();
         if (!selectedLocalBody) return;
@@ -405,44 +422,44 @@ onZoneChange(event: { value: Zone | null }) {
         const wardsInLocalBody = this.filteredWards().filter(
             (ward) => ward.localBodyName === selectedLocalBody.name
         );
-        
+
         this.selectedWards.set(wardsInLocalBody);
         this.onSelectionChange();
     }
-       clearSelection() {
+    clearSelection() {
         this.selectedWards.set([]);
         this.bulkSelectionLevel.set(null);
     }
-onDistrictChange(event: { value: District | null }) {
-    this.selectedSubdistrict.set(null);
-    this.selectedLocalBodyType.set('All');
-    this.selectedLocalBody.set(null);
-    
-    this.convex.clearSubdistricts();
+    onDistrictChange(event: { value: District | null }) {
+        this.selectedSubdistrict.set(null);
+        this.selectedLocalBodyType.set('All');
+        this.selectedLocalBody.set(null);
 
-    if (event.value) {
-        this.convex.loadSubdistrictsByDistrict(event.value.name);
+        this.convex.clearSubdistricts();
+
+        if (event.value) {
+            this.convex.loadSubdistrictsByDistrict(event.value.name);
+        }
     }
-}
 
-onSubdistrictChange(event: { value: LocalBody | null }) {
-    this.selectedLocalBodyType.set('All');
-    this.selectedLocalBody.set(null);
-    
-    this.convex.clearWards();
-    this.convex.localBodies.set([]);
+    onSubdistrictChange(event: { value: LocalBody | null }) {
+        this.selectedLocalBodyType.set('All');
+        this.selectedLocalBody.set(null);
 
-    const subdistrict = this.selectedSubdistrict();
+        this.convex.clearWards();
+        this.convex.localBodies.set([]);
 
-    if (subdistrict) {
-        // Load all wards when subdistrict is selected (type defaults to 'All')
-        this.convex.loadWards({
-            subdistrict: subdistrict.name,
-            localBodyType: 'All',
-            searchText: this.searchText()
-        });
+        const subdistrict = this.selectedSubdistrict();
+
+        if (subdistrict) {
+            // Load all wards when subdistrict is selected (type defaults to 'All')
+            this.convex.loadWards({
+                subdistrict: subdistrict.name,
+                localBodyType: 'All',
+                searchText: this.searchText()
+            });
+        }
     }
-}
     // ==========================================
     // DIALOG HANDLERS
     // ==========================================
@@ -457,58 +474,75 @@ onSubdistrictChange(event: { value: LocalBody | null }) {
         this.isVolunteerDialogVisible.set(true);
         this.isVolunteerDialogVisible.set(true);
     }
-addToCart() {
-    const ward = this.selectedWardForSponsorship();
-    const count = this.sponsoredExecutivesCount();
-    const startDate = this.sponsorshipStartDate();
-    const endDate = this.sponsorshipEndDate();
+    addToCart() {
+        const ward = this.selectedWardForSponsorship();
+        const count = this.sponsoredExecutivesCount();
+        const startDate = this.sponsorshipStartDate();
+        const endDate = this.sponsorshipEndDate();
 
-    if (!ward || count < 1 || !startDate || !endDate) {
-        this.messageService.add({
-            severity: 'error',
-            summary: 'Missing Information',
-            detail: 'Please fill in all required fields',
-            life: 3000
-        });
-        return;
+        if (!ward || count < 1 || !startDate || !endDate) {
+            this.messageService.add({
+                severity: 'error',
+                summary: 'Missing Information',
+                detail: 'Please fill in all required fields',
+                life: 3000
+            });
+            return;
+        }
+
+        // Check conflict with bulk selections
+        const wardHierarchy = {
+            state: 'Kerala',
+            zone: ward.zoneName,
+            district: ward.districtName
+        };
+
+        const conflict = this.checkCartConflict(wardHierarchy, 'individual');
+        if (conflict.hasConflict) {
+            this.messageService.add({
+                severity: 'error',
+                summary: 'Cannot Add Ward',
+                detail: conflict.conflictMessage,
+                life: 5000
+            });
+            return;
+        }
+
+        // Check if already in cart
+        const existingIndex = this.cartItems().findIndex(
+            (item) => !item.isBulk && item.ward._id === ward._id
+        );
+
+        const newItem: CartItem = {
+            ward,
+            executivesSponsored: count,
+            monthlyRate: 15000,
+            costPerMonth: count * 15000,
+            startDate,
+            endDate
+        };
+
+        const action = this.upsertCartItem(newItem);
+
+        if (existingIndex > -1) {
+            this.messageService.add({
+                severity: 'warn',
+                summary: 'Already in Cart',
+                detail: `${ward.wardName} was already in cart. Updated details.`,
+                life: 4000
+            });
+        } else {
+            this.messageService.add({
+                severity: 'success',
+                summary: 'Added to Cart',
+                detail: `${ward.wardName} added successfully`,
+                life: 3000
+            });
+        }
+
+        this.isVolunteerDialogVisible.set(false);
     }
 
-    // Check if already in cart
-    const existingIndex = this.cartItems().findIndex(
-        item => !item.isBulk && item.ward._id === ward._id
-    );
-
-    const newItem: CartItem = {
-        ward,
-        executivesSponsored: count,
-        monthlyRate: 15000,
-        costPerMonth: count * 15000,
-        startDate,
-        endDate
-    };
-    
-    const action = this.upsertCartItem(newItem);
-    
-    if (existingIndex > -1) {
-        // Ward was already in cart
-        this.messageService.add({
-            severity: 'warn',
-            summary: 'Already in Cart',
-            detail: `${ward.wardName} was already in cart. Updated details.`,
-            life: 4000
-        });
-    } else {
-        // New ward added
-        this.messageService.add({
-            severity: 'success',
-            summary: 'Added to Cart',
-            detail: `${ward.wardName} added successfully`,
-            life: 3000
-        });
-    }
-
-    this.isVolunteerDialogVisible.set(false);
-}
     openBulkSponsorDialog() {
         // Set default dates
         const startDate = new Date();
@@ -520,45 +554,48 @@ addToCart() {
         this.isBulkSponsorDialogVisible.set(true);
     }
 
-async selectAllWardsInZone() {
-    const selectedZone = this.selectedZone();
-    if (!selectedZone) return;
+    async selectAllWardsInZone() {
+        const selectedZone = this.selectedZone();
+        if (!selectedZone) return;
 
-    const summary = await this.convex.client.query('wards:getZoneSummary', {
-        zone: selectedZone.name
-    });
+        const summary = await this.convex.client.query('wards:getZoneSummary', {
+            zone: selectedZone.name
+        });
 
-    this.bulkSelectionLevel.set('zone');
-    this.bulkSponsorshipData.set({
-        level: 'zone',
-        identifier: selectedZone.name,
-        wardCount: summary.totalWards,
-        estimatedCost: summary.estimatedCost
-    });
-    
-    this.selectedWards.set([]);
-}
+        this.bulkSelectionLevel.set('zone');
+        this.bulkSponsorshipData.set({
+            level: 'zone',
+            identifier: selectedZone.name,
+            wardCount: summary.totalWards,
+            estimatedCost: summary.estimatedCost
+        });
 
-async selectAllWardsInDistrict() {
-    const selectedDistrict = this.selectedDistrict();
-    if (!selectedDistrict) return;
+        this.selectedWards.set([]);
+    }
 
-    const summary = await this.convex.client.query('wards:getDistrictSummary', {
-        district: selectedDistrict.name
-    });
+    async selectAllWardsInDistrict() {
+        const selectedDistrict = this.selectedDistrict();
+        if (!selectedDistrict) return;
 
-    this.bulkSelectionLevel.set('district');
-    this.bulkSponsorshipData.set({
-        level: 'district',
-        identifier: selectedDistrict.name,
-        wardCount: summary.totalWards,
-        estimatedCost: summary.estimatedCost
-    });
-    
-    this.selectedWards.set([]);
-}
+        const summary = await this.convex.client.query(
+            'wards:getDistrictSummary',
+            {
+                district: selectedDistrict.name
+            }
+        );
 
-        displayedWardCount = computed(() => {
+        this.bulkSelectionLevel.set('district');
+        this.bulkSponsorshipData.set({
+            level: 'district',
+            identifier: selectedDistrict.name,
+            wardCount: summary.totalWards,
+            estimatedCost: summary.estimatedCost
+        });
+
+        this.selectedWards.set([]);
+    }
+
+    displayedWardCount = computed(() => {
         const bulkData = this.bulkSponsorshipData();
         if (bulkData) {
             return bulkData.wardCount;
@@ -566,258 +603,294 @@ async selectAllWardsInDistrict() {
         return this.selectedWards().length;
     });
 
-displayedEstimatedCost = computed(() => {
-    const bulkData = this.bulkSponsorshipData();
-    if (bulkData) {
-        return bulkData.estimatedCost * this.bulkSponsoredExecutivesCount();
-    }
-    return this.bulkSelectionCost();
-});
-
-estimatedCostDescription = computed(() => {
-    const level = this.bulkSelectionLevel();
-    const execCount = this.bulkSponsoredExecutivesCount();
-    
-    if (level) {
-        return `Based on ${execCount} executive${execCount > 1 ? 's' : ''} per ward (₹15,000/executive/month). Actual cost varies: Panchayat=1, Municipality=3, Corporation=5 executives.`;
-    }
-    return '';
-});
-async selectAllWardsInSubdistrict() {
-    const selectedSubdistrict = this.selectedSubdistrict();
-    if (!selectedSubdistrict) return;
-
-    this.bulkSelectionLevel.set('subdistrict');
-    
-    // Can load actual wards (under 8K limit)
-    this.selectedWards.set(this.filteredWards());
-    this.onSelectionChange();
-}
-
-async selectAllWardsByType() {
-    const selectedSubdistrict = this.selectedSubdistrict();
-    const selectedType = this.selectedLocalBodyType();
-    
-    if (!selectedSubdistrict || selectedType === 'All') return;
-
-    const summary = await this.convex.client.query('wards:getWardsSummaryBySubdistrictAndType', {
-        subdistrict: selectedSubdistrict.name,
-        localBodyType: selectedType
+    displayedEstimatedCost = computed(() => {
+        const bulkData = this.bulkSponsorshipData();
+        if (bulkData) {
+            return bulkData.estimatedCost * this.bulkSponsoredExecutivesCount();
+        }
+        return this.bulkSelectionCost();
     });
 
-    this.bulkSelectionLevel.set('type');
-    this.bulkSponsorshipData.set({
-        level: 'type',
-        identifier: `${selectedSubdistrict.name} - ${this.getLocalBodyTypeLabel(selectedType as any)}`,
-        wardCount: summary.totalWards,
-        estimatedCost: summary.estimatedCost
+    estimatedCostDescription = computed(() => {
+        const level = this.bulkSelectionLevel();
+        const execCount = this.bulkSponsoredExecutivesCount();
+
+        if (level) {
+            return `Based on ${execCount} executive${execCount > 1 ? 's' : ''} per ward (₹15,000/executive/month). Actual cost varies: Panchayat=1, Municipality=3, Corporation=5 executives.`;
+        }
+        return '';
     });
-    
-    this.selectedWards.set([]);
-}
+    async selectAllWardsInSubdistrict() {
+        const selectedSubdistrict = this.selectedSubdistrict();
+        if (!selectedSubdistrict) return;
 
-clearStateSelection() {
-    if (this.bulkSelectionLevel() === 'state') {
-        this.clearSelection();
-    }
-}
+        this.bulkSelectionLevel.set('subdistrict');
 
-clearZoneSelection() {
-    if (this.bulkSelectionLevel() === 'zone') {
-        this.clearSelection();
-    }
-}
-
-clearDistrictSelection() {
-    if (this.bulkSelectionLevel() === 'district') {
-        this.clearSelection();
-    }
-}
-
-clearSubdistrictSelection() {
-    if (this.bulkSelectionLevel() === 'subdistrict') {
-        this.clearSelection();
-    }
-}
-
-clearTypeSelection() {
-    if (this.bulkSelectionLevel() === 'type') {
-        this.clearSelection();
-    }
-}
-
-clearLocalBodySelection() {
-    if (this.bulkSelectionLevel() === 'localbody') {
-        this.clearSelection();
-    }
-}
-
-
-addSelectedWardsToCart() {
-    const bulkData = this.bulkSponsorshipData();
-    const count = this.bulkSponsoredExecutivesCount();
-    const startDate = this.bulkSponsorshipStartDate();
-    const endDate = this.bulkSponsorshipEndDate();
-
-    if (!startDate || !endDate || count < 1) {
-        this.messageService.add({
-            severity: 'error',
-            summary: 'Missing Information',
-            detail: 'Please fill in all required fields',
-            life: 3000
-        });
-        return;
+        // Can load actual wards (under 8K limit)
+        this.selectedWards.set(this.filteredWards());
+        this.onSelectionChange();
     }
 
-    if (bulkData) {
-        console.log('📦 Adding bulk selection to cart:', bulkData);
-        
-        // CHECK FOR DUPLICATES
-        const existingBulkIndex = this.cartItems().findIndex(
-            item => item.isBulk && 
-                    item.bulkLevel === bulkData.level && 
-                    item.bulkIdentifier === bulkData.identifier
+    async selectAllWardsByType() {
+        const selectedSubdistrict = this.selectedSubdistrict();
+        const selectedType = this.selectedLocalBodyType();
+
+        if (!selectedSubdistrict || selectedType === 'All') return;
+
+        const summary = await this.convex.client.query(
+            'wards:getWardsSummaryBySubdistrictAndType',
+            {
+                subdistrict: selectedSubdistrict.name,
+                localBodyType: selectedType
+            }
         );
 
-        if (existingBulkIndex > -1) {
-            // DUPLICATE FOUND - Show warning and ask if they want to update
-            this.messageService.add({
-                severity: 'warn',
-                summary: 'Already in Cart',
-                detail: `${bulkData.identifier} is already in your cart. Do you want to update it?`,
-                life: 5000,
-                sticky: false
-            });
+        this.bulkSelectionLevel.set('type');
+        this.bulkSponsorshipData.set({
+            level: 'type',
+            identifier: `${selectedSubdistrict.name} - ${this.getLocalBodyTypeLabel(selectedType as any)}`,
+            wardCount: summary.totalWards,
+            estimatedCost: summary.estimatedCost
+        });
 
-            // UPDATE existing bulk item
-            this.cartItems.update(items => {
-                const updatedItems = [...items];
-                updatedItems[existingBulkIndex] = {
-                    ...updatedItems[existingBulkIndex],
-                    executivesSponsored: count,
-                    costPerMonth: bulkData.estimatedCost * count,
-                    startDate,
-                    endDate
-                };
-                return updatedItems;
-            });
+        this.selectedWards.set([]);
+    }
 
-            // Show success message after update
-            setTimeout(() => {
-                this.messageService.add({
-                    severity: 'success',
-                    summary: 'Updated',
-                    detail: `Updated sponsorship details for ${bulkData.identifier}`,
-                    life: 3000
-                });
-            }, 500);
-
-        } else {
-            // ADD new bulk item
-            const bulkKey = `${bulkData.level}-${bulkData.identifier}`;
-            const bulkCartItem: CartItem = {
-                isBulk: true,
-                bulkLevel: bulkData.level,
-                bulkIdentifier: bulkData.identifier,
-                bulkWardCount: bulkData.wardCount,
-                executivesSponsored: count,
-                monthlyRate: 15000,
-                costPerMonth: bulkData.estimatedCost * count,
-                startDate,
-                endDate,
-                ward: {
-                    _id: bulkKey,
-                    wardName: `All Wards in ${bulkData.identifier}`,
-                    localBodyId: bulkKey,
-                    localBodyName: `${bulkData.wardCount} wards`,
-                    localBodyType: 'P',
-                    type: 'Rural',
-                    districtName: '',
-                    zoneName: ''
-                }
-            };
-
-            this.cartItems.update(items => [...items, bulkCartItem]);
-            
-            this.messageService.add({
-                severity: 'success',
-                summary: 'Added to Cart',
-                detail: `${bulkData.wardCount} wards in ${bulkData.identifier} added successfully`,
-                life: 3000
-            });
+    clearStateSelection() {
+        if (this.bulkSelectionLevel() === 'state') {
+            this.clearSelection();
         }
-    } else {
-        // INDIVIDUAL WARDS
-        const wards = this.selectedWards();
-        if (wards.length === 0) {
+    }
+
+    clearZoneSelection() {
+        if (this.bulkSelectionLevel() === 'zone') {
+            this.clearSelection();
+        }
+    }
+
+    clearDistrictSelection() {
+        if (this.bulkSelectionLevel() === 'district') {
+            this.clearSelection();
+        }
+    }
+
+    clearSubdistrictSelection() {
+        if (this.bulkSelectionLevel() === 'subdistrict') {
+            this.clearSelection();
+        }
+    }
+
+    clearTypeSelection() {
+        if (this.bulkSelectionLevel() === 'type') {
+            this.clearSelection();
+        }
+    }
+
+    clearLocalBodySelection() {
+        if (this.bulkSelectionLevel() === 'localbody') {
+            this.clearSelection();
+        }
+    }
+
+    addSelectedWardsToCart() {
+        const bulkData = this.bulkSponsorshipData();
+        const count = this.bulkSponsoredExecutivesCount();
+        const startDate = this.bulkSponsorshipStartDate();
+        const endDate = this.bulkSponsorshipEndDate();
+
+        if (!startDate || !endDate || count < 1) {
             this.messageService.add({
-                severity: 'warn',
-                summary: 'No Selection',
-                detail: 'Please select wards to add to cart',
+                severity: 'error',
+                summary: 'Missing Information',
+                detail: 'Please fill in all required fields',
                 life: 3000
             });
             return;
         }
 
-        let addedCount = 0;
-        let updatedCount = 0;
-        let alreadyInCartCount = 0;
+        if (bulkData) {
+            console.log('📦 Adding bulk selection to cart:', bulkData);
 
-        wards.forEach((ward) => {
-            // Check if already in cart
-            const existingIndex = this.cartItems().findIndex(
-                item => !item.isBulk && item.ward._id === ward._id
+            // BUILD HIERARCHY DATA
+            const hierarchyData = this.buildHierarchyData(bulkData.level);
+
+            // CHECK FOR CONFLICTS
+            const conflict = this.checkCartConflict(
+                hierarchyData,
+                bulkData.level
             );
 
-            if (existingIndex > -1) {
-                alreadyInCartCount++;
+            if (conflict.hasConflict) {
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Conflict Detected',
+                    detail: conflict.conflictMessage,
+                    life: 5000,
+                    sticky: false
+                });
+                return; // BLOCK the addition
             }
 
-            const newItem: CartItem = {
-                ward,
-                executivesSponsored: count,
-                monthlyRate: 15000,
-                costPerMonth: count * 15000,
-                startDate,
-                endDate
-            };
-            const action = this.upsertCartItem(newItem);
+            // Check for exact duplicate
+            const bulkKey = `${bulkData.level}-${bulkData.identifier}`;
+            const existingBulkIndex = this.cartItems().findIndex(
+                (item) =>
+                    item.isBulk &&
+                    item.bulkLevel === bulkData.level &&
+                    item.bulkIdentifier === bulkData.identifier
+            );
 
-            if (action === 'added') {
-                addedCount++;
+            if (existingBulkIndex > -1) {
+                // UPDATE existing item
+                this.messageService.add({
+                    severity: 'warn',
+                    summary: 'Already in Cart',
+                    detail: `${bulkData.identifier} is already in cart. Updating details...`,
+                    life: 4000
+                });
+
+                this.cartItems.update((items) => {
+                    const updatedItems = [...items];
+                    updatedItems[existingBulkIndex] = {
+                        ...updatedItems[existingBulkIndex],
+                        executivesSponsored: count,
+                        costPerMonth: bulkData.estimatedCost * count,
+                        startDate,
+                        endDate,
+                        hierarchyData // Update hierarchy too
+                    };
+                    return updatedItems;
+                });
+
+                setTimeout(() => {
+                    this.messageService.add({
+                        severity: 'success',
+                        summary: 'Updated',
+                        detail: `Updated sponsorship details for ${bulkData.identifier}`,
+                        life: 3000
+                    });
+                }, 500);
             } else {
-                updatedCount++;
+                // ADD new bulk item
+                const bulkCartItem: CartItem = {
+                    isBulk: true,
+                    bulkLevel: bulkData.level,
+                    bulkIdentifier: bulkData.identifier,
+                    bulkWardCount: bulkData.wardCount,
+                    executivesSponsored: count,
+                    monthlyRate: 15000,
+                    costPerMonth: bulkData.estimatedCost * count,
+                    startDate,
+                    endDate,
+                    hierarchyData, // INCLUDE HIERARCHY
+                    ward: {
+                        _id: bulkKey,
+                        wardName: `All Wards in ${bulkData.identifier}`,
+                        localBodyId: bulkKey,
+                        localBodyName: `${bulkData.wardCount} wards`,
+                        localBodyType: 'P',
+                        type: 'Rural',
+                        districtName: hierarchyData.district || '',
+                        zoneName: hierarchyData.zone || ''
+                    }
+                };
+
+                this.cartItems.update((items) => [...items, bulkCartItem]);
+
+                this.messageService.add({
+                    severity: 'success',
+                    summary: 'Added to Cart',
+                    detail: `${bulkData.wardCount} wards in ${bulkData.identifier} added successfully`,
+                    life: 3000
+                });
             }
-        });
+        } else {
+            // INDIVIDUAL WARDS - Check against bulk selections
+            const wards = this.selectedWards();
+            if (wards.length === 0) {
+                this.messageService.add({
+                    severity: 'warn',
+                    summary: 'No Selection',
+                    detail: 'Please select wards to add to cart',
+                    life: 3000
+                });
+                return;
+            }
 
-        // Show appropriate message
-        if (alreadyInCartCount > 0 && addedCount === 0) {
-            this.messageService.add({
-                severity: 'warn',
-                summary: 'Already in Cart',
-                detail: `${alreadyInCartCount} ward(s) already in cart. Updated details.`,
-                life: 4000
+            // Check if any individual ward conflicts with bulk selections
+            for (const ward of wards) {
+                const wardHierarchy = {
+                    state: 'Kerala',
+                    zone: ward.zoneName,
+                    district: ward.districtName
+                    // Note: We don't have subdistrict/localBody in Ward interface
+                    // You may need to add these fields to Ward interface
+                };
+
+                const conflict = this.checkCartConflict(
+                    wardHierarchy,
+                    'individual'
+                );
+                if (conflict.hasConflict) {
+                    this.messageService.add({
+                        severity: 'error',
+                        summary: 'Conflict Detected',
+                        detail: `${ward.wardName}: ${conflict.conflictMessage}`,
+                        life: 5000
+                    });
+                    return; // Block entire operation
+                }
+            }
+
+            // No conflicts, proceed with adding
+            let addedCount = 0;
+            let updatedCount = 0;
+
+            wards.forEach((ward) => {
+                const newItem: CartItem = {
+                    ward,
+                    executivesSponsored: count,
+                    monthlyRate: 15000,
+                    costPerMonth: count * 15000,
+                    startDate,
+                    endDate
+                };
+                const action = this.upsertCartItem(newItem);
+
+                if (action === 'added') {
+                    addedCount++;
+                } else {
+                    updatedCount++;
+                }
             });
-        } else if (addedCount > 0 && updatedCount > 0) {
-            this.messageService.add({
-                severity: 'success',
-                summary: 'Cart Updated',
-                detail: `${addedCount} added, ${updatedCount} already in cart (updated)`,
-                life: 3000
-            });
-        } else if (addedCount > 0) {
-            this.messageService.add({
-                severity: 'success',
-                summary: 'Added to Cart',
-                detail: `${addedCount} ward(s) added successfully`,
-                life: 3000
-            });
+
+            if (addedCount > 0 && updatedCount > 0) {
+                this.messageService.add({
+                    severity: 'success',
+                    summary: 'Cart Updated',
+                    detail: `${addedCount} added, ${updatedCount} updated`,
+                    life: 3000
+                });
+            } else if (addedCount > 0) {
+                this.messageService.add({
+                    severity: 'success',
+                    summary: 'Added to Cart',
+                    detail: `${addedCount} ward(s) added successfully`,
+                    life: 3000
+                });
+            } else if (updatedCount > 0) {
+                this.messageService.add({
+                    severity: 'warn',
+                    summary: 'Already in Cart',
+                    detail: `${updatedCount} ward(s) already in cart. Updated details.`,
+                    life: 4000
+                });
+            }
         }
-    }
 
-    this.isBulkSponsorDialogVisible.set(false);
-    this.clearSelection();
-}
+        this.isBulkSponsorDialogVisible.set(false);
+        this.clearSelection();
+    }
 
     private upsertCartItem(newItem: CartItem): 'added' | 'updated' {
         // 👈 Change return type
@@ -841,24 +914,24 @@ addSelectedWardsToCart() {
         });
         return action; // 👈 Return the action taken
     }
-removeFromCart(wardId: string) {
-    const item = this.cartItems().find(i => i.ward._id === wardId);
-    
-    this.cartItems.update((items) =>
-        items.filter((item) => item.ward._id !== wardId)
-    );
+    removeFromCart(wardId: string) {
+        const item = this.cartItems().find((i) => i.ward._id === wardId);
 
-    if (item) {
-        this.messageService.add({
-            severity: 'info',
-            summary: 'Removed',
-            detail: item.isBulk 
-                ? `Removed ${item.bulkWardCount} wards from ${item.bulkIdentifier}`
-                : `Removed ${item.ward.wardName}`,
-            life: 3000
-        });
+        this.cartItems.update((items) =>
+            items.filter((item) => item.ward._id !== wardId)
+        );
+
+        if (item) {
+            this.messageService.add({
+                severity: 'info',
+                summary: 'Removed',
+                detail: item.isBulk
+                    ? `Removed ${item.bulkWardCount} wards from ${item.bulkIdentifier}`
+                    : `Removed ${item.ward.wardName}`,
+                life: 3000
+            });
+        }
     }
-}
 
     // ==========================================
     // PAYMENT HANDLER
@@ -870,7 +943,7 @@ removeFromCart(wardId: string) {
         }
 
         const bulkData = this.bulkSponsorshipData();
-        
+
         const paymentData = {
             sponsor: {
                 type: this.sponsorType(),
@@ -878,14 +951,18 @@ removeFromCart(wardId: string) {
                 email: this.sponsorEmail()
             },
             sponsorshipType: bulkData ? 'bulk' : 'individual',
-            bulkSelection: bulkData ? {
-                level: bulkData.level,
-                identifier: bulkData.identifier,
-                wardCount: bulkData.wardCount,
-                executivesPerWard: this.bulkSponsoredExecutivesCount(),
-                totalCost: bulkData.estimatedCost * this.bulkSponsoredExecutivesCount()
-            } : null,
-            items: this.cartItems().map(item => ({
+            bulkSelection: bulkData
+                ? {
+                      level: bulkData.level,
+                      identifier: bulkData.identifier,
+                      wardCount: bulkData.wardCount,
+                      executivesPerWard: this.bulkSponsoredExecutivesCount(),
+                      totalCost:
+                          bulkData.estimatedCost *
+                          this.bulkSponsoredExecutivesCount()
+                  }
+                : null,
+            items: this.cartItems().map((item) => ({
                 wardId: item.ward._id,
                 wardName: item.ward.wardName,
                 localBody: item.ward.localBodyName,
@@ -906,9 +983,10 @@ removeFromCart(wardId: string) {
         };
 
         console.log('Processing payment:', paymentData);
-        alert(`Payment processing...\nTotal: ₹${this.total().toLocaleString()}\nWallet Bonus: ₹${this.walletBonus().toLocaleString()}`);
+        alert(
+            `Payment processing...\nTotal: ₹${this.total().toLocaleString()}\nWallet Bonus: ₹${this.walletBonus().toLocaleString()}`
+        );
     }
-
 
     // ... (rest of the component)
 
@@ -927,6 +1005,191 @@ removeFromCart(wardId: string) {
                 return '';
         }
     }
+    private checkCartConflict(
+        newHierarchy: any,
+        newLevel: string
+    ): {
+        hasConflict: boolean;
+        conflictMessage: string;
+        conflictingItem?: CartItem;
+    } {
+        const existingItems = this.cartItems();
 
- 
+        for (const item of existingItems) {
+            // Skip non-bulk items for hierarchy check
+            if (!item.isBulk) continue;
+
+            const existingHierarchy = item.hierarchyData;
+            if (!existingHierarchy) continue;
+
+            // STATE level conflict - blocks everything
+            if (item.bulkLevel === 'state') {
+                return {
+                    hasConflict: true,
+                    conflictMessage: `Cannot add ${newLevel} selection. Entire state (Kerala) is already in cart.`,
+                    conflictingItem: item
+                };
+            }
+
+            // NEW item is STATE - conflicts with anything
+            if (newLevel === 'state') {
+                return {
+                    hasConflict: true,
+                    conflictMessage: `Cannot add entire state. Cart already contains ${item.bulkLevel} level selection (${item.bulkIdentifier}).`,
+                    conflictingItem: item
+                };
+            }
+
+            // ZONE level conflicts
+            if (
+                item.bulkLevel === 'zone' &&
+                existingHierarchy.zone === newHierarchy.zone
+            ) {
+                return {
+                    hasConflict: true,
+                    conflictMessage: `Cannot add ${newLevel} selection. Zone "${existingHierarchy.zone}" is already in cart.`,
+                    conflictingItem: item
+                };
+            }
+
+            if (
+                newLevel === 'zone' &&
+                newHierarchy.zone === existingHierarchy.zone
+            ) {
+                return {
+                    hasConflict: true,
+                    conflictMessage: `Cannot add zone "${newHierarchy.zone}". Cart already contains ${item.bulkLevel} level selection from this zone.`,
+                    conflictingItem: item
+                };
+            }
+
+            // DISTRICT level conflicts
+            if (
+                item.bulkLevel === 'district' &&
+                existingHierarchy.district === newHierarchy.district
+            ) {
+                return {
+                    hasConflict: true,
+                    conflictMessage: `Cannot add ${newLevel} selection. District "${existingHierarchy.district}" is already in cart.`,
+                    conflictingItem: item
+                };
+            }
+
+            if (
+                newLevel === 'district' &&
+                newHierarchy.district === existingHierarchy.district
+            ) {
+                return {
+                    hasConflict: true,
+                    conflictMessage: `Cannot add district "${newHierarchy.district}". Cart already contains ${item.bulkLevel} level selection from this district.`,
+                    conflictingItem: item
+                };
+            }
+
+            // SUBDISTRICT level conflicts
+            if (
+                item.bulkLevel === 'subdistrict' &&
+                existingHierarchy.subdistrict === newHierarchy.subdistrict
+            ) {
+                return {
+                    hasConflict: true,
+                    conflictMessage: `Cannot add ${newLevel} selection. Subdistrict "${existingHierarchy.subdistrict}" is already in cart.`,
+                    conflictingItem: item
+                };
+            }
+
+            if (
+                newLevel === 'subdistrict' &&
+                newHierarchy.subdistrict === existingHierarchy.subdistrict
+            ) {
+                return {
+                    hasConflict: true,
+                    conflictMessage: `Cannot add subdistrict "${newHierarchy.subdistrict}". Cart already contains ${item.bulkLevel} level selection from this subdistrict.`,
+                    conflictingItem: item
+                };
+            }
+
+            // TYPE level conflicts (same subdistrict + same type)
+            if (
+                item.bulkLevel === 'type' &&
+                existingHierarchy.subdistrict === newHierarchy.subdistrict &&
+                existingHierarchy.localBodyType === newHierarchy.localBodyType
+            ) {
+                return {
+                    hasConflict: true,
+                    conflictMessage: `Cannot add ${newLevel} selection. ${this.getLocalBodyTypeLabel(existingHierarchy.localBodyType as any)}s in ${existingHierarchy.subdistrict} are already in cart.`,
+                    conflictingItem: item
+                };
+            }
+
+            // LOCAL BODY conflicts (exact match on subdistrict + type + name)
+            if (
+                item.bulkLevel === 'localbody' &&
+                existingHierarchy.subdistrict === newHierarchy.subdistrict &&
+                existingHierarchy.localBodyType ===
+                    newHierarchy.localBodyType &&
+                existingHierarchy.localBodyName === newHierarchy.localBodyName
+            ) {
+                return {
+                    hasConflict: true,
+                    conflictMessage: `Cannot add. Local body "${existingHierarchy.localBodyName}" in ${existingHierarchy.subdistrict} is already in cart.`,
+                    conflictingItem: item
+                };
+            }
+        }
+
+        return { hasConflict: false, conflictMessage: '' };
+    }
+    private buildHierarchyData(level: string): any {
+        const hierarchy: any = {
+            state: 'Kerala' // Always Kerala for this app
+        };
+
+        if (level === 'state') {
+            return hierarchy;
+        }
+
+        const zone = this.selectedZone();
+        if (zone) {
+            hierarchy.zone = zone.name;
+        }
+
+        if (level === 'zone') {
+            return hierarchy;
+        }
+
+        const district = this.selectedDistrict();
+        if (district) {
+            hierarchy.district = district.name;
+        }
+
+        if (level === 'district') {
+            return hierarchy;
+        }
+
+        const subdistrict = this.selectedSubdistrict();
+        if (subdistrict) {
+            hierarchy.subdistrict = subdistrict.name;
+        }
+
+        if (level === 'subdistrict') {
+            return hierarchy;
+        }
+
+        const type = this.selectedLocalBodyType();
+        if (type && type !== 'All') {
+            hierarchy.localBodyType = type;
+        }
+
+        if (level === 'type') {
+            return hierarchy;
+        }
+
+        const localBody = this.selectedLocalBody();
+        if (localBody) {
+            hierarchy.localBodyName = localBody.name;
+        }
+
+        return hierarchy;
+    }
 }
