@@ -28,6 +28,8 @@ import { ScrollAnimateDirective } from '../shared/scroll-animate.directive';
 import { DialogModule } from 'primeng/dialog';
 import { MessageService } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
+import { Router } from '@angular/router';
+import { environment } from 'src/environments/environment';
 
 @Component({
     selector: 'app-sponsor-ward',
@@ -57,6 +59,7 @@ export class SponsorWardComponent {
     private messageService = inject(MessageService);
     convex = inject(ConvexService);
     private readonly RATE_PER_EXECUTIVE = 15000;
+    private router=inject(Router)
     // ==========================================
     // SIGNALS - Selection State
     // ==========================================
@@ -936,58 +939,76 @@ export class SponsorWardComponent {
     // ==========================================
     // PAYMENT HANDLER
     // ==========================================
-    proceedToPayment() {
-        if (!this.isFormValid()) {
-            alert('Please fill in all required fields');
-            return;
+async proceedToPayment() {
+    if (!this.isFormValid()) {
+        alert("Please ensure your name, email, and cart are filled out.");
+        return;
+    }
+    
+    // 1. Prepare Data
+    const totalAmountPaise = this.total() * 100; // Total cost in Rupees, converted to PAISA (critical)
+    const sponsorInfo = { name: this.sponsorName(), email: this.sponsorEmail() };
+    
+    try {
+        // 2. Create Pending Sponsorship Record in Convex (Mutation)
+        // Note: You must ensure this method exists and returns the sponsorshipId
+        const sponsorshipId = await (this.convex as any).createSponsorship({
+            sponsorName: sponsorInfo.name,
+            sponsorEmail: sponsorInfo.email,
+            totalAmount: this.total(), // Store total amount in Rupees
+            cart: this.cartItems(),
+            sponsorshipDurationMonths: this.sponsorshipMonths() 
+        });
+
+        // 3. Get the Razorpay Order ID (Convex Action)
+        const { orderId } = await (this.convex as any).createRazorpayOrder({
+            sponsorshipId, 
+            amount: totalAmountPaise, 
+            sponsorName: sponsorInfo.name, 
+            sponsorEmail: sponsorInfo.email
+        });
+
+        // 4. Load the Razorpay Checkout Script (if not already loaded)
+        await loadRazorpayScript();
+        
+        if (!(window as any).Razorpay) {
+            throw new Error("Payment gateway failed to load.");
         }
-
-        const bulkData = this.bulkSponsorshipData();
-
-        const paymentData = {
-            sponsor: {
-                type: this.sponsorType(),
-                name: this.sponsorName(),
-                email: this.sponsorEmail()
+        
+        // 5. Configure and Open the Razorpay Modal
+        const options = {
+            key: environment.RAZORPAY_KEY_ID, // Public Key ID from environment
+            amount: totalAmountPaise,         // Amount in PAISA
+            currency: "INR",
+            name: "WeOne Digital Sponsorship",
+            description: `Sponsorship for ${this.cartItems().length} Ward(s)`,
+            order_id: orderId, // The Order ID from the Convex Action
+            
+            // 6. Handle Success Callback
+            handler: async (response: any) => {
+                // Call the secure Convex Action to verify payment and process the sponsorship
+                await (this.convex as any).processPaymentSuccess({
+                    sponsorshipId: sponsorshipId, 
+                    paymentId: response.razorpay_payment_id, 
+                    orderId: response.razorpay_order_id, 
+                    signature: response.razorpay_signature,
+                });
+                
+                // Final success: Redirect user
+                this.router.navigate(['/thank-you']); 
             },
-            sponsorshipType: bulkData ? 'bulk' : 'individual',
-            bulkSelection: bulkData
-                ? {
-                      level: bulkData.level,
-                      identifier: bulkData.identifier,
-                      wardCount: bulkData.wardCount,
-                      executivesPerWard: this.bulkSponsoredExecutivesCount(),
-                      totalCost:
-                          bulkData.estimatedCost *
-                          this.bulkSponsoredExecutivesCount()
-                  }
-                : null,
-            items: this.cartItems().map((item) => ({
-                wardId: item.ward._id,
-                wardName: item.ward.wardName,
-                localBody: item.ward.localBodyName,
-                localBodyType: item.ward.localBodyType,
-                district: item.ward.districtName,
-                zone: item.ward.zoneName,
-                executivesSponsored: item.executivesSponsored,
-                costPerMonth: item.costPerMonth,
-                sponsorshipStartDate: item.startDate.toISOString(),
-                sponsorshipEndDate: item.endDate.toISOString()
-            })),
-            summary: {
-                subtotal: this.subtotal(),
-                gst: this.gst(),
-                total: this.total(),
-                walletBonus: this.walletBonus()
-            }
+            prefill: sponsorInfo,
+            theme: { color: "#2AABEE" }
         };
 
-        console.log('Processing payment:', paymentData);
-        alert(
-            `Payment processing...\nTotal: ₹${this.total().toLocaleString()}\nWallet Bonus: ₹${this.walletBonus().toLocaleString()}`
-        );
-    }
+        const rzp = new (window as any).Razorpay(options);
+        rzp.open();
 
+    } catch (error) {
+        console.error("Payment Process Failed:", error);
+        alert("Payment processing failed. Please check your network and console.");
+    }
+}
     // ... (rest of the component)
 
     // ==========================================
@@ -1192,4 +1213,20 @@ export class SponsorWardComponent {
 
         return hierarchy;
     }
+
+    
+}
+
+function loadRazorpayScript(): Promise<void> {
+    const src = 'https://checkout.razorpay.com/v1/checkout.js';
+    return new Promise((resolve) => {
+        if (typeof (window as any).Razorpay !== 'undefined') {
+            return resolve();
+        }
+        const script = document.createElement('script');
+        script.src = src;
+        script.onload = () => resolve();
+       script.onerror = () => resolve();
+        document.head.appendChild(script);
+    });
 }

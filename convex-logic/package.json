@@ -14,6 +14,8 @@
     "@types/node": "^24.7.2",
     "bcryptjs": "^3.0.2",
     "convex": "^1.27.5",
-    "csv-parser": "^3.2.0"
+    "csv-parser": "^3.2.0",
+    "node-forge": "^1.3.1",
+    "razorpay": "^2.9.6"
   }
 }

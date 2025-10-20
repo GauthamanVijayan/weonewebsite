@@ -1,11 +1,17 @@
 // in backend/convex/sponsorships.ts
 
 // NOTE: Ensure your global file (or the necessary type file) exports QueryCtx, MutationCtx, Id, and the internal module export helpers.
-import { query, mutation, QueryCtx, MutationCtx } from "./_generated/server";
+import {
+  query,
+  mutation,
+  QueryCtx,
+  MutationCtx,
+  internalMutation,
+} from "./_generated/server";
 import { v } from "convex/values";
-import { api } from "./_generated/api";
+import { api ,internal} from "./_generated/api";
 import { Id } from "./_generated/dataModel";
-
+import { action, ActionCtx } from "./_generated/server";
 // --- Type Definitions for Strict Mode Fixes ---
 
 // Define the shape of a Cart Item used in the mutation args
@@ -64,7 +70,7 @@ export const createSponsorship = mutation({
 /**
  * Activates a sponsorship and "locks" the corresponding wards.
  */
-export const processSponsorship = mutation({
+export const _processSponsorshipInternal = internalMutation({
   args: { sponsorshipId: v.id("sponsorships") },
   handler: async (
     ctx: MutationCtx,
@@ -73,33 +79,19 @@ export const processSponsorship = mutation({
     const sponsorship = (await ctx.db.get(sponsorshipId)) as
       | (CreateSponsorshipArgs & { userId: string; cart: CartItem[] })
       | null;
-    if (!sponsorship) {
-      throw new Error("Sponsorship not found");
-    }
 
-    const now = Date.now(); // 🎯 FIX: Calculate endDate based on the new sponsorshipDurationMonths field
+    if (!sponsorship) {
+      throw new Error("Sponsorship Not Found");
+    }
+    const now = Date.now();
     const durationMs =
       sponsorship.sponsorshipDurationMonths * 30 * 24 * 60 * 60 * 1000;
-    const endDate = now + durationMs; // 1. Update the sponsorship record to "active"
+    const endDate = now + durationMs;
     await ctx.db.patch(sponsorshipId, {
       status: "active",
       startDate: now,
       endDate: endDate,
-    }); // 2. Lock each ward that was part of this sponsorship
-
-    // Check if the entire sponsorship was for a single ward (e.g., full month sponsorship)
-    const itemsToLock = sponsorship.singleSponsoredWardId
-      ? [{ ward: { _id: sponsorship.singleSponsoredWardId } }]
-      : sponsorship.cart;
-
-    for (const item of itemsToLock) {
-      const wardId = item.ward._id as Id<"wards">;
-      await ctx.db.patch(wardId, {
-        isSponsored: true,
-        sponsoredUntil: endDate,
-      });
-    }
-
+    });
     return { success: true };
   },
 });
@@ -169,5 +161,44 @@ export const getMySponsorships = query({
       .filter((q: any) => q.eq(q.field("status"), "active")) // Added 'q: any' for safety
       .order("desc") // Show the most recent sponsorships first
       .collect();
+  },
+});
+
+// backend/convex/sponsorships.ts (Add this function)
+
+// This function is called by the frontend after payment success.
+export const processPaymentSuccess = action({
+  args: {
+    sponsorshipId: v.id("sponsorships"),
+    paymentId: v.string(),
+    orderId: v.string(),
+    signature: v.string(), // CRITICAL for verification
+  }, // 🎯 FIX 1: Explicitly type the arguments and return type
+  handler: async (
+    ctx: ActionCtx,
+    args: {
+      sponsorshipId: Id<"sponsorships">;
+      paymentId: string;
+      orderId: string;
+      signature: string;
+    }
+  ): Promise<any> => {
+ 
+
+    // 🎯 FIX 2: Call the verification Action (must be created separately)
+  const isVerified = await ctx.runAction(internal.payment.verifyRazorpayPayment, {
+        orderId: args.orderId,
+        paymentId: args.paymentId,
+        signature: args.signature,
+      });
+
+    if (!isVerified) {
+      throw new Error("Payment verification failed due to signature mismatch.");
+    } // 3. Call the existing processSponsorship mutation to finalize the state
+
+ await ctx.runMutation(internal.sponsorships._processSponsorshipInternal, { 
+            sponsorshipId: args.sponsorshipId 
+        });
+   return { success: true };
   },
 });

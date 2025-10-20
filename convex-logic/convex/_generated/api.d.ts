@@ -16,6 +16,7 @@ import type {
 import type * as admin from "../admin.js";
 import type * as importWards from "../importWards.js";
 import type * as internal_users from "../internal/users.js";
+import type * as payment from "../payment.js";
 import type * as sponsorships from "../sponsorships.js";
 import type * as wards from "../wards.js";
 
@@ -31,6 +32,7 @@ declare const fullApi: ApiFromModules<{
   admin: typeof admin;
   importWards: typeof importWards;
   "internal/users": typeof internal_users;
+  payment: typeof payment;
   sponsorships: typeof sponsorships;
   wards: typeof wards;
 }>;
