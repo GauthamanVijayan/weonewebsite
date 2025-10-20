@@ -16,13 +16,16 @@ import { AuthService } from './auth.service';
     providedIn: 'root'
 })
 export class ConvexService {
-    private client = inject(ConvexClient); // Loading states
+    public client = inject(ConvexClient); // Loading states
     private authService = inject(AuthService);
 
     zonesLoading = signal(false);
     districtsLoading = signal(false);
     subdistrictsLoading = signal(false); // RENAMED for clarity
     wardsLoading = signal(false); // Data signals
+
+    public localBodies = signal<LocalBody[]>([]);
+    public localBodiesLoading = signal(false);
 
     zones = signal<Zone[]>([]);
     districts = signal<District[]>([]);
@@ -90,7 +93,6 @@ export class ConvexService {
         this.wardsLoading.set(true);
         this.clearWards();
         try {
-            // 🎯 FIX: Changed dot (.) to colon (:)
             const wards = await this.client.query('wards:getWards', filters);
             this.wards.set(wards);
         } catch (error) {
@@ -100,6 +102,7 @@ export class ConvexService {
             this.wardsLoading.set(false);
         }
     }
+
     private mapLocalBodyType(type: string): 'P' | 'M' | 'C' {
         const normalized = type.toLowerCase().trim();
         if (normalized.includes('panchay')) return 'P'; // Handles both "Panchayat" and "Panchayath"
@@ -107,6 +110,25 @@ export class ConvexService {
         if (normalized.includes('corp')) return 'C'; // Fallback
         return 'P';
     }
+
+async loadLocalBodies(subdistrict: string, localBodyType: string) {
+    console.log('🚀 SERVICE: Loading local bodies', { subdistrict, localBodyType });
+    this.localBodiesLoading.set(true);
+    this.localBodies.set([]);
+    try {
+        const localBodies = await this.client.query(
+            'wards:getLocalBodiesBySubdistrictAndType',
+            { subdistrict, localBodyType }
+        );
+        console.log('✅ SERVICE: Loaded local bodies:', localBodies);
+        this.localBodies.set(localBodies as LocalBody[]);
+    } catch (error) {
+        console.error('❌ SERVICE: Error loading local bodies:', error);
+        this.localBodies.set([]);
+    } finally {
+        this.localBodiesLoading.set(false);
+    }
+}
 
     clearDistricts() {
         this.districts.set([]);

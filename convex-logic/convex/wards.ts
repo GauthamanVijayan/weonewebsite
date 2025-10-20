@@ -298,3 +298,228 @@ export const getWards = query({
     });
   },
 });
+
+// backend/convex/wards.ts (Add this new query)
+
+export const getLocalBodiesBySubdistrictAndType = query({
+  args: { 
+    subdistrict: v.string(), 
+    localBodyType: v.string() // This will be 'P', 'M', or 'C'
+  },
+  handler: async (ctx: QueryCtx, { subdistrict, localBodyType }: { subdistrict: string, localBodyType: string }) => {
+    console.log('🔍 Querying local bodies:', { subdistrict, localBodyType });
+    
+    // Get all wards in this subdistrict first
+    const allWardsInSubdistrict = (await ctx.db
+      .query("wards")
+      .withIndex("by_subdistrict", (q: any) => q.eq("subdistrict", subdistrict))
+      .collect()) as WardDocument[];
+
+    console.log('📊 Total wards in subdistrict:', allWardsInSubdistrict.length);
+
+    // Filter by type (comparing first character)
+    const wardsOfType = allWardsInSubdistrict.filter((ward: WardDocument) => {
+      const firstChar = ward.localBodyType.charAt(0).toUpperCase();
+      const match = firstChar === localBodyType;
+      if (match) {
+        console.log('✅ Match found:', ward.localBodyName, ward.localBodyType);
+      }
+      return match;
+    });
+
+    console.log('📊 Wards matching type:', wardsOfType.length);
+
+    // Extract unique local body names
+    const uniqueLocalBodyNames = [...new Set(
+      wardsOfType.map((ward: WardDocument) => ward.localBodyName)
+    )];
+
+    console.log('🏛️ Unique local bodies:', uniqueLocalBodyNames);
+
+    return uniqueLocalBodyNames.map((name, index) => ({
+      _id: `lb-${subdistrict}-${localBodyType}-${index}`,
+      name: name,
+      type: localBodyType as 'P' | 'M' | 'C',
+      subdistrictId: subdistrict
+    }));
+  },
+});
+
+export const getAllWards = query({
+  args: {},
+  handler: async (ctx: QueryCtx) => {
+    const wards = (await ctx.db
+      .query("wards")
+      .filter((q: any) => q.neq(q.field("isSponsored"), true))
+      .collect()) as WardDocument[];
+
+    return wards.map((ward: WardDocument) => {
+      const typeCode = ward.localBodyType.charAt(0).toUpperCase() as "P" | "M" | "C";
+      return {
+        _id: ward._id.toString(),
+        wardName: ward.wardName,
+        localBodyId: ward.localBodyName,
+        localBodyName: ward.localBodyName,
+        localBodyType: typeCode,
+        type: (typeCode === "P" ? "Rural" : "Urban") as "Urban" | "Rural",
+        districtName: ward.district,
+        zoneName: ward.zone,
+      };
+    });
+  },
+});
+
+export const getWardsByZone = query({
+  args: { zone: v.string() },
+  handler: async (ctx: QueryCtx, { zone }: { zone: string }) => {
+    const wards = (await ctx.db
+      .query("wards")
+      .withIndex("by_zone", (q: any) => q.eq("zone", zone))
+      .filter((q: any) => q.neq(q.field("isSponsored"), true))
+      .collect()) as WardDocument[];
+
+    return wards.map((ward: WardDocument) => {
+      const typeCode = ward.localBodyType.charAt(0).toUpperCase() as "P" | "M" | "C";
+      return {
+        _id: ward._id.toString(),
+        wardName: ward.wardName,
+        localBodyId: ward.localBodyName,
+        localBodyName: ward.localBodyName,
+        localBodyType: typeCode,
+        type: (typeCode === "P" ? "Rural" : "Urban") as "Urban" | "Rural",
+        districtName: ward.district,
+        zoneName: ward.zone,
+      };
+    });
+  },
+});
+
+// Get all wards by district
+export const getWardsByDistrict = query({
+  args: { district: v.string() },
+  handler: async (ctx: QueryCtx, { district }: { district: string }) => {
+    const wards = (await ctx.db
+      .query("wards")
+      .withIndex("by_district", (q: any) => q.eq("district", district))
+      .filter((q: any) => q.neq(q.field("isSponsored"), true))
+      .collect()) as WardDocument[];
+
+    return wards.map((ward: WardDocument) => {
+      const typeCode = ward.localBodyType.charAt(0).toUpperCase() as "P" | "M" | "C";
+      return {
+        _id: ward._id.toString(),
+        wardName: ward.wardName,
+        localBodyId: ward.localBodyName,
+        localBodyName: ward.localBodyName,
+        localBodyType: typeCode,
+        type: (typeCode === "P" ? "Rural" : "Urban") as "Urban" | "Rural",
+        districtName: ward.district,
+        zoneName: ward.zone,
+      };
+    });
+  },
+});
+
+export const getStateSummary = query({
+  args: {},
+  handler: async (ctx: QueryCtx) => {
+    const allWards = (await ctx.db
+      .query("wards")
+      .filter((q: any) => q.neq(q.field("isSponsored"), true))
+      .collect()) as WardDocument[];
+
+    // Count by type
+    const panchayatCount = allWards.filter(w => w.localBodyType.charAt(0).toUpperCase() === 'P').length;
+    const municipalityCount = allWards.filter(w => w.localBodyType.charAt(0).toUpperCase() === 'M').length;
+    const corporationCount = allWards.filter(w => w.localBodyType.charAt(0).toUpperCase() === 'C').length;
+
+    return {
+      totalWards: allWards.length,
+      breakdown: {
+        panchayat: panchayatCount,
+        municipality: municipalityCount,
+        corporation: corporationCount
+      },
+      estimatedCost: allWards.length * 15000, // Per ward per month
+      zones: [...new Set(allWards.map(w => w.zone))],
+      districts: [...new Set(allWards.map(w => w.district))]
+    };
+  },
+});
+
+// Similar summaries for zone and district
+export const getZoneSummary = query({
+  args: { zone: v.string() },
+  handler: async (ctx: QueryCtx, { zone }: { zone: string }) => {
+    const wards = (await ctx.db
+      .query("wards")
+      .withIndex("by_zone", (q: any) => q.eq("zone", zone))
+      .filter((q: any) => q.neq(q.field("isSponsored"), true))
+      .collect()) as WardDocument[];
+
+    const panchayatCount = wards.filter(w => w.localBodyType.charAt(0).toUpperCase() === 'P').length;
+    const municipalityCount = wards.filter(w => w.localBodyType.charAt(0).toUpperCase() === 'M').length;
+    const corporationCount = wards.filter(w => w.localBodyType.charAt(0).toUpperCase() === 'C').length;
+
+    return {
+      zone,
+      totalWards: wards.length,
+      breakdown: {
+        panchayat: panchayatCount,
+        municipality: municipalityCount,
+        corporation: corporationCount
+      },
+      estimatedCost: wards.length * 15000
+    };
+  },
+});
+
+export const getDistrictSummary = query({
+  args: { district: v.string() },
+  handler: async (ctx: QueryCtx, { district }: { district: string }) => {
+    const wards = (await ctx.db
+      .query("wards")
+      .withIndex("by_district", (q: any) => q.eq("district", district))
+      .filter((q: any) => q.neq(q.field("isSponsored"), true))
+      .collect()) as WardDocument[];
+
+    const panchayatCount = wards.filter(w => w.localBodyType.charAt(0).toUpperCase() === 'P').length;
+    const municipalityCount = wards.filter(w => w.localBodyType.charAt(0).toUpperCase() === 'M').length;
+    const corporationCount = wards.filter(w => w.localBodyType.charAt(0).toUpperCase() === 'C').length;
+
+    return {
+      district,
+      totalWards: wards.length,
+      breakdown: {
+        panchayat: panchayatCount,
+        municipality: municipalityCount,
+        corporation: corporationCount
+      },
+      estimatedCost: wards.length * 15000
+    };
+  },
+});export const getWardsSummaryBySubdistrictAndType = query({
+  args: { 
+    subdistrict: v.string(), 
+    localBodyType: v.string() 
+  },
+  handler: async (ctx: QueryCtx, { subdistrict, localBodyType }: { subdistrict: string, localBodyType: string }) => {
+    const allWardsInSubdistrict = (await ctx.db
+      .query("wards")
+      .withIndex("by_subdistrict", (q: any) => q.eq("subdistrict", subdistrict))
+      .filter((q: any) => q.neq(q.field("isSponsored"), true))
+      .collect()) as WardDocument[];
+
+    const wardsOfType = allWardsInSubdistrict.filter((ward: WardDocument) => {
+      const firstChar = ward.localBodyType.charAt(0).toUpperCase();
+      return firstChar === localBodyType;
+    });
+
+    return {
+      subdistrict,
+      localBodyType,
+      totalWards: wardsOfType.length,
+      estimatedCost: wardsOfType.length * 15000
+    };
+  },
+});

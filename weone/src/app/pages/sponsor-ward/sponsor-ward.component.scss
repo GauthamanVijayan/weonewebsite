@@ -1,17 +1,16 @@
-/* ==========================================
-// Base & Host Styles
-// ========================================== */
-html, body {
-  overflow-x: hidden !important;
-  max-width: 100vw !important;
+/* ===================================================================
+// SPONSOR WARD - COMPONENT-SPECIFIC STYLES (REFACTORED & ISOLATED)
+// =================================================================== */
+
+/* --- 1. BASE & HOST STYLES (CRITICAL OVERFLOW FIXES) --- */
+/* Global host and body overflow is handled in styles.scss, but keeping
+   local host overflow for safety on this complex component. */
+:host {
+  display: block;
+  overflow-x: hidden;
 }
 
-:host,
-:host * {
-  box-sizing: border-box !important;
-}
-
-/* Ensure no element can cause horizontal scroll */
+/* Ensure no element can cause horizontal scroll - kept for safety */
 .weone-container,
 .weone-section,
 .weone-tool-layout,
@@ -23,28 +22,11 @@ html, body {
   max-width: 100% !important;
   overflow-x: hidden !important;
 }
-:host {
-  display: block;
-  overflow-x: hidden;
-}
 
 /* ==========================================
-// Animation System
+// Animation System (Moved to Global)
 // ========================================== */
-[appScrollAnimate] {
-  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
-
-  &:not(.weone-animate-visible) {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-
-  &.weone-animate-visible {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
+/* Keeping only component-specific keyframes */
 @keyframes pulse {
   0%,
   100% {
@@ -56,42 +38,25 @@ html, body {
 }
 
 /* ==========================================
-// Global Layout Containers
-// ========================================== */
-.weone-container,
-.weone-hero-container {
-  width: 100%;
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 2rem;
-  overflow-x: hidden;
-}
-
-/* ==========================================
-// Section Styling
+// Section Styling (Base container and padding relies on global)
 // ========================================== */
 .weone-section {
-  padding: 6rem 0;
+  padding: var(--space-24) 0; /* Using global variable */
 }
 
 .weone-section-header {
   text-align: center;
-  margin-bottom: 4rem;
+  margin-bottom: var(--space-16); /* Using global variable */
 }
 
 .weone-section-title {
-  font-family: 'Poppins', sans-serif;
+  /* Extends .weone-section-title-base globally */
   font-size: clamp(2rem, 4vw, 3rem);
-  font-weight: 700;
-  margin-bottom: 1rem;
-  background: var(--accent-gradient);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  margin-bottom: var(--space-4);
 }
 
 .weone-section-subtitle {
-  font-size: 1.125rem;
+  font-size: var(--font-lg);
   color: var(--text-secondary);
   max-width: 600px;
   margin: 0 auto;
@@ -108,7 +73,7 @@ html, body {
   background: var(--secondary-bg);
   position: relative;
   overflow: hidden;
-  padding: 120px 0 80px 0;
+  padding: 120px 0 80px 0; /* Specific padding retained */
 
   &::before {
     content: '';
@@ -137,16 +102,16 @@ html, body {
 .weone-hero-badge {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-2);
   background: var(--primary-bg);
   backdrop-filter: blur(10px);
   border: 1px solid var(--glass-border);
-  padding: 0.5rem 1.5rem;
+  padding: var(--space-2) var(--space-6);
   border-radius: 50px;
-  font-size: 0.875rem;
+  font-size: var(--font-sm);
   font-weight: 600;
   color: var(--trust-blue);
-  margin-bottom: 1.5rem;
+  margin-bottom: var(--space-6);
 }
 
 .weone-badge-dot {
@@ -158,22 +123,17 @@ html, body {
 }
 
 .weone-hero-title {
-  font-family: 'Poppins', sans-serif;
+  /* Extends .weone-section-title-base globally */
   font-size: clamp(2.5rem, 5vw, 4rem);
-  font-weight: 700;
   line-height: 1.1;
-  margin-bottom: 1.5rem;
-  background: var(--accent-gradient);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  margin-bottom: var(--space-6);
 }
 
 .weone-hero-subtitle {
-  font-size: 1.25rem;
+  font-size: var(--font-xl);
   color: var(--text-secondary);
   line-height: 1.6;
-  margin-bottom: 3rem;
+  margin-bottom: var(--space-12);
   max-width: 700px;
   margin-left: auto;
   margin-right: auto;
@@ -181,20 +141,20 @@ html, body {
 
 .weone-hero-stats {
   display: flex;
-  gap: 2rem;
+  gap: var(--space-8);
   justify-content: center;
   flex-wrap: wrap;
-  margin-top: 3rem;
+  margin-top: var(--space-12);
 }
 
 .weone-stat-item {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.5rem;
-  padding: 1.5rem;
+  gap: var(--space-2);
+  padding: var(--space-6);
   background: var(--primary-bg);
-  border-radius: 16px;
+  border-radius: var(--radius-xl);
   box-shadow: var(--shadow-md);
   border: 1px solid var(--glass-border);
   min-width: 180px;
@@ -202,13 +162,13 @@ html, body {
 
 .weone-stat-number {
   font-family: 'Poppins', sans-serif;
-  font-size: 1.875rem;
+  font-size: var(--font-3xl);
   font-weight: 700;
   color: var(--trust-blue);
 }
 
 .weone-stat-label {
-  font-size: 0.875rem;
+  font-size: var(--font-sm);
   color: var(--text-secondary);
   text-align: center;
 }
@@ -226,10 +186,10 @@ html, body {
 }
 
 .weone-intro-text {
-  font-size: 1.125rem;
+  font-size: var(--font-lg);
   color: var(--text-secondary);
   line-height: 1.8;
-  margin-bottom: 1.5rem;
+  margin-bottom: var(--space-6);
 
   strong {
     color: var(--text-primary);
@@ -244,18 +204,18 @@ html, body {
 .weone-benefits-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 2rem;
-  margin-top: 3rem;
+  gap: var(--space-8);
+  margin-top: var(--space-12);
 }
 
 .weone-benefit-card {
   background: var(--primary-bg);
-  padding: 2rem;
+  padding: var(--space-8);
   border-radius: 20px;
   box-shadow: var(--shadow-md);
   border: 1px solid var(--glass-border);
   text-align: center;
-  transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: var(--transition-spring); /* Using global variable */
 
   &:hover {
     transform: translateY(-8px);
@@ -264,10 +224,10 @@ html, body {
   }
 
   h3 {
-    font-size: 1.25rem;
+    font-size: var(--font-xl);
     font-weight: 600;
     color: var(--text-primary);
-    margin-bottom: 1rem;
+    margin-bottom: var(--space-4);
   }
 
   p {
@@ -284,13 +244,13 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0 auto 1.5rem;
+  margin: 0 auto var(--space-6);
   color: white;
-  font-size: 2rem;
+  font-size: var(--font-2xl);
   box-shadow: 0 4px 12px rgba(42, 171, 226, 0.3);
 
   i {
-    font-size: 2rem;
+    font-size: var(--font-2xl);
   }
 }
 
@@ -300,12 +260,12 @@ html, body {
 
 .weone-bonus-highlight {
   background: var(--primary-bg);
-  border-radius: 24px;
-  padding: 3rem;
+  border-radius: var(--radius-2xl);
+  padding: var(--space-12);
   box-shadow: var(--shadow-xl);
   display: grid;
   grid-template-columns: auto 1fr;
-  gap: 2rem;
+  gap: var(--space-8);
   align-items: center;
   border: 2px solid rgba(42, 171, 226, 0.2);
 }
@@ -326,17 +286,17 @@ html, body {
 
 .weone-bonus-content {
   h3 {
-    font-size: 1.5rem;
+    font-size: var(--font-2xl);
     font-weight: 700;
     color: var(--text-primary);
-    margin-bottom: 1rem;
+    margin-bottom: var(--space-4);
   }
 
   p {
-    font-size: 1.125rem;
+    font-size: var(--font-lg);
     color: var(--text-secondary);
     line-height: 1.6;
-    margin-bottom: 1.5rem;
+    margin-bottom: var(--space-6);
 
     strong {
       color: var(--trust-blue);
@@ -354,13 +314,13 @@ html, body {
   li {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: var(--space-2);
     color: var(--text-secondary);
-    font-size: 1rem;
+    font-size: var(--font-base);
 
     i {
       color: var(--trust-blue);
-      font-size: 1.25rem;
+      font-size: var(--font-xl);
     }
   }
 }
@@ -389,18 +349,18 @@ html, body {
 }
 
 .weone-section-header-small {
-  margin-bottom: 2rem;
+  margin-bottom: var(--space-8);
 
   h3 {
     font-family: 'Poppins', sans-serif;
-    font-size: 1.875rem;
+    font-size: var(--font-3xl);
     font-weight: 700;
     color: var(--text-primary);
-    margin-bottom: 0.5rem;
+    margin-bottom: var(--space-2);
   }
 
   p {
-    font-size: 1.125rem;
+    font-size: var(--font-lg);
     color: var(--text-secondary);
     line-height: 1.6;
   }
@@ -409,26 +369,26 @@ html, body {
 .weone-filter-section {
   background: var(--primary-bg);
   border-radius: 20px;
-  padding: 2rem;
+  padding: var(--space-8);
   box-shadow: var(--shadow-md);
   border: 1px solid var(--glass-border);
-  margin-bottom: 2rem;
+  margin-bottom: var(--space-8);
 }
 
 .weone-filter-controls {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1.5rem;
+  gap: var(--space-6);
 }
 
 .weone-filter-item {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: var(--space-2);
 
   label {
     font-weight: 600;
-    font-size: 0.875rem;
+    font-size: var(--font-sm);
     color: var(--text-primary);
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -438,7 +398,7 @@ html, body {
 .weone-table-wrapper {
   background: var(--primary-bg);
   border-radius: 20px;
-  padding: 1.5rem;
+  padding: var(--space-6);
   box-shadow: var(--shadow-md);
   border: 1px solid var(--glass-border);
   overflow-x: auto;
@@ -452,12 +412,12 @@ html, body {
 
   strong {
     color: var(--text-primary);
-    font-size: 1rem;
+    font-size: var(--font-base);
   }
 
   small {
     color: var(--text-muted);
-    font-size: 0.75rem;
+    font-size: var(--font-xs);
   }
 }
 
@@ -465,7 +425,7 @@ html, body {
   display: inline-flex;
   padding: 0.25rem 0.75rem;
   border-radius: 50px;
-  font-size: 0.75rem;
+  font-size: var(--font-xs);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -488,41 +448,48 @@ html, body {
 
   i {
     font-size: 3rem;
-    margin-bottom: 1rem;
+    margin-bottom: var(--space-4);
     opacity: 0.5;
   }
 
   p {
-    font-size: 1.125rem;
+    font-size: var(--font-lg);
+    font-weight: 600;
+    margin-bottom: var(--space-2);
+  }
+
+  small {
+    font-size: var(--font-sm);
   }
 }
 
+/* Sidebar structure relies on global fix for position: sticky breaking on mobile */
 .weone-tool-sidebar {
   position: sticky;
   top: 100px;
   display: flex;
   flex-direction: column;
   z-index: 1;
-  gap: 2rem;
+  gap: var(--space-8);
 }
 
 .weone-sidebar-card {
   background: var(--primary-bg);
   border-radius: 20px;
-  padding: 2rem;
+  padding: var(--space-8);
   box-shadow: var(--shadow-md);
   border: 1px solid var(--glass-border);
 
   h4 {
-    font-size: 1.25rem;
+    font-size: var(--font-xl);
     font-weight: 700;
     color: var(--text-primary);
-    margin-bottom: 1.5rem;
-    padding-bottom: 1rem;
+    margin-bottom: var(--space-6);
+    padding-bottom: var(--space-4);
     border-bottom: 2px solid var(--glass-border);
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: var(--space-2);
 
     i {
       color: var(--trust-blue);
@@ -531,7 +498,7 @@ html, body {
 }
 
 .weone-form-group {
-  margin-bottom: 1.5rem;
+  margin-bottom: var(--space-6);
 
   &:last-child {
     margin-bottom: 0;
@@ -540,9 +507,9 @@ html, body {
   label {
     display: block;
     font-weight: 600;
-    font-size: 0.875rem;
+    font-size: var(--font-sm);
     color: var(--text-primary);
-    margin-bottom: 0.5rem;
+    margin-bottom: var(--space-2);
   }
 }
 
@@ -551,45 +518,22 @@ html, body {
 // ========================================== */
 .weone-cart-card {
   border: 2px solid var(--trust-blue);
-  background: linear-gradient(135deg, #eff8ff 0%, #ffffff 100%);
-}
-
-.weone-empty-cart {
-  text-align: center;
-  padding: 3rem 1rem;
-  color: var(--text-muted);
-
-  i {
-    font-size: 3rem;
-    margin-bottom: 1rem;
-    opacity: 0.5;
-  }
-
-  p {
-    font-size: 1.125rem;
-    font-weight: 600;
-    margin-bottom: 0.5rem;
-  }
-
-  small {
-    font-size: 0.875rem;
-  }
 }
 
 .weone-cart-intimation {
   background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
-  padding: 1rem;
-  border-radius: 12px;
+  padding: var(--space-4);
+  border-radius: var(--radius-lg);
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  font-size: 0.875rem;
+  font-size: var(--font-sm);
   color: #1e40af;
   border: 1px solid #93c5fd;
-  margin-bottom: 1rem;
+  margin-bottom: var(--space-4);
 
   i {
-    font-size: 1.25rem;
+    font-size: var(--font-xl);
     flex-shrink: 0;
   }
 }
@@ -606,7 +550,7 @@ html, body {
   justify-content: space-between;
   align-items: center;
   padding: 8px 0;
-  border-bottom: 1px solid var(--surface-border);
+  border-bottom: 1px solid var(--glass-border); /* Using glass-border instead of var(--surface-border) */
 }
 
 .weone-cart-item-details {
@@ -625,12 +569,12 @@ html, body {
 
   strong {
     color: var(--text-primary);
-    font-size: 1rem;
+    font-size: var(--font-base);
   }
 
   small {
     color: var(--text-muted);
-    font-size: 0.75rem;
+    font-size: var(--font-xs);
   }
 }
 
@@ -643,8 +587,8 @@ html, body {
 
 .weone-cart-summary {
   border-top: 2px solid var(--glass-border);
-  padding-top: 1.5rem;
-  margin-bottom: 1.5rem;
+  padding-top: var(--space-6);
+  margin-bottom: var(--space-6);
 }
 
 .weone-summary-row {
@@ -653,29 +597,29 @@ html, body {
   align-items: center;
   margin-bottom: 0.75rem;
   color: var(--text-secondary);
-  font-size: 1rem;
+  font-size: var(--font-base);
 
   &.weone-summary-total {
-    font-size: 1.25rem;
+    font-size: var(--font-xl);
     font-weight: 700;
     color: var(--text-primary);
-    margin-top: 1rem;
-    padding-top: 1rem;
+    margin-top: var(--space-4);
+    padding-top: var(--space-4);
     border-top: 1px solid var(--glass-border);
   }
 }
 
 .weone-summary-bonus {
   background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-  padding: 1rem;
-  border-radius: 12px;
+  padding: var(--space-4);
+  border-radius: var(--radius-lg);
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  margin-top: 1rem;
+  margin-top: var(--space-4);
 
   i {
-    font-size: 1.5rem;
+    font-size: var(--font-2xl);
     color: #f59e0b;
   }
 
@@ -687,40 +631,40 @@ html, body {
 
     strong {
       color: #92400e;
-      font-size: 1rem;
+      font-size: var(--font-base);
     }
 
     span {
       color: #f59e0b;
       font-weight: 700;
-      font-size: 1.125rem;
+      font-size: var(--font-lg);
     }
   }
 }
 
 .weone-bulk-actions {
-  margin-bottom: 2rem;
+  margin-bottom: var(--space-8);
 }
 
 .weone-bulk-summary-bar {
   background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
-  padding: 1rem 1.5rem;
-  border-radius: 12px;
+  padding: var(--space-4) var(--space-6);
+  border-radius: var(--radius-lg);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 1rem;
+  gap: var(--space-4);
   border: 2px solid #6ee7b7;
   flex-wrap: wrap;
 
   span {
     color: #065f46;
     font-weight: 600;
-    font-size: 0.9375rem;
+    font-size: var(--font-base);
 
     strong {
       color: #064e3b;
-      font-size: 1.125rem;
+      font-size: var(--font-lg);
     }
   }
 }
@@ -737,8 +681,8 @@ html, body {
 .weone-ward-summary {
   background: var(--secondary-bg);
   padding: 0.75rem !important;
-  border-radius: 12px;
-  margin-bottom: 1rem !important;
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--space-4) !important;
   display: flex;
   flex-direction: column !important;
   gap: 0.5rem !important;
@@ -753,21 +697,21 @@ html, body {
   gap: 0.5rem !important;
 
   .weone-label {
-    font-size: 0.8125rem !important;
+    font-size: 0.8125rem !important; /* Specific small size retained */
     color: var(--text-secondary);
     flex-shrink: 0;
   }
 
   .weone-value,
   .weone-badge {
-    font-size: 0.875rem !important;
+    font-size: var(--font-sm) !important;
     font-weight: 600;
   }
 }
 
 .weone-dialog-form {
   .weone-form-group {
-    margin-bottom: 1rem !important;
+    margin-bottom: var(--space-4) !important;
 
     &:last-child {
       margin-bottom: 0 !important;
@@ -776,7 +720,7 @@ html, body {
     label {
       display: block;
       font-weight: 600;
-      font-size: 0.8125rem !important;
+      font-size: 0.8125rem !important; /* Specific small size retained */
       color: var(--text-primary);
       margin-bottom: 0.5rem !important;
     }
@@ -793,16 +737,16 @@ html, body {
 .weone-date-picker-group {
   display: grid;
   grid-template-columns: 1fr !important;
-  gap: 1rem !important;
-  margin-top: 1rem !important;
+  gap: var(--space-4) !important;
+  margin-top: var(--space-4) !important;
 }
 
 .weone-bulk-summary {
   background: var(--secondary-bg);
-  padding: 0.875rem !important;
-  border-radius: 12px;
-  margin-bottom: 1rem !important;
-  font-size: 0.875rem !important;
+  padding: 0.875rem !important; /* Specific size retained */
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--space-4) !important;
+  font-size: var(--font-sm) !important;
   line-height: 1.5 !important;
   color: var(--text-secondary);
 
@@ -814,9 +758,10 @@ html, body {
 
 /* ===================================================================
 // CONSOLIDATED ::ng-deep FOR PRIMENG & OTHER COMPONENT OVERRIDES
+// (CRITICAL for functionality & appearance - must be retained)
 // =================================================================== */
 :host ::ng-deep {
-  /* --- Dialog Overrides (Global) --- */
+  /* --- Dialog Overrides --- */
   .p-dialog-mask {
     padding: 0.5rem !important;
   }
@@ -834,20 +779,17 @@ html, body {
   .p-dialog-header {
     padding: 1rem 0.75rem !important;
     word-wrap: break-word !important;
-    overflow-wrap: break-word !important;
 
     .p-dialog-title {
-      font-size: 1.125rem !important;
+      font-size: var(--font-lg) !important;
       line-height: 1.3 !important;
-      padding-right: 2rem !important;
+      padding-right: var(--space-8) !important;
     }
   }
 
   .p-dialog-content {
     padding: 0.5rem 0.75rem !important;
     overflow-x: hidden !important;
-    overflow-y: auto !important;
-    max-width: 100% !important;
 
     > * {
       max-width: 100% !important;
@@ -866,10 +808,11 @@ html, body {
       flex: 1 1 calc(50% - 0.25rem) !important;
       min-width: 0 !important;
       justify-content: center !important;
+      color: #000;
     }
   }
 
-  /* --- Form Inputs (Global & Inside Dialogs) --- */
+  /* --- Form Inputs --- */
   .p-inputtext,
   .p-inputnumber,
   .p-datepicker,
@@ -900,7 +843,7 @@ html, body {
       flex: 1 1 50% !important;
       min-width: 0 !important;
       padding: 0.5rem 0.25rem !important;
-      font-size: 0.875rem !important;
+      font-size: var(--font-sm) !important;
       white-space: nowrap !important;
       .p-button-label {
         overflow: hidden !important;
@@ -909,17 +852,14 @@ html, body {
     }
   }
 
-  /* --- p-table Customization --- */
+  /* --- p-table Customization (Data Table) --- */
   .weone-wards-table {
-    .p-datatable-header tr:first-child th {
-      padding: 0;
-    }
-
     .p-datatable-table {
       min-width: 700px;
       width: 100%;
     }
 
+    /* Styles pulled from global but refined here for component */
     .p-datatable-thead > tr > th {
       width: auto !important;
       white-space: nowrap;
@@ -929,24 +869,19 @@ html, body {
       border: none;
       border-bottom: 2px solid var(--glass-border);
     }
-
-    .p-datatable-tbody > tr:hover {
-      background: var(--secondary-bg);
-    }
-
     .p-datatable-tbody > tr > td {
       border-bottom: 1px solid var(--glass-border);
     }
 
     .p-datatable-thead > tr > th,
     .p-datatable-tbody > tr > td {
-      padding: 1rem 0.5rem;
+      padding: var(--space-4) 0.5rem;
     }
 
     .p-paginator {
       background: transparent;
       border: none;
-      padding: 1rem 0 0;
+      padding: var(--space-4) 0 0;
     }
   }
 
@@ -981,7 +916,7 @@ html, body {
 }
 
 /* ===================================================================
-// RESPONSIVENESS (MEDIA QUERIES)
+// RESPONSIVENESS (MEDIA QUERIES) - HIGHLY CRITICAL
 // =================================================================== */
 
 /* Desktop Breakpoints */
@@ -994,10 +929,10 @@ html, body {
 @media (max-width: 1280px) and (min-width: 1025px) {
   .weone-tool-layout {
     grid-template-columns: 1fr 350px;
-    gap: 2rem;
+    gap: var(--space-8);
   }
   .weone-sidebar-card {
-    padding: 1.5rem !important;
+    padding: var(--space-6) !important;
   }
   .weone-filter-controls {
     grid-template-columns: repeat(2, 1fr);
@@ -1011,20 +946,22 @@ html, body {
     padding: 5rem 0;
   }
   .weone-tool-layout {
-    grid-template-columns: 1fr !important;
-    gap: 2rem;
+    grid-template-columns: 1fr !important; /* Forces stack */
+    gap: var(--space-8);
   }
   .weone-tool-sidebar {
-    position: static !important;
+    position: static !important; /* Critical override from global style */
     width: 100% !important;
     top: auto !important;
   }
 }
 
 @media (max-width: 1024px) and (min-width: 761px) {
-  .weone-container {
+  .weone-container,
+  .weone-hero-container {
     padding: 0 1.5rem !important;
   }
+  /* Global fix: max-width for sidebar on stack */
   .weone-tool-sidebar {
     max-width: 700px;
     margin: 0 auto;
@@ -1041,26 +978,26 @@ html, body {
 @media (max-width: 760px) {
 
   .weone-section {
-    padding: 4rem 0;
+    padding: var(--space-16) 0;
   }
   .weone-container,
   .weone-hero-container {
-    padding: 0 1rem !important;
+    padding: 0 var(--space-4) !important;
   }
   .weone-hero-title {
     font-size: clamp(2rem, 8vw, 2.5rem);
   }
   .weone-hero-subtitle {
-    font-size: 1rem;
+    font-size: var(--font-base);
   }
   .weone-benefits-grid {
     grid-template-columns: 1fr;
-    gap: 1.5rem;
+    gap: var(--space-6);
   }
   .weone-bonus-highlight {
     grid-template-columns: 1fr;
     text-align: center;
-    padding: 1.5rem;
+    padding: var(--space-6);
   }
   .weone-bonus-icon {
     margin: 0 auto;
@@ -1069,8 +1006,8 @@ html, body {
     grid-template-columns: 1fr;
   }
   .weone-filter-section {
-    padding: 1rem !important;
-    border-radius: 16px !important;
+    padding: var(--space-4) !important;
+    border-radius: var(--radius-xl) !important;
   }
   .weone-filter-controls {
     grid-template-columns: 1fr !important;
@@ -1082,35 +1019,36 @@ html, body {
   }
   .weone-table-wrapper {
     padding: 0.875rem !important;
-    border-radius: 16px !important;
+    border-radius: var(--radius-xl) !important;
     overflow-x: auto !important;
     -webkit-overflow-scrolling: touch !important;
   }
   .weone-sidebar-card {
-    padding: 1.25rem !important;
-    border-radius: 16px !important;
+    padding: var(--space-6) !important;
+    border-radius: var(--radius-xl) !important;
   }
   .weone-section-header-small {
+    margin-bottom: var(--space-4);
     h3 {
-      font-size: 1.5rem !important;
+      font-size: var(--font-2xl) !important;
     }
     p {
-      font-size: 1rem !important;
+      font-size: var(--font-base) !important;
     }
   }
   .weone-bulk-actions {
-    margin-bottom: 1.5rem;
+    margin-bottom: var(--space-6);
   }
   .weone-bulk-summary-bar {
     flex-direction: column;
     align-items: stretch;
     text-align: center;
     gap: 0.75rem;
-    padding: 1rem;
+    padding: var(--space-4);
     span {
-      font-size: 0.875rem;
+      font-size: var(--font-sm);
       strong {
-        font-size: 1rem;
+        font-size: var(--font-base);
         display: block;
         margin-top: 0.25rem;
       }
@@ -1120,33 +1058,31 @@ html, body {
     max-height: 200px;
   }
   .weone-cart-summary {
-    font-size: 0.875rem;
+    font-size: var(--font-sm);
   }
   .weone-summary-row {
-    font-size: 0.875rem !important;
+    font-size: var(--font-sm) !important;
     &.weone-summary-total {
-      font-size: 1rem !important;
+      font-size: var(--font-base) !important;
     }
   }
   .weone-summary-bonus {
     padding: 0.875rem;
     i {
-      font-size: 1.25rem;
+      font-size: var(--font-xl);
     }
     div {
       strong {
-        font-size: 0.875rem;
+        font-size: var(--font-sm);
       }
       span {
-        font-size: 1rem;
+        font-size: var(--font-base);
       }
     }
   }
 
+  /* CRITICAL ::ng-deep overrides for 760px */
   :host ::ng-deep {
-    .weone-bulk-summary-bar .p-button {
-      width: 100% !important;
-    }
     .p-button {
       font-size: 0.8125rem !important;
       padding: 0.625rem 0.875rem !important;
@@ -1163,7 +1099,7 @@ html, body {
     .p-inputtext,
     .p-select .p-select-label,
     .p-inputnumber-input {
-      font-size: 0.875rem !important;
+      font-size: var(--font-sm) !important;
       padding: 0.625rem 0.75rem !important;
     }
     .weone-wards-table {
@@ -1173,6 +1109,7 @@ html, body {
         padding: 0.625rem 0.5rem !important;
         font-size: 0.8125rem !important;
       }
+      /* Hides a column for better mobile fit */
       th:nth-child(3),
       td:nth-child(3) {
         display: none !important;
@@ -1182,212 +1119,33 @@ html, body {
         padding: 0.5rem 0.75rem !important;
       }
     }
-  }
-}
+    .weone-bulk-summary-bar .p-button {
+      width: 100% !important;
+    }
 
-/* ===================================================================
-// CRITICAL FIX: Prevent Cut-offs Below 760px (Stacked Layout)
-// =================================================================== */
-
-@media (max-width: 760px) {
-  /* Force all containers to be truly fluid */
-  .weone-tool-section,
-  .weone-container,
-  .weone-tool-layout,
-  .weone-tool-main,
-  .weone-tool-sidebar {
-    max-width: 100vw !important;
-    overflow-x: hidden !important;
-  }
-
-  /* Make all cards and wrappers fit */
-  .weone-filter-section,
-  .weone-table-wrapper,
-  .weone-sidebar-card {
-    max-width: 100% !important;
-    box-sizing: border-box !important;
-  }
-
-  /* Critical: Override PrimeNG component minimum widths */
-  :host ::ng-deep {
-    /* Force all PrimeNG components to be fluid */
-    .p-component,
-    .p-select,
-    .p-inputtext,
-    .p-inputnumber,
-    .p-button,
-    .p-datepicker {
+    /* CRITICAL FIX: Overflow prevention on PrimeNG components */
+    .p-component, .p-select, .p-inputtext, .p-inputnumber, .p-button, .p-datepicker {
       max-width: 100% !important;
       min-width: 0 !important;
       box-sizing: border-box !important;
     }
-
-    /* Fix select dropdowns */
-    .p-select,
-    .p-select-trigger {
-      width: 100% !important;
-    }
-
-    /* Fix input number component */
+    .p-select, .p-select-trigger { width: 100% !important; }
     .p-inputnumber {
-      width: 100% !important;
-      max-width: 100% !important;
-      
-      .p-inputnumber-input {
-        width: 100% !important;
-        max-width: 100% !important;
-        min-width: 0 !important;
-      }
-      
-      .p-inputnumber-button {
-        width: 2rem !important;
-        min-width: 2rem !important;
-        flex-shrink: 0 !important;
-      }
+      .p-inputnumber-button { width: 2rem !important; min-width: 2rem !important; }
     }
-
-    /* Fix button groups */
     .p-buttonset {
       width: 100% !important;
-      max-width: 100% !important;
-      display: flex !important;
-      
-      .p-button {
-        flex: 1 1 auto !important;
-        min-width: 0 !important;
-        max-width: none !important;
-      }
+      .p-button { flex: 1 1 auto !important; min-width: 0 !important; }
     }
-
-    /* Ensure table stays within bounds */
-    .p-datatable-wrapper {
-      width: 100% !important;
-      max-width: 100% !important;
-      overflow-x: auto !important;
-    }
-
-    /* Fix pagination */
-    .p-paginator {
-      width: 100% !important;
-      max-width: 100% !important;
-      overflow-x: auto !important;
-      
-      .p-paginator-element {
-        min-width: 2rem !important;
-      }
-    }
-  }
-}
-
-/* Additional fixes for smaller breakpoints */
-@media (max-width: 640px) {
-  /* Even tighter restrictions */
-  .weone-container {
-    width: 100% !important;
-    max-width: 100vw !important;
-    padding-left: 0.75rem !important;
-    padding-right: 0.75rem !important;
-    box-sizing: border-box !important;
-  }
-
-  :host ::ng-deep {
-    /* Make buttons more compact */
-    .p-button {
-      padding: 0.5rem 0.625rem !important;
-      font-size: 0.8125rem !important;
-      white-space: nowrap !important;
-      overflow: hidden !important;
-      text-overflow: ellipsis !important;
-      
-      .p-button-label {
-        overflow: hidden !important;
-        text-overflow: ellipsis !important;
-      }
-    }
-
-    /* Compact select buttons further */
-    .p-selectbutton {
-      .p-button {
-        padding: 0.5rem 0.25rem !important;
-        font-size: 0.75rem !important;
-      }
-    }
-
-    /* Make form inputs more compact */
-    .p-inputtext,
-    .p-inputnumber-input {
-      padding: 0.5rem 0.625rem !important;
-      font-size: 0.875rem !important;
-    }
-  }
-}
-
-@media (max-width: 480px) {
-  /* Ultra-compact mode */
-  .weone-container {
-    padding-left: 0.5rem !important;
-    padding-right: 0.5rem !important;
-  }
-
-  /* Make "Select All" button wrap text */
-  .weone-filter-item {
-    p-button {
-      :host ::ng-deep .p-button-label {
-        white-space: normal !important;
-        line-height: 1.2 !important;
-        text-align: center !important;
-      }
-    }
-  }
-
-  :host ::ng-deep {
-    /* Even more compact buttons */
-    .p-button {
-      padding: 0.5rem 0.5rem !important;
-      font-size: 0.75rem !important;
-      
-      &.p-button-sm {
-        padding: 0.375rem 0.5rem !important;
-        font-size: 0.6875rem !important;
-      }
-    }
-
-    /* Hide button icons on very small screens to save space */
-    .p-button .p-button-icon {
-      @media (max-width: 420px) {
-        display: none !important;
-      }
-    }
-
-    /* Stack bulk action bar content */
-    .weone-bulk-summary-bar {
-      .p-button {
-        width: 100% !important;
-        margin-top: 0.5rem !important;
-      }
-    }
-  }
-}
-
-@media (max-width: 380px) {
-  .weone-container {
-    padding-left: 0.375rem !important;
-    padding-right: 0.375rem !important;
-  }
-
-  /* Extreme compact for all cards */
-  .weone-filter-section,
-  .weone-table-wrapper,
-  .weone-sidebar-card {
-    border-radius: 10px !important;
-    margin-left: 0 !important;
-    margin-right: 0 !important;
+    .p-datatable-wrapper { width: 100% !important; overflow-x: auto !important; }
+    .p-paginator { width: 100% !important; overflow-x: auto !important; }
   }
 }
 
 /* Small Phones */
 @media (max-width: 640px) {
-  .weone-container {
+  .weone-container,
+  .weone-hero-container {
     padding: 0 0.75rem !important;
   }
   .weone-filter-section,
@@ -1414,8 +1172,8 @@ html, body {
     }
   }
   .weone-sidebar-card h4 {
-    font-size: 1.125rem !important;
-    margin-bottom: 1rem !important;
+    font-size: var(--font-lg) !important;
+    margin-bottom: var(--space-4) !important;
     padding-bottom: 0.75rem !important;
   }
   .weone-form-group {
@@ -1430,35 +1188,40 @@ html, body {
     padding: 0.875rem;
   }
 
+  /* CRITICAL ::ng-deep overrides for 640px */
   :host ::ng-deep {
-    .p-dialog,
-    .p-dialog:has(.weone-bulk-summary) {
+    /* Force fluid containers */
+    .p-dialog, .p-dialog:has(.weone-bulk-summary) {
       max-width: calc(100vw - 1.5rem) !important;
       width: calc(100vw - 1.5rem) !important;
     }
-    .p-select,
-    .p-inputtext,
     .p-button {
-      font-size: 0.875rem !important;
+      padding: 0.5rem 0.625rem !important;
+      font-size: 0.8125rem !important;
+      white-space: nowrap !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
     }
-    .p-button {
-      padding: 0.625rem 1rem !important;
-    }
-    .weone-bulk-summary-bar .p-button {
+    .p-selectbutton .p-button {
+      padding: 0.5rem 0.25rem !important;
       font-size: 0.75rem !important;
-      padding: 0.5rem 0.75rem !important;
+    }
+    .p-inputtext, .p-inputnumber-input {
+      padding: 0.5rem 0.625rem !important;
+      font-size: var(--font-sm) !important;
     }
   }
 }
 
 /* Very Small Phones */
 @media (max-width: 480px) {
-  .weone-container {
+  .weone-container,
+  .weone-hero-container {
     padding: 0 0.625rem !important;
   }
   .weone-hero-stats {
     flex-direction: column;
-    gap: 1rem;
+    gap: var(--space-4);
   }
   .weone-stat-item {
     width: 100%;
@@ -1491,11 +1254,13 @@ html, body {
   }
   .weone-bulk-summary-bar {
     padding: 0.625rem 0.75rem !important;
-    border-radius: 10px !important;
+    border-radius: var(--radius-lg) !important;
   }
 
+  /* CRITICAL ::ng-deep overrides for 480px */
   :host ::ng-deep {
     .weone-wards-table {
+      /* Hides another column */
       th:nth-child(4),
       td:nth-child(4) {
         display: none !important;
@@ -1505,7 +1270,7 @@ html, body {
         padding: 0.5rem 0.375rem !important;
         font-size: 0.75rem !important;
       }
-      .p-button .p-button-label {
+      .p-button .p-button-icon {
         @media (max-width: 420px) {
           display: none !important;
         }
@@ -1513,42 +1278,42 @@ html, body {
     }
     .p-paginator {
       font-size: 0.75rem !important;
-      .p-paginator-pages .p-paginator-page {
-        min-width: 2rem !important;
-        height: 2rem !important;
-        font-size: 0.75rem !important;
-      }
+    }
+    .p-button {
+      padding: 0.5rem 0.5rem !important;
+      font-size: 0.75rem !important;
     }
   }
 }
 
 /* Ultra-Compact Screens */
 @media (max-width: 380px) {
-  .weone-container {
+  .weone-container,
+  .weone-hero-container {
     padding: 0 0.5rem !important;
   }
   .weone-hero-badge {
     font-size: 0.75rem !important;
-    padding: 0.375rem 1rem !important;
+    padding: 0.375rem var(--space-4) !important;
   }
   .weone-stat-item {
-    padding: 1rem !important;
+    padding: var(--space-4) !important;
     min-width: 150px !important;
   }
   .weone-stat-number {
-    font-size: 1.5rem !important;
+    font-size: var(--font-2xl) !important;
   }
   .weone-stat-label {
     font-size: 0.75rem !important;
   }
   .weone-benefit-card,
   .weone-sidebar-card {
-    padding: 1.25rem !important;
-    border-radius: 12px !important;
+    padding: var(--space-6) !important;
+    border-radius: var(--radius-lg) !important;
   }
   .weone-cart-item-details {
     strong {
-      font-size: 0.875rem !important;
+      font-size: var(--font-sm) !important;
     }
     small {
       font-size: 0.6875rem !important;
@@ -1561,14 +1326,14 @@ html, body {
   .weone-filter-section,
   .weone-table-wrapper {
     padding: 0.625rem !important;
-    border-radius: 12px !important;
+    border-radius: var(--radius-lg) !important;
   }
   .weone-section-header-small {
     h3 {
-      font-size: 1.25rem !important;
+      font-size: var(--font-xl) !important;
     }
     p {
-      font-size: 0.875rem !important;
+      font-size: var(--font-sm) !important;
     }
   }
   .weone-bulk-summary-bar {
@@ -1581,60 +1346,34 @@ html, body {
     }
   }
   .weone-sidebar-card h4 {
-    font-size: 1rem !important;
+    font-size: var(--font-base) !important;
   }
 
+  /* CRITICAL ::ng-deep overrides for 380px */
   :host ::ng-deep {
-    .p-dialog {
-      max-width: calc(100vw - 1rem) !important;
-      width: calc(100vw - 1rem) !important;
-    }
-    .p-dialog-header .p-dialog-title {
-      font-size: 1rem !important;
-    }
-    .p-dialog-footer .p-button {
-      font-size: 0.8125rem !important;
-      padding: 0.625rem 0.5rem !important;
-      .p-button-label {
-        font-size: 0.8125rem !important;
-      }
-    }
-    .p-inputnumber .p-inputnumber-button {
-      width: 2rem !important;
-    }
-    .p-selectbutton .p-button {
-      font-size: 0.75rem !important;
-      padding: 0.5rem 0.15rem !important;
-    }
+    .p-dialog { max-width: calc(100vw - 1rem) !important; width: calc(100vw - 1rem) !important; }
+    .p-dialog-header .p-dialog-title { font-size: var(--font-base) !important; }
+    .p-dialog-footer .p-button { font-size: 0.8125rem !important; padding: 0.625rem 0.5rem !important; }
+    .p-selectbutton .p-button { font-size: 0.75rem !important; padding: 0.5rem 0.15rem !important; }
     .weone-wards-table {
-      .p-datatable-thead > tr > th,
-      .p-datatable-tbody > tr > td {
+      .p-datatable-thead > tr > th, .p-datatable-tbody > tr > td {
         padding: 0.375rem 0.25rem !important;
         font-size: 0.6875rem !important;
       }
-      th:first-child {
-        width: 2rem !important;
-      }
     }
-    .p-button {
-      font-size: 0.6875rem !important;
-      padding: 0.375rem 0.5rem !important;
-    }
-    .p-inputtext,
-    .p-select .p-select-label {
-      font-size: 0.8125rem !important;
-      padding: 0.5rem 0.625rem !important;
-    }
+    .p-button { font-size: 0.6875rem !important; padding: 0.375rem 0.5rem !important; }
+    .p-inputtext, .p-select .p-select-label { font-size: 0.8125rem !important; padding: 0.5rem 0.625rem !important; }
   }
 }
 
-/* Extreme-Compact Screens */
+/* Extreme-Compact Screens (Final Fallback) */
 @media (max-width: 320px) {
-  .weone-container {
+  .weone-container,
+  .weone-hero-container {
     padding: 0 0.375rem !important;
   }
   .weone-section {
-    padding: 2rem 0;
+    padding: var(--space-8) 0;
   }
   .weone-filter-section,
   .weone-table-wrapper,
@@ -1642,6 +1381,7 @@ html, body {
     padding: 0.5rem !important;
   }
 
+  /* CRITICAL ::ng-deep overrides for 320px */
   :host ::ng-deep {
     .weone-wards-table {
       .p-datatable-thead > tr > th,
@@ -1653,26 +1393,201 @@ html, body {
   }
 }
 
-/* ==========================================
-// Global Overflow Prevention & Box Sizing
-// ========================================== */
-* {
-  box-sizing: border-box !important;
+.weone-bulk-selection-notice {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    border: 2px solid #f59e0b;
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    box-shadow: var(--shadow-md);
+
+    @media (max-width: 768px) {
+        flex-direction: column;
+        align-items: stretch;
+    }
 }
 
-:host,
-.weone-container,
-.weone-section,
-.weone-dialog-content,
-.weone-form-group,
-.weone-date-picker-group {
-  max-width: 100% !important;
-  overflow-x: hidden !important;
+.weone-notice-content {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex: 1;
+
+    i {
+        font-size: 1.5rem;
+        color: #f59e0b;
+        flex-shrink: 0;
+    }
+
+    span {
+        color: #92400e;
+        font-size: 1rem;
+        line-height: 1.5;
+
+        strong {
+            color: #78350f;
+            text-transform: capitalize;
+        }
+    }
 }
 
-img,
-video,
-iframe {
-  max-width: 100% !important;
-  height: auto !important;
+// State Selector
+.weone-state-selector {
+    grid-column: 1 / -1; // Span full width
+    background: linear-gradient(135deg, #dbeafe 0%, #eff6ff 100%);
+    border: 2px solid var(--trust-blue);
+    border-radius: 16px;
+    padding: 1.5rem;
+
+    label {
+        font-size: 1.125rem;
+        font-weight: 700;
+        color: var(--trust-blue);
+        margin-bottom: 1rem;
+        display: block;
+    }
+
+    ::ng-deep .p-button {
+        font-size: 1rem;
+        padding: 0.875rem 1.5rem;
+        font-weight: 600;
+    }
+}
+
+// Filter Divider
+.weone-filter-divider {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin: 1rem 0;
+
+    &::before,
+    &::after {
+        content: '';
+        flex: 1;
+        height: 1px;
+        background: var(--glass-border);
+    }
+
+    span {
+        color: var(--text-muted);
+        font-weight: 600;
+        font-size: 0.875rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+}
+
+// Disabled state styling
+.weone-filter-item {
+    &:has(p-select[disabled]),
+    &:has(p-button[disabled]) {
+        opacity: 0.5;
+        pointer-events: none;
+    }
+}
+
+.weone-bulk-note {
+    background: #eff6ff;
+    border-left: 3px solid var(--trust-blue);
+    padding: 0.75rem;
+    margin-top: 1rem;
+    font-size: 0.875rem;
+    color: #1e40af;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    
+    i {
+        flex-shrink: 0;
+        margin-top: 2px;
+    }
+}
+
+.weone-selection-active {
+    background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+    border: 2px solid #10b981;
+    border-radius: 12px;
+    padding: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+}
+
+.weone-selection-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #065f46;
+    font-weight: 600;
+
+    i {
+        font-size: 1.25rem;
+        color: #10b981;
+    }
+}
+
+.weone-selection-active-inline {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    background: #d1fae5;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    color: #065f46;
+    font-weight: 600;
+}
+
+.weone-selection-actions {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+
+
+
+
+:host ::ng-deep {
+    // Bulk cart icon buttons - FORCE visibility
+    .weone-inline-actions {
+        .p-button.p-button-text.p-button-success {
+            background: rgba(16, 185, 129, 0.12) !important;
+            border-radius: 6px !important;
+            padding: 0.5rem !important;
+            min-width: 2.5rem !important;
+            margin-right: 1rem;
+            
+            .p-button-icon.pi-shopping-cart {
+                color: #10b981 !important;
+                font-size: 1.5rem !important;
+                font-weight: 600 !important;
+                margin-right: 1rem;
+            }
+            
+            &:hover:not(:disabled) {
+                background: rgba(16, 185, 129, 0.2) !important;
+                
+                .p-button-icon.pi-shopping-cart {
+                    color: #059669 !important;
+                    transform: scale(1.1);
+                }
+            }
+        }
+    }
+
+    // Target all PrimeNG cart buttons with text style
+    .p-button-text .pi-shopping-cart {
+        color: #10b981 !important;
+        font-size: 1.375rem !important;
+        margin-left: 1rem;
+    }
 }

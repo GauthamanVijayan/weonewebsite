@@ -23,7 +23,8 @@ export default defineSchema({
     .index("by_localBody", ["localBodyName"])
     .index("by_zone", ["zone"])
     .index("by_subdistrict", ["subdistrict"])
-    .index("by_sponsored_until", ["sponsoredUntil"]),
+    .index("by_sponsored_until", ["sponsoredUntil"])
+    .index("by_subdistrict_and_type", ["subdistrict", "localBodyType"]),
 
   sponsorships: defineTable({
     sponsorName: v.string(),

@@ -38,6 +38,11 @@ export interface CartItem {
   costPerMonth: number;
   startDate: Date;
   endDate: Date;
+
+   isBulk?: boolean;
+    bulkLevel?: 'state' | 'zone' | 'district' | 'subdistrict' | 'type' | 'localbody';
+    bulkIdentifier?: string;
+    bulkWardCount?: number;
 }
 
 export interface SponsorType {

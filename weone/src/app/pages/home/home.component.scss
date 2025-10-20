@@ -1,3 +1,7 @@
+/* ==========================================
+// HOME COMPONENT STYLES (ISOLATED)
+// ========================================== */
+
 /* Hero Section */
 .hero {
   min-height: 100vh;
@@ -5,14 +9,11 @@
   align-items: center;
   position: relative;
   overflow: hidden;
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  background: linear-gradient(135deg, var(--primary-bg) 0%, #f8fafc 100%);
   padding-top: 100px;
 }
 
 .hero-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 var(--space-8);
   display: grid;
   grid-template-columns: 1.2fr 0.8fr;
   gap: var(--space-16);
@@ -48,15 +49,10 @@
 }
 
 .hero-title {
-  font-family: "Poppins", sans-serif;
+  /* Extends .weone-section-title-base globally */
   font-size: clamp(2.5rem, 5vw, 4rem);
-  font-weight: 700;
   line-height: 1.1;
   margin-bottom: var(--space-6);
-  background: var(--accent-gradient);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
 }
 
 .hero-subtitle {
@@ -73,51 +69,19 @@
   margin-bottom: var(--space-12);
 }
 
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: var(--space-4) var(--space-8);
-  border-radius: var(--radius-md);
-  font-weight: 600;
-  text-decoration: none;
-  transition: var(--transition-smooth);
-  cursor: pointer;
-  border: none;
-  font-size: var(--font-base);
-}
-
+/* Button overrides that rely on global .btn base style */
 .btn-primary {
-  background: var(--accent-gradient);
-  color: white;
   box-shadow: 0 4px 12px rgba(15, 118, 110, 0.3);
 }
 
 .btn-primary:hover {
-  transform: translateY(-2px);
   box-shadow: 0 8px 20px rgba(15, 118, 110, 0.4);
 }
-
-.btn-secondary {
-  background: var(--primary-bg);
-  color: var(--text-primary);
-  border: 2px solid var(--glass-border);
-  box-shadow: var(--shadow-soft);
-}
-
-.btn-secondary:hover {
-  background: var(--secondary-bg);
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-lg);
-}
+/* End Button Overrides */
 
 .hero-stats {
   display: flex;
   gap: var(--space-8);
-}
-
-.stat-item {
-  text-align: center;
 }
 
 .stat-number {
@@ -134,7 +98,7 @@
   font-weight: 500;
 }
 
-/* WeOne Ecosystem - Clean & Professional */
+/* WeOne Ecosystem Visual */
 .hero-visual {
   position: relative;
   animation: fadeInUp 1s ease-out 0.3s forwards;
@@ -193,12 +157,12 @@
   animation: ringPulse 3s ease-in-out infinite;
 }
 
-/* Stakeholder Cards - No Overlap */
+/* Stakeholder Cards */
 .stakeholder-card {
   position: absolute;
   width: 90px;
   height: 90px;
-  background: white;
+  background: var(--primary-bg);
   border: 2px solid var(--glass-border);
   border-radius: var(--radius-lg);
   display: flex;
@@ -229,7 +193,7 @@
   text-align: center;
 }
 
-/* Positioned properly within bounds */
+/* Positioned properly within bounds, using new variables */
 .stakeholder-card[data-position="0"] {
   top: 30px;
   left: 50%;
@@ -291,31 +255,14 @@
   opacity: 0;
 }
 
-.floating-indicator:nth-child(6) {
-  top: 15%;
-  right: 15%;
-}
-
-.floating-indicator:nth-child(7) {
-  bottom: 20%;
-  left: 10%;
-}
-
-.floating-indicator:nth-child(8) {
-  top: 10%;
-  left: 20%;
-}
+.floating-indicator:nth-child(6) { top: 15%; right: 15%; }
+.floating-indicator:nth-child(7) { bottom: 20%; left: 10%; }
+.floating-indicator:nth-child(8) { top: 10%; left: 20%; }
 
 /* Impact Section */
 .impact-section {
   padding: var(--space-24) 0;
   background: var(--secondary-bg);
-}
-
-.section-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 var(--space-8);
 }
 
 .section-header {
@@ -325,14 +272,9 @@
 }
 
 .section-title {
-  font-family: "Poppins", sans-serif;
+  /* Extends .weone-section-title-base globally */
   font-size: clamp(2rem, 4vw, 3rem);
-  font-weight: 700;
   margin-bottom: var(--space-4);
-  background: var(--accent-gradient);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
 }
 
 .section-subtitle {
@@ -486,7 +428,7 @@
   line-height: 1.6;
 }
 
-/* Animations */
+/* Animations (moved from bottom of original file) */
 @keyframes fadeInUp {
   to {
     opacity: 1;
@@ -543,17 +485,6 @@
     opacity: 1;
     transform: translateY(-8px);
   }
-}
-
-/* Utility Classes */
-.animate-on-scroll {
-  transform: translateY(30px);
-  transition: var(--transition-smooth);
-}
-
-.animate-on-scroll.in-view {
-  opacity: 1;
-  transform: translateY(0);
 }
 
 /* Responsive Design */
@@ -623,14 +554,6 @@
   .features-grid {
     grid-template-columns: 1fr;
     gap: var(--space-8);
-  }
-
-  .section-container {
-    padding: 0 var(--space-4);
-  }
-
-  .hero-container {
-    padding: 0 var(--space-4);
   }
 
   .weone-ecosystem {

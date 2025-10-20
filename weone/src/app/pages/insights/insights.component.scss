@@ -1,10 +1,12 @@
+/* ==========================================
+// INSIGHTS COMPONENT STYLES (ISOLATED)
+// ========================================== */
+
 :host {
     display: block;
 }
 
-// ==========================================
-// ANIMATION SYSTEM
-// ==========================================
+// ANIMATION SYSTEM (Critical for this component)
 [appScrollAnimate]:not(.weone-animate-visible) {
     opacity: 0;
     transform: translateY(30px);
@@ -21,14 +23,12 @@
     transform: translateY(0);
 }
 
-// ==========================================
 // HERO SECTION
-// ==========================================
 .insights-hero {
     min-height: 70vh;
     display: flex;
     align-items: center;
-    background: var(--secondary-bg); // CHANGED
+    background: var(--secondary-bg);
     padding: 120px 0 80px 0;
     position: relative;
     overflow: hidden;
@@ -43,19 +43,13 @@
         background: radial-gradient(
             circle,
             rgba(42, 171, 226, 0.05) 0%,
-            // CHANGED
             transparent 70%
         );
         border-radius: 50%;
     }
 }
 
-.hero-container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 2rem;
-    width: 100%;
-}
+/* Container classes rely on the global definition */
 
 .hero-content {
     text-align: center;
@@ -66,31 +60,26 @@
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
-    background: rgba(42, 171, 226, 0.1); // CHANGED
-    border: 1px solid rgba(42, 171, 226, 0.2); // CHANGED
+    background: rgba(42, 171, 226, 0.1);
+    border: 1px solid rgba(42, 171, 226, 0.2);
     padding: 0.5rem 1.5rem;
     border-radius: 50px;
-    font-size: 0.875rem;
+    font-size: var(--font-sm);
     font-weight: 600;
     margin-bottom: 1.5rem;
-    color: var(--trust-blue); // CHANGED
+    color: var(--trust-blue);
 }
 
 .hero-title {
-    font-family: 'Poppins', sans-serif;
+    /* Extends .weone-section-title-base globally */
     font-size: clamp(2.5rem, 5vw, 4rem);
-    font-weight: 700;
     line-height: 1.1;
     margin-bottom: 1.5rem;
-    background: var(--accent-gradient); // CHANGED
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
 }
 
 .hero-subtitle {
-    font-size: 1.25rem;
-    color: var(--text-secondary); // CHANGED
+    font-size: var(--font-xl);
+    color: var(--text-secondary);
     margin-bottom: 2rem;
     max-width: 700px;
     margin-left: auto;
@@ -99,8 +88,8 @@
 }
 
 .disclaimer {
-    font-size: 0.875rem;
-    color: var(--text-muted); // CHANGED
+    font-size: var(--font-sm);
+    color: var(--text-muted);
     font-style: italic;
     margin-top: 2rem;
 }
@@ -113,14 +102,13 @@
 }
 
 .metric-preview-card {
-    background: var(--glass-bg);
     backdrop-filter: blur(20px);
-    border: 1px solid var(--glass-border); // CHANGED
+    border: 1px solid var(--glass-border);
     border-radius: 16px;
     padding: 1.5rem;
     text-align: center;
     box-shadow: var(--shadow-md);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: var(--transition-smooth);
 
     &:hover {
         transform: translateY(-4px);
@@ -128,9 +116,9 @@
     }
 
     .metric-value {
-        font-size: 1.875rem;
+        font-size: var(--font-3xl);
         font-weight: 700;
-        background: var(--accent-gradient); // CHANGED
+        background: var(--accent-gradient);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
@@ -138,17 +126,15 @@
     }
 
     .metric-label {
-        color: var(--text-secondary); // CHANGED
-        font-size: 0.875rem;
+        color: var(--text-secondary);
+        font-size: var(--font-sm);
         font-weight: 500;
         text-transform: uppercase;
         letter-spacing: 0.5px;
     }
 }
 
-// ==========================================
 // SECTIONS
-// ==========================================
 .section {
     padding: 6rem 0;
 }
@@ -159,29 +145,22 @@
 }
 
 .section-title {
-    font-family: 'Poppins', sans-serif;
+    /* Extends .weone-section-title-base globally */
     font-size: clamp(2rem, 4vw, 3rem);
-    font-weight: 700;
     margin-bottom: 1rem;
-    background: var(--accent-gradient); // CHANGED
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
 }
 
 .section-subtitle {
-    font-size: 1.125rem;
-    color: var(--text-secondary); // CHANGED
+    font-size: var(--font-lg);
+    color: var(--text-secondary);
     max-width: 600px;
     margin: 0 auto;
     line-height: 1.6;
 }
 
-// ==========================================
 // METRICS SECTION
-// ==========================================
 .metrics-section {
-    background: var(--secondary-bg); // CHANGED
+    background: var(--secondary-bg);
 }
 
 .metrics-grid {
@@ -193,12 +172,12 @@
 
 .metric-card {
     background: var(--primary-bg);
-    border: 1px solid var(--glass-border); // CHANGED
+    border: 1px solid var(--glass-border);
     border-radius: 20px;
     padding: 2rem;
     text-align: center;
     box-shadow: var(--shadow-md);
-    transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+    transition: var(--transition-spring);
 
     &:hover {
         transform: translateY(-8px) scale(1.02);
@@ -211,9 +190,9 @@
     }
 
     .metric-value {
-        font-size: 2.25rem;
+        font-size: var(--font-4xl);
         font-weight: 700;
-        background: var(--accent-gradient); // CHANGED
+        background: var(--accent-gradient);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
@@ -222,22 +201,20 @@
     }
 
     .metric-label {
-        color: var(--text-primary); // CHANGED
-        font-size: 1.125rem;
+        color: var(--text-primary);
+        font-size: var(--font-lg);
         font-weight: 600;
         margin-bottom: 0.75rem;
     }
 
     .metric-description {
-        color: var(--text-secondary); // CHANGED
-        font-size: 0.875rem;
+        color: var(--text-secondary);
+        font-size: var(--font-sm);
         line-height: 1.5;
     }
 }
 
-// ==========================================
 // COVERAGE SECTION
-// ==========================================
 .coverage-section {
     background: var(--primary-bg);
 }
@@ -256,21 +233,21 @@
         135deg,
         #f0f8ff 0%,
         #ffffff 100%
-    ); // CHANGED to a blueish white
-    border: 2px solid rgba(42, 171, 226, 0.2); // CHANGED
+    );
+    border: 2px solid rgba(42, 171, 226, 0.2);
     border-radius: 16px;
-    transition: all 0.3s ease;
+    transition: var(--transition-smooth);
 
     &:hover {
         transform: translateY(-4px);
-        border-color: var(--trust-blue); // CHANGED
-        box-shadow: 0 8px 20px rgba(42, 171, 226, 0.2); // CHANGED
+        border-color: var(--trust-blue);
+        box-shadow: 0 8px 20px rgba(42, 171, 226, 0.2);
     }
 
     .coverage-number {
         font-size: 3rem;
         font-weight: 700;
-        color: var(--trust-blue); // CHANGED
+        color: var(--trust-blue);
         font-family: 'Poppins', sans-serif;
         margin-bottom: 0.5rem;
     }
@@ -283,14 +260,12 @@
     }
 
     .coverage-detail {
-        font-size: 0.875rem;
+        font-size: var(--font-sm);
         color: var(--text-secondary);
     }
 }
 
-// ==========================================
 // IMPACT SECTION
-// ==========================================
 .impact-section {
     background: var(--secondary-bg);
 }
@@ -308,7 +283,7 @@
     padding: 2rem;
     text-align: center;
     box-shadow: var(--shadow-md);
-    transition: all 0.3s ease;
+    transition: var(--transition-smooth);
     border: 1px solid var(--glass-border);
 
     &:hover {
@@ -323,14 +298,14 @@
     }
 
     h3 {
-        font-size: 1.125rem;
+        font-size: var(--font-lg);
         font-weight: 600;
         color: var(--text-primary);
         margin-bottom: 0.75rem;
     }
 
     .impact-stat {
-        font-size: 2.25rem;
+        font-size: var(--font-4xl);
         font-weight: 700;
         color: var(--trust-blue);
         font-family: 'Poppins', sans-serif;
@@ -338,15 +313,13 @@
     }
 
     .impact-desc {
-        font-size: 0.875rem;
+        font-size: var(--font-sm);
         color: var(--text-secondary);
         line-height: 1.5;
     }
 }
 
-// ==========================================
 // CTA SECTION
-// ==========================================
 .cta-section {
     background: var(--accent-gradient);
     padding: 5rem 0;
@@ -364,7 +337,7 @@
     }
 
     p {
-        font-size: 1.25rem;
+        font-size: var(--font-xl);
         margin-bottom: 2rem;
         max-width: 600px;
         margin-left: auto;
@@ -380,18 +353,7 @@
     flex-wrap: wrap;
 }
 
-.btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 1rem 2rem;
-    border-radius: 12px;
-    font-weight: 600;
-    text-decoration: none;
-    transition: all 0.3s ease;
-    font-size: 1rem;
-}
-
+/* Local button overrides */
 .btn-primary {
     background: #ffffff;
     color: var(--trust-blue);
@@ -414,9 +376,7 @@
     }
 }
 
-// ==========================================
 // RESPONSIVE DESIGN
-// ==========================================
 @media (max-width: 768px) {
     .section {
         padding: 4rem 0;
@@ -439,4 +399,4 @@
             max-width: 280px;
         }
     }
-}
+}   

@@ -1,12 +1,12 @@
 /* =================================================================== */
-/* WEONE - NEW LOGO THEME (GLOBAL STYLESHEET)                          */
+/* WEONE - GLOBAL STYLESHEET (CONSOLIDATED)                             */
 /* =================================================================== */
 
-/* --- 1. YOUR NEW LOGO THEME DEFINITION --- */
+/* --- 1. GLOBAL VARIABLE DEFINITION --- */
 :root {
-    /* --- Color Palette (Based on your logo) --- */
+    /* --- Color Palette --- */
     --primary-bg: #ffffff;
-    --secondary-bg: #f7fafc; /* A slightly cooler off-white for backgrounds */
+    --secondary-bg: #f7fafc;
     --accent-gradient: linear-gradient(
         135deg,
         #2aabe2 0%,
@@ -16,61 +16,224 @@
     --text-primary: #1e293b;
     --text-secondary: #475569;
     --glass-border: rgba(42, 171, 226, 0.15);
-    --trust-blue: #2aabe2; /* Replaces the old --trust-green */
+    --trust-blue: #2aabe2;
+    --text-muted: #6b7280;
+    --green-500: #10b981;
+    --yellow-400: #facc15;
+    --yellow-900: #78350f;
+    
+    /* Colors from home.component.scss for global access */
+    --trust-green: #0f766e; /* Extracted from rgba(15, 118, 110, 0.X) */
+    --governance-blue: #2aabe2; /* Matching trust-blue */
+    --citizen-orange: #f97316; /* Assumed standard orange for distinct stakeholder */
+    --transparency-teal: #14b8a6; /* Assumed standard teal for distinct stakeholder */
 
-    /* Shadows (unchanged) */
+
+    /* Shadows */
     --shadow-soft: 0 1px 3px rgba(0, 0, 0, 0.08);
     --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.12);
     --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.15);
     --shadow-xl: 0 20px 40px rgba(0, 0, 0, 0.18);
 
-    /* Typography & Spacing (unchanged) */
-    --font-base: 1rem;
-    --font-lg: 1.125rem;
-    --font-xl: 1.25rem;
-    --font-2xl: 1.5rem;
-    --font-3xl: 1.875rem;
-    --space-1: 0.25rem;
-    --space-2: 0.5rem;
-    --space-3: 0.75rem;
-    --space-4: 1rem;
-    --space-6: 1.5rem;
-    --space-8: 2rem;
-    --space-12: 3rem;
-    --space-16: 4rem;
-    --space-24: 6rem;
-    --radius-sm: 8px;
-    --radius-md: 12px;
-    --radius-lg: 16px;
-    --radius-xl: 20px;
-
+    /* Typography, Spacing & Transitions */
     --transition-smooth: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-spring: 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+    
+    /* Spacing Scale (based on rem/px values from components) */
+    --space-1: 0.25rem; /* 4px */
+    --space-2: 0.5rem;  /* 8px */
+    --space-3: 0.75rem; /* 12px */
+    --space-4: 1rem;    /* 16px */
+    --space-6: 1.5rem;  /* 24px */
+    --space-8: 2rem;    /* 32px */
+    --space-12: 3rem;   /* 48px */
+    --space-16: 4rem;   /* 64px */
+    --space-24: 6rem;   /* 96px */
+
+    /* Font Sizes */
+    --font-xs: 0.75rem; /* 12px */
+    --font-sm: 0.875rem; /* 14px */
+    --font-base: 1rem;  /* 16px */
+    --font-lg: 1.125rem; /* 18px */
+    --font-xl: 1.25rem; /* 20px */
+    --font-2xl: 1.5rem; /* 24px */
+    --font-3xl: 1.875rem; /* 30px */
+    --font-4xl: 2.25rem; /* 36px */
+    
+    /* Radii */
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-xl: 16px;
+    --radius-2xl: 24px;
 }
 
-/* --- 2. BASE & RESET STYLES --- */
+/* --- 2. BASE & RESET STYLES (CRITICAL FOR MOBILE/SCROLL) --- */
 * {
     margin: 0;
     padding: 0;
-    box-sizing: border-box;
+    box-sizing: border-box !important;
+    max-width: 100%;
 }
+
 html {
     scroll-behavior: smooth;
+    overflow-x: hidden;
 }
+
 body {
     font-family: 'Inter', sans-serif;
     background: var(--primary-bg);
     color: var(--text-primary);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
 }
 
-/* --- 3. PRIMENG COMPONENT THEME OVERRIDES --- */
-/* This section applies your new theme to all PrimeNG components */
+/* Ensure Images Never Overflow (from about.component.scss) */
+img {
+    max-width: 100% !important;
+    height: auto !important;
+    display: block;
+}
+
+/* --- 3. GLOBAL LAYOUT UTILITIES --- */
+
+/* Reusable Container Base */
+.weone-container, .container, .hero-container, .section-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 var(--space-8);
+    width: 100%;
+    /* Override for component files using .container/.section-container */
+    &.hero-container { padding: 0 var(--space-8); }
+    &.section-container { padding: 0 var(--space-8); }
+    &.container { padding: 0 var(--space-8); }
+}
+
+/* Reusable Card Base */
+.weone-card-base {
+    background: var(--primary-bg);
+    border-radius: var(--radius-xl); /* Adjusted to standard radius */
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--glass-border);
+    transition: var(--transition-smooth);
+}
+
+/* Base Title Styling */
+.weone-section-title-base, .section-title, .hero-title {
+    font-family: 'Poppins', sans-serif;
+    background: var(--accent-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 700;
+}
+
+/* Base Button Styling (moved from home.component.scss) */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-4) var(--space-8);
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    text-decoration: none;
+    transition: var(--transition-smooth);
+    cursor: pointer;
+    border: none;
+    font-size: var(--font-base);
+}
+
+.btn-primary {
+  background: var(--accent-gradient);
+  color: white;
+  box-shadow: 0 4px 12px rgba(42, 171, 226, 0.3); /* Base on accent color */
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(42, 171, 226, 0.4);
+}
+
+.btn-secondary {
+  background: var(--primary-bg);
+  color: var(--text-primary);
+  border: 2px solid var(--glass-border);
+  box-shadow: var(--shadow-soft);
+}
+
+.btn-secondary:hover {
+  background: var(--secondary-bg);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+/* Base Animation Classes */
+.animate-on-scroll {
+  transform: translateY(30px);
+  transition: var(--transition-smooth);
+}
+
+.animate-on-scroll.in-view {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Specific component animation logic from insights.component.scss */
+[appScrollAnimate]:not(.weone-animate-visible) {
+    opacity: 0;
+    transform: translateY(30px);
+}
+
+[appScrollAnimate] {
+    transition:
+        opacity 0.6s ease-out,
+        transform 0.6s ease-out;
+}
+
+[appScrollAnimate].weone-animate-visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+
+/* --- 4. GLOBAL RESPONSIVE FIXES --- */
+@media (max-width: 1024px) {
+    /* Tool sidebar fix - critical for desktop-to-tablet layout transition */
+    .weone-tool-sidebar {
+        position: static !important;
+        top: auto !important;
+        max-width: 700px; /* Added from sponsor-ward.component.scss */
+        margin: 0 auto; /* Added from sponsor-ward.component.scss */
+    }
+}
+@media (max-width: 768px) {
+    /* Smaller container padding for better mobile use */
+    .weone-container, .container, .hero-container, .section-container {
+        padding: 0 var(--space-4) !important; /* Changed from 1rem to var */
+    }
+}
+@media (max-width: 640px) {
+     .weone-container, .container, .hero-container, .section-container {
+        padding: 0 var(--space-4) !important; 
+    }
+}
+@media (max-width: 480px) {
+    .weone-container, .container, .hero-container, .section-container {
+        padding: 0 var(--space-4) !important; 
+    }
+}
+
+/* --- 5. PRIMENG DEEP OVERRIDES (GLOBAL) --- */
+
+:root {
+    --p-button-primary-background: var(--accent-gradient);
+}
+
 .p-button {
     background: var(--accent-gradient) !important;
     border: none !important;
-    font-family: 'Inter', sans-serif !important;
     transition: var(--transition-smooth) !important;
 }
 .p-button:hover {
@@ -105,6 +268,8 @@ body {
 .p-select-item:hover {
     background: var(--secondary-bg) !important;
 }
+
+/* Datatable Overrides */
 .p-datatable .p-datatable-thead > tr > th {
     background: var(--secondary-bg) !important;
     border-bottom: 1px solid var(--glass-border) !important;
@@ -122,6 +287,8 @@ body {
     background: var(--secondary-bg) !important;
     border-top: 1px solid var(--glass-border) !important;
 }
+
+/* Dialog/Overlay Overrides */
 .p-dialog .p-dialog-header,
 .p-dialog .p-dialog-footer {
     background: var(--secondary-bg) !important;
@@ -129,7 +296,8 @@ body {
 }
 .p-dialog .p-dialog-content {
     background: var(--primary-bg) !important;
+    padding: 0 !important; /* Critical override from original styles.scss */
 }
 
-/* --- 4. TEMPLATE'S CORE LAYOUT STYLES (DO NOT REMOVE) --- */
+/* --- 6. IMPORT LOCAL LAYOUT (The actual Angular template structure) --- */
 @import 'layout/layout.scss';
