@@ -8,7 +8,7 @@ import {
   MutationCtx,
   internalMutation,
 } from "./_generated/server";
-import { v } from "convex/values";
+import { ConvexError, v } from "convex/values";
 import { api, internal } from "./_generated/api";
 import { Id } from "./_generated/dataModel";
 import { action, ActionCtx } from "./_generated/server";
@@ -242,5 +242,29 @@ export const _fulfillSponsorshipInternal = internalMutation({
     console.log(
       `Fulfillment complete and wards locked for sponsorship: ${sponsorshipId}`
     );
+  },
+});
+
+export const getAllSponsorshipsForAdmin = query({
+  handler: async (ctx: QueryCtx) => {
+    const identity = await ctx.auth.getUserIdentity();
+
+    // 🛑 CRITICAL: Ensure a user is logged in AND is an Admin/Manager
+    if (!identity) {
+      throw new ConvexError("Unauthorized: Must be logged in.");
+    }
+
+    // OPTIONAL: Check for Admin Role (Highly Recommended)
+    // const userDoc = await ctx.db.query("users").withIndex("by_authId", q => q.eq("authId", identity.subject)).unique();
+    // if (userDoc?.role !== 'admin') {
+    //   throw new ConvexError("Unauthorized: User is not an administrator.");
+    // }
+
+    // Fetch ALL active sponsorships (regardless of who created them)
+    return await ctx.db
+      .query("sponsorships")
+      .filter((q: any) => q.eq(q.field("status"), "active"))
+      .order("desc") 
+      .collect();
   },
 });

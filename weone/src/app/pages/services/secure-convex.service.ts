@@ -40,8 +40,7 @@ return this.authService.getConvexToken();    }
     public async loadMySponsorships() {
         this.sponsorshipsLoading.set(true);
         try {
-            const data = await this.authenticatedCall("sponsorships:getMySponsorships", {});
-            this.sponsorships.set(data || []);
+const data = await this.authenticatedCall("sponsorships:getAllSponsorshipsForAdmin", {});            this.sponsorships.set(data || []);
         } catch (error) {
             console.error("Failed to load secure sponsorships:", error);
             this.sponsorships.set([]);
