@@ -29,10 +29,10 @@ return this.authService.getConvexToken();    }
     }
         const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-    if (name.includes('get')) {
-        return (this.client as any).query(name, args); // No manual headers
+  if (name.includes('get')) {
+        return (this.client as any).query(name, args, { headers }); // ✅ FIX HERE
     } else {
-        return (this.client as any).mutation(name, args); // No manual headers
+        return (this.client as any).mutation(name, args, { headers }); // ✅ FIX HERE (for consistency)
     }
     }
 

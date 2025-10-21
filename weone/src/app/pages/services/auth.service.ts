@@ -49,6 +49,7 @@ public async login(email: string, password: string): Promise<AuthResult> {
                 
                 userSignal.set({ firstName: result.firstName || 'Manager', email }); 
                 isSignedInSignal.set(true);
+                
                 return { success: true };
             }
             return { success: false, message: 'Invalid credentials.' };
