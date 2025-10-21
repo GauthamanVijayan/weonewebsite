@@ -45,4 +45,18 @@ export default defineSchema({
     startDate: v.optional(v.number()), // NEW: Sponsorship start date
     endDate: v.optional(v.number()), // NEW: Sponsorship end date
   }).index("by_userId", ["userId"]),
+
+  users: defineTable({
+    email: v.string(),
+    passwordHash: v.string(), // Hashed password
+    firstName: v.string(),
+    lastName: v.string(),
+    role: v.union(v.literal("admin"), v.literal("sponsor")),
+    // 🎯 CRITICAL: This is the JWT/Auth Provider subject ID used by ctx.auth
+    authId: v.optional(v.string()), 
+  })
+    .index("by_email", ["email"])
+    .index("by_authId", ["authId"]), // Index for quickly mapping token subject to user document
+
+
 });

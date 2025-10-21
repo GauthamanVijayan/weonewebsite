@@ -27,23 +27,22 @@ export const createAdminUser = action({
   },
   // 🎯 FIX 2: Use ActionCtx, which is valid for Node.js
   handler: async (
-    ctx: ActionCtx,
-    { email, password, firstName, lastName }: CreateUserArgs // 👈 FIXES 'Cannot find name' errors
-  ): Promise<Id<any>> => {
-    // --- 1. NON-DB LOGIC (Hashing) ---
-    // This is safe to run in the Node.js environment.
-    const passwordHash = await bcrypt.hash(password, 10);
+      ctx: ActionCtx,
+      { email, password, firstName, lastName }: CreateUserArgs
+    ): Promise<Id<"users">> => { // Correctly specifying return type
+      // 1. NON-DB LOGIC (Hashing) - Stays in Node Action
+      const passwordHash = await bcrypt.hash(password, 10);
 
-    // --- 2. DB LOGIC (Delegation) ---
-    // 🎯 FIX 3: Call the internal mutation to perform the secure database write
-    const userId = await ctx.runMutation(internal.users.insertAdminRecord, {
-      email: email,
-      passwordHash: passwordHash,
-      firstName: firstName,
-      lastName: lastName,
-      role: "admin",
-    });
+      // 2. DB LOGIC (Delegation) - Now calls the new safe mutation
+      // 🎯 FIX: Call internal.internal._insertUserRecordDB
+      const userId = await ctx.runMutation(internal.internal._insertUserRecordDB, {
+        email: email,
+        passwordHash: passwordHash,
+        firstName: firstName,
+        lastName: lastName,
+        role: "admin",
+      });
 
-    return userId as Id<"users">;;
-  },
+      return userId as Id<"users">;
+    },
 });

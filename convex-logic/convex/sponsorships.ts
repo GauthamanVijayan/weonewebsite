@@ -155,10 +155,11 @@ export const getMySponsorships = query({
       return []; // Return an empty array if the user is not logged in
     }
 
+    const subjectId = identity.subject;
     // Fetch sponsorships linked to the user that are currently active
     return await ctx.db
       .query("sponsorships")
-      .withIndex("by_userId", (q: any) => q.eq("userId", identity.subject)) // Added 'q: any' for safety
+      .withIndex("by_userId", (q: any) => q.eq("userId", subjectId)) // Added 'q: any' for safety
       .filter((q: any) => q.eq(q.field("status"), "active")) // Added 'q: any' for safety
       .order("desc") // Show the most recent sponsorships first
       .collect();
