@@ -43,20 +43,11 @@ export const createRazorpayOrder = action({
     const MAX_INSTANT_PAYMENT_PAISE = 5000000;
     let paymentMethods: any = {};
 
-    if (args.amount > MAX_INSTANT_PAYMENT_PAISE) {
-      paymentMethods = {
-        options: {
-          checkout: {
-            method: {
-              card: 0,
-              upi: 0, // Disable instant payment types
-              netbanking: 0,
-            },
-          },
-          // Force user to see check/bank transfer options in the modal
-        },
-      };
-    }
+    // NOTE: The 'paymentMethods' object manipulation is client-side configuration
+    // and should be merged into the 'options' object returned to the Angular frontend,
+    // not used when creating the order on the server. We will ignore that part
+    // for the server order creation.
+
     const orderOptions = {
       amount: args.amount, // Required in paise
       currency: "INR",
@@ -68,11 +59,20 @@ export const createRazorpayOrder = action({
     };
 
     try {
-      // 2. Create the Order on Razorpay's server
-      const order = await razorpay?.orders.create(orderOptions);
+      // 1. Check for Razorpay SDK initialization
+      if (!razorpay) {
+        throw new Error(
+          "Payment service is unavailable due to missing server configuration."
+        );
+      } // 2. Create the Order on Razorpay's server
 
-      // 3. Return the Order ID needed by the frontend to open the payment modal
-      return { orderId: order?.id, amount: order?.amount };
+      const order = await razorpay.orders.create(orderOptions); // 3. Return the Order ID and the public Key ID to the frontend
+
+      return {
+        orderId: order.id,
+        amount: order.amount,
+        keyId: keyId, // <--- RETURNED HERE
+      };
     } catch (error) {
       console.error("Razorpay Order Creation Failed:", error);
       throw new Error("Failed to create payment order.");
@@ -90,7 +90,7 @@ export const verifyRazorpayPayment = action({
   handler: async (ctx, { orderId, paymentId, signature, sponsorshipId }) => {
     const RAZORPAY_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET;
     if (!RAZORPAY_KEY_SECRET) {
-     throw new Error("Server config error");
+      throw new Error("Server config error");
     }
     const shasum = crypto.createHmac("sha256", RAZORPAY_KEY_SECRET);
     shasum.update(`${orderId}|${paymentId}`);
@@ -139,15 +139,12 @@ export const processPaymentSuccess = action({
     }
   ): Promise<{ success: boolean }> => {
     // 1. Call the verification Action (defined in your convex/payment.ts)
-    const isVerified = await ctx.runAction(
-      verifyRazorpayPayment as any,
-      {
-        orderId: args.orderId,
-        paymentId: args.paymentId,
-        signature: args.signature,
-        sponsorshipId: args.sponsorshipId
-      }
-    );
+    const isVerified = await ctx.runAction(verifyRazorpayPayment as any, {
+      orderId: args.orderId,
+      paymentId: args.paymentId,
+      signature: args.signature,
+      sponsorshipId: args.sponsorshipId,
+    });
 
     if (!isVerified) {
       throw new ConvexError(

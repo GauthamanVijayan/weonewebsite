@@ -969,12 +969,12 @@ async proceedToPayment() {
         });
 
         // 3. Get the Razorpay Order ID (Convex Action)
-        const { orderId } = await (this.convex as any).createRazorpayOrder({
-            sponsorshipId, 
-            amount: totalAmountPaise, 
-            sponsorName: sponsorInfo.name, 
-            sponsorEmail: sponsorInfo.email
-        });
+        const { orderId, keyId } = await (this.convex as any).createRazorpayOrder({
+        sponsorshipId, 
+        amount: totalAmountPaise, 
+        sponsorName: sponsorInfo.name, 
+        sponsorEmail: sponsorInfo.email
+    });
 
         // 4. Load the Razorpay Checkout Script (if not already loaded)
         await loadRazorpayScript();
@@ -985,7 +985,7 @@ async proceedToPayment() {
         
         // 5. Configure and Open the Razorpay Modal
         const options = {
-            key: environment.RAZORPAY_KEY_ID, // Public Key ID from environment
+            key: keyId, // Public Key ID from environment
             amount: totalAmountPaise,         // Amount in PAISA
             currency: "INR",
             name: "WeOne Digital Sponsorship",

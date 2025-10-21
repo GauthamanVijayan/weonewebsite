@@ -31,12 +31,7 @@ type CreateSponsorshipArgs = {
   singleSponsoredWardId?: Id<"wards">;
 };
 
-// --- END Type Definitions ---
 
-/**
- * Creates a new sponsorship record with a "pending" status.
- * This is called when the user clicks "Proceed to Payment".
- */
 export const createSponsorship = mutation({
   args: {
     sponsorName: v.string(),
@@ -52,15 +47,22 @@ export const createSponsorship = mutation({
   ): Promise<Id<"sponsorships">> => {
     const identity = await ctx.auth.getUserIdentity();
     const identityFields: { userId?: string } = {};
+    const processedCart = args.cart.map(item => ({
+        ...item,
+        // Convert ISO string back to timestamp number for consistent backend storage/use
+        startDate: new Date(item.startDate).getTime(), 
+        endDate: new Date(item.endDate).getTime(),
+    }));
 
     if (identity) {
       identityFields.userId = identity.subject;
     }
-    const sponsorshipId = await ctx.db.insert("sponsorships", {
-      ...args,
-      status: "pending", // Payment hasn't happened yet
-      paymentDate: 0, // Set to 0 or null initially
-      ...identityFields,
+   const sponsorshipId = await ctx.db.insert("sponsorships", {
+        ...args,
+        cart: processedCart, // Use the processed cart
+        status: "pending", 
+        paymentDate: 0, 
+        ...identityFields
     });
     return sponsorshipId;
   },

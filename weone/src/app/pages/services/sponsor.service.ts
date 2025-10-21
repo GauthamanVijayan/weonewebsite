@@ -57,13 +57,14 @@ public async createSponsorship(args: {
         return(this.client as any).action('payment:createRazorpayOrder', args);
     }
 
-    public async processPaymentSuccess(args: {
+public async processPaymentSuccess(args: {
         sponsorshipId: string;
         paymentId: string;
         orderId: string;
         signature: string;
     }): Promise<any> {
-        return (this.client as any)('sponsorships:processPaymentSuccess', args);
+        return (this.client as any).action('payment:processPaymentSuccess', args);
+        
     }
     async loadZones() {
         this.zonesLoading.set(true);

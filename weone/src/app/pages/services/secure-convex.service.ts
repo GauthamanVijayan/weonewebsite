@@ -4,6 +4,7 @@ import { Injectable, inject } from '@angular/core';
 import { ConvexClient } from 'convex/browser';
 import { AuthService } from './auth.service';
 import { signal } from '@angular/core';
+import { api } from 'convex';
 
 @Injectable({
   providedIn: 'root'
