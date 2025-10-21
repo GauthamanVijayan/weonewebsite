@@ -3,7 +3,7 @@
 "use node";
 
 import { action, ActionCtx } from "./_generated/server";
-import { ConvexError, v } from "convex/values";
+import {  v } from "convex/values";
 import Razorpay from "razorpay";
 import { Id } from "./_generated/dataModel"; // Import Id for type safety
 import { internalAction } from "./_generated/server";
@@ -11,9 +11,11 @@ import { internal } from "./_generated/api";
 import crypto from "crypto";
 // Initialize Razorpay with the secret key from the environment
 let razorpay: Razorpay | null = null;
-const keyId = process.env.RAZORPAY_KEY_ID;
-const keySecret = process.env.RAZORPAY_KEY_SECRET;
-
+const keyId = process.env['RAZORPAY_KEY_ID'];
+const keySecret = process.env['RAZORPAY_KEY_SECRET'];
+type VerifyPaymentArgs = { 
+    orderId: string; paymentId: string; signature: string; sponsorshipId: Id<"sponsorships"> 
+}
 if (keyId && keySecret && keyId.length > 5 && !keyId.includes("YOUR_")) {
   razorpay = new Razorpay({
     key_id: keyId,
@@ -87,8 +89,8 @@ export const verifyRazorpayPayment = action({
     signature: v.string(),
     sponsorshipId: v.id("sponsorships"), // Pass the Convex ID from the frontend
   },
-  handler: async (ctx, { orderId, paymentId, signature, sponsorshipId }) => {
-    const RAZORPAY_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET;
+  handler: async (ctx: ActionCtx, { orderId, paymentId, signature, sponsorshipId }: VerifyPaymentArgs) => {
+  const RAZORPAY_KEY_SECRET = process.env['RAZORPAY_KEY_SECRET'];
     if (!RAZORPAY_KEY_SECRET) {
       throw new Error("Server config error");
     }
@@ -131,12 +133,7 @@ export const processPaymentSuccess = action({
   },
   handler: async (
     ctx: ActionCtx,
-    args: {
-      sponsorshipId: Id<"sponsorships">;
-      paymentId: string;
-      orderId: string;
-      signature: string;
-    }
+    args: VerifyPaymentArgs
   ): Promise<{ success: boolean }> => {
     // 1. Call the verification Action (defined in your convex/payment.ts)
     const isVerified = await ctx.runAction(internal.razorpayUtils._verifySignatureInternal, {
@@ -146,7 +143,7 @@ export const processPaymentSuccess = action({
     });
 
     if (!isVerified) {
-      throw new ConvexError(
+      throw new Error(
         "Payment verification failed due to signature mismatch."
       );
     } // 2. CRITICAL: Call the NEW consolidated fulfillment mutation.

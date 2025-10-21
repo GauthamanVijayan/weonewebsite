@@ -1,4 +1,3 @@
-<p-toast position="top-right" />
 <section class="weone-sponsor-hero">
     <div class="weone-hero-container">
         <div class="weone-hero-content" appScrollAnimate>
@@ -260,7 +259,6 @@
                                             icon="pi pi-shopping-cart"
                                             severity="success"
                                             size="small"
-                                            
                                             [text]="true"
                                             [title]="'Add to Cart'"
                                             (onClick)="openBulkSponsorDialog()"
@@ -589,10 +587,20 @@
                 </div>
 
                 <div class="weone-table-wrapper" appScrollAnimate>
+                    <div class="bulk-action-bar flex justify-content-end p-2">
+                        <p-button
+                            label="Add Selected Wards to Cart"
+                            icon="pi pi-cart-plus"
+                            severity="success"
+                            [disabled]="selectedWards().length === 0"
+                            (onClick)="openBulkSponsorDialog()"
+                        />
+                    </div>
                     <div style="overflow-x: auto">
                         <p-table
                             [value]="filteredWards()"
                             [loading]="wardsLoading()"
+                            selectionMode="multiple"
                             [(selection)]="selectedWards"
                             (selectionChange)="onSelectionChange()"
                             dataKey="_id"
@@ -653,7 +661,7 @@
                                     </td>
                                     <td>
                                         <p-button
-                                            label="Sponsor"
+                                            label="Add to cart"
                                             i18n-label
                                             icon="pi pi-heart"
                                             size="small"
@@ -855,6 +863,25 @@
     [resizable]="false"
 >
     <div class="weone-dialog-content">
+        <!-- ✅ SIMPLE: Just show if currently sponsored -->
+        @if (selectedWardForSponsorship()?.isSponsored) {
+            <div class="p-message p-message-warn" style="margin-bottom: 1rem">
+                <div class="p-message-wrapper">
+                    <span
+                        class="p-message-icon pi pi-exclamation-triangle"
+                    ></span>
+                    <div class="p-message-text">
+                        This ward is currently sponsored until
+                        <strong>{{
+                            selectedWardForSponsorship()?.sponsoredUntil
+                                | date: 'mediumDate'
+                        }}</strong
+                        >. Your sponsorship will start after this date.
+                    </div>
+                </div>
+            </div>
+        }
+
         <div class="weone-ward-summary">
             <div class="weone-ward-summary-item">
                 <span class="weone-label">Local Body Type:</span>
@@ -896,13 +923,20 @@
                         [minDate]="today"
                         dateFormat="dd/mm/yy"
                         appendTo="body"
+                        [readonlyInput]="
+                            selectedWardForSponsorship()?.isSponsored
+                        "
                     />
+                    @if (selectedWardForSponsorship()?.isSponsored) {
+                        <small class="text-blue-600">
+                            <i class="pi pi-info-circle"></i>
+                            Auto-set to day after current sponsorship ends
+                        </small>
+                    }
                 </div>
 
                 <div class="weone-form-group">
-                    <label for="durationMonths"
-                        >Sponsorship Duration (Months)</label
-                    >
+                    <label for="durationMonths">Duration (Months)</label>
                     <p-inputNumber
                         inputId="durationMonths"
                         [(ngModel)]="sponsorshipMonths"
@@ -932,37 +966,69 @@
             (onClick)="isVolunteerDialogVisible.set(false)"
         />
         <p-button
-            label="Add to Cart"
+            [label]="
+                selectedWardForSponsorship()?.isSponsored
+                    ? 'Queue Sponsorship'
+                    : 'Add to Cart'
+            "
             icon="pi pi-shopping-cart"
             (onClick)="addToCart()"
             [disabled]="!sponsorshipStartDate() || !sponsorshipEndDate()"
         />
     </ng-template>
 </p-dialog>
-
 <p-dialog
     header="Sponsor Multiple Wards"
     [(visible)]="isBulkSponsorDialogVisible"
     [modal]="true"
     [draggable]="false"
     [resizable]="false"
+    [style]="{ width: '90vw', maxWidth: '500px' }"
 >
     <div class="weone-dialog-content">
         <div class="weone-bulk-summary">
-            You are setting the sponsorship details for
-            <strong>{{ displayedWardCount() }} selected wards</strong>
             @if (bulkSponsorshipData()) {
-                at <strong>{{ bulkSponsorshipData()!.level }}</strong> level
+                <!-- Bulk selection at higher level -->
+                <p>
+                    Sponsoring
+                    <strong>{{ displayedWardCount() }} wards</strong> at
+                    <strong>{{ bulkSponsorshipData()!.level }}</strong> level in
+                    <strong>{{ bulkSponsorshipData()!.identifier }}</strong
+                    >.
+                </p>
+                <p class="weone-bulk-note">
+                    <i class="pi pi-info-circle"></i>
+                    {{ estimatedCostDescription() }}
+                </p>
+            } @else {
+                <!-- Individual ward selection -->
+                <p>
+                    You have selected
+                    <strong>{{ selectedWards().length }} ward(s)</strong> to
+                    sponsor. Maximum executives allowed:
+                    <strong>{{ bulkMaxExecutives() }}</strong
+                    >.
+                </p>
             }
-            . The maximum executives allowed for this group is
-            <strong>{{ bulkMaxExecutives() }}</strong
-            >.
         </div>
+
+        <!-- ✅ SIMPLE: Just show if any are queued -->
+        @if (hasQueuedWardsInSelection()) {
+            <div class="p-message p-message-info" style="margin-top: 1rem">
+                <div class="p-message-wrapper">
+                    <span class="p-message-icon pi pi-clock"></span>
+                    <div class="p-message-text">
+                        Some selected wards are currently sponsored. Your
+                        sponsorship for these wards will start after their
+                        current sponsorship ends.
+                    </div>
+                </div>
+            </div>
+        }
+
         <div class="weone-dialog-form">
             <div class="weone-form-group">
-                <label for="bulkExecutiveCount">
-                    Number of Executives to Sponsor (per ward)
-                </label>
+                <label for="bulkExecutiveCount"> Executives per Ward </label>
                 <p-inputNumber
                     inputId="bulkExecutiveCount"
                     [(ngModel)]="bulkSponsoredExecutivesCount"
@@ -974,9 +1040,10 @@
                     decrementButtonIcon="pi pi-minus"
                 />
             </div>
+
             <div class="weone-date-picker-group">
                 <div class="weone-form-group">
-                    <label for="bulkStartDate">Sponsorship Start Date</label>
+                    <label for="bulkStartDate">Start Date</label>
                     <p-datePicker
                         inputId="bulkStartDate"
                         [(ngModel)]="bulkSponsorshipStartDate"
@@ -985,10 +1052,9 @@
                         appendTo="body"
                     />
                 </div>
+
                 <div class="weone-form-group">
-                    <label for="bulkDurationMonths"
-                        >Sponsorship Duration (Months)</label
-                    >
+                    <label for="bulkDurationMonths">Duration (Months)</label>
                     <p-inputNumber
                         inputId="bulkDurationMonths"
                         [(ngModel)]="bulkSponsorshipMonths"
@@ -1000,14 +1066,16 @@
                     />
                 </div>
             </div>
+
             <div class="weone-form-group">
-                <label>Sponsorship Ends On:</label>
+                <label>Ends On:</label>
                 <span class="weone-value">{{
                     bulkSponsorshipEndDate() | date: 'mediumDate'
                 }}</span>
             </div>
         </div>
     </div>
+
     <ng-template pTemplate="footer">
         <p-button
             label="Cancel"
@@ -1016,7 +1084,7 @@
             (onClick)="isBulkSponsorDialogVisible.set(false)"
         />
         <p-button
-            label="Add Selected to Cart"
+            label="Add to Cart"
             icon="pi pi-shopping-cart"
             (onClick)="addSelectedWardsToCart()"
             [disabled]="

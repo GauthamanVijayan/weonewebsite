@@ -19,16 +19,19 @@ export interface LocalBody {
 }
 
 export interface Ward {
-  _id: string;
-  wardName: string;
-  
-  wardNumber?: string;
-  localBodyId: string;
-  localBodyName: string;
-  localBodyType: 'P' | 'M' | 'C';
-  type: 'Urban' | 'Rural';
-  districtName: string;
-  zoneName: string;
+    _id: string;
+    wardName: string;
+    localBodyId: string;
+    localBodyName: string;
+    localBodyType: 'P' | 'M' | 'C';
+    type: 'Urban' | 'Rural';
+    districtName: string;
+    zoneName: string;
+    isSponsored: boolean; // ✅ Now properly calculated
+    sponsoredUntil: number; // ✅ Latest end date of all sponsorships
+    sponsoredExecutivesCount: number; // ✅ Total executives sponsored
+    availableExecutives: number; // ✅ Remaining slots
+    isPendingSponsorship?: boolean; // ✅ Has pending sponsorship (3-day lock)
 }
 export interface CartItem {
     ward: Ward;

@@ -73,3 +73,187 @@
         }
     }
 }
+.weone-filter-section {
+    background: var(--primary-bg);
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--glass-border);
+}
+
+.weone-filter-controls {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.weone-filter-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+
+    label {
+        font-weight: 600;
+        font-size: 0.875rem;
+        color: var(--text-primary);
+    }
+}
+
+.weone-filter-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+
+    &.status-active {
+        background: #d1fae5;
+        color: #065f46;
+    }
+
+    &.status-pending {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    &.status-expired {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+}
+
+.weone-empty-state {
+    text-align: center;
+    padding: 3rem;
+    color: var(--text-muted);
+
+    i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+
+    p {
+        font-size: 1.125rem;
+        font-weight: 600;
+    }
+}
+
+sponsorship-details {
+    .detail-section {
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--glass-border);
+
+        &:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+
+        h4 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.75rem;
+        }
+
+        p {
+            margin-bottom: 0.5rem;
+            color: var(--text-secondary);
+
+            strong {
+                color: var(--text-primary);
+                font-weight: 600;
+                margin-right: 0.5rem;
+            }
+        }
+    }
+
+    .wards-list {
+        max-height: 300px;
+        overflow-y: auto;
+        margin-top: 0.5rem;
+    }
+
+    .ward-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem;
+        margin-bottom: 0.5rem;
+        background: var(--secondary-bg);
+        border-radius: 8px;
+        border: 1px solid var(--glass-border);
+
+        .ward-info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+
+            strong {
+                color: var(--text-primary);
+                font-size: 0.9375rem;
+            }
+
+            small {
+                color: var(--text-secondary);
+                font-size: 0.8125rem;
+            }
+        }
+
+        .ward-cost {
+            font-weight: 600;
+            color: var(--trust-blue);
+            white-space: nowrap;
+        }
+    }
+}
+
+// Message styling
+.p-message {
+    border-radius: 8px;
+    border-left-width: 4px;
+
+    &.p-message-warn {
+        background: #fef3c7;
+        border-color: #f59e0b;
+        color: #92400e;
+    }
+
+    &.p-message-info {
+        background: #dbeafe;
+        border-color: #3b82f6;
+        color: #1e40af;
+    }
+
+    .p-message-wrapper {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.75rem;
+        padding: 1rem;
+    }
+
+    .p-message-icon {
+        font-size: 1.125rem;
+        flex-shrink: 0;
+    }
+
+    .p-message-text {
+        flex: 1;
+        line-height: 1.5;
+        font-size: 0.9375rem;
+
+        strong {
+            font-weight: 700;
+        }
+    }
+}

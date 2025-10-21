@@ -19,11 +19,11 @@
         "module": "ES2022",
         "types": ["jasmine", "node"],
         "baseUrl": "./",
-        "paths": {
-            "@/*": ["src/app/*"],
-            "convex/*": ["../backconvex-logic/convex/*"],
-           
-        }
+     "paths": {
+      "@/*": ["src/app/*"],
+      "convex/_generated/*": ["../convex-logic/convex/_generated/*"],
+      "convex/*": ["../convex-logic/convex/*"]
+    }
     },
     "angularCompilerOptions": {
         "enableI18nLegacyMessageIdFormat": false,

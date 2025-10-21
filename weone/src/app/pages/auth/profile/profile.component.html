@@ -19,28 +19,252 @@
             />
         </div>
 
+        <!-- ✅ Filter Section -->
+        <div class="weone-filter-section">
+            <div class="weone-filter-controls">
+                <!-- Search -->
+                <div class="weone-filter-item">
+                    <label for="search">Search</label>
+                    <input
+                        id="search"
+                        type="text"
+                        pInputText
+                        [(ngModel)]="searchText"
+                        placeholder="Search sponsor, ward, or local body..."
+                        (ngModelChange)="applyFilters()"
+                        [style]="{ width: '100%' }"
+                    />
+                </div>
+
+                <!-- Status -->
+                <div class="weone-filter-item">
+                    <label for="status">Status</label>
+                    <p-select
+                        inputId="status"
+                        [options]="statusOptions"
+                        [(ngModel)]="selectedStatus"
+                        (onChange)="applyFilters()"
+                        [style]="{ width: '100%' }"
+                    />
+                </div>
+
+                <!-- Zone -->
+                <div class="weone-filter-item">
+                    <label for="zone">Zone</label>
+                    <p-select
+                        inputId="zone"
+                        [options]="zones()"
+                        [(ngModel)]="selectedZone"
+                        (onChange)="onZoneChange()"
+                        placeholder="All Zones"
+                        [showClear]="true"
+                        [style]="{ width: '100%' }"
+                    />
+                </div>
+
+                <!-- District -->
+                <div class="weone-filter-item">
+                    <label for="district">District</label>
+                    <p-select
+                        inputId="district"
+                        [options]="districts()"
+                        [(ngModel)]="selectedDistrict"
+                        (onChange)="onDistrictChange()"
+                        placeholder="All Districts"
+                        [showClear]="true"
+                        [disabled]="!selectedZone()"
+                        [style]="{ width: '100%' }"
+                    />
+                </div>
+
+                <!-- Subdistrict -->
+                <div class="weone-filter-item">
+                    <label for="subdistrict">Sub District</label>
+                    <p-select
+                        inputId="subdistrict"
+                        [options]="subdistricts()"
+                        [(ngModel)]="selectedSubdistrict"
+                        (onChange)="onSubdistrictChange()"
+                        placeholder="All Sub Districts"
+                        [showClear]="true"
+                        [disabled]="!selectedDistrict()"
+                        [style]="{ width: '100%' }"
+                    />
+                </div>
+
+                <!-- Local Body -->
+                <div class="weone-filter-item">
+                    <label for="localBody">Local Body</label>
+                    <p-select
+                        inputId="localBody"
+                        [options]="localBodies()"
+                        [(ngModel)]="selectedLocalBody"
+                        (onChange)="applyFilters()"
+                        placeholder="All Local Bodies"
+                        [showClear]="true"
+                        [disabled]="!selectedSubdistrict()"
+                        [style]="{ width: '100%' }"
+                    />
+                </div>
+            </div>
+
+            <div class="weone-filter-actions">
+                <p-button
+                    label="Clear Filters"
+                    icon="pi pi-filter-slash"
+                    severity="secondary"
+                    [outlined]="true"
+                    (onClick)="clearFilters()"
+                />
+            </div>
+        </div>
+
+        <!-- Table -->
         <div class="weone-table-wrapper">
             <p-table
                 [value]="sponsorships()"
                 [loading]="sponsorshipsLoading()"
-                styleClass="weone-wards-table"
                 [paginator]="true"
-                [rows]="5"
+                [rows]="10"
                 [showCurrentPageReport]="true"
                 currentPageReportTemplate="Showing {first} to {last} of {totalRecords} sponsorships"
             >
-                <ng-template pTemplate="body" let-sponsorship>
+                <ng-template pTemplate="header">
                     <tr>
-                        <td>{{ sponsorship.endDate | date: 'mediumDate' }}</td>
-                        <td>
-                            <p-button
-                                label="Cancel Sponsorship"
-                                icon="pi pi-times-circle"
-                                [text]="true"
-                                severity="danger"
-                                (onClick)="onCancel(sponsorship._id)"
-                                [loading]="isCancelling()"
-                            />
+                        <th>Sponsor Name</th>
+                        <th>Ward Name</th>
+                        <th>Zone</th>
+                        <th>District</th>
+                        <th>Local Body</th>
+                        <th>Amount</th>
+                        <th>Start Date</th>
+                        <th>End Date</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </ng-template>
+
+           <ng-template pTemplate="body" let-sponsorship>
+    <tr>
+        <td>{{ sponsorship.sponsorName }}</td>
+        
+        <!-- ✅ FIX: Show all wards or bulk description -->
+        <td>
+            @if (sponsorship.cart.length === 1) {
+                {{ sponsorship.cart[0]?.ward?.wardName || 'N/A' }}
+            } @else if (sponsorship.cart[0]?.isBulk) {
+                <strong>{{ sponsorship.cart[0].bulkWardCount }} wards</strong>
+                <br>
+                <small>{{ sponsorship.cart[0].bulkIdentifier }}</small>
+            } @else {
+                <strong>{{ sponsorship.cart.length }} wards</strong>
+                <br>
+                <small>Multiple locations</small>
+            }
+        </td>
+        
+        <td>
+            @if (sponsorship.cart.length === 1) {
+                {{ sponsorship.cart[0]?.ward?.localBodyName || 'N/A' }}
+            } @else if (sponsorship.cart[0]?.isBulk) {
+                {{ sponsorship.cart[0].bulkLevel | titlecase }} Level
+            } @else {
+                Multiple
+            }
+        </td>
+        
+        <td>{{ sponsorship.totalAmount | currency:'INR':'symbol':'1.2-2' }}</td>
+        <td>{{ sponsorship.endDate | date: 'mediumDate' }}</td>
+        
+        <td>
+            <p-button
+                label="View Details"
+                icon="pi pi-eye"
+                [text]="true"
+                size="small"
+                (onClick)="viewSponsorshipDetails(sponsorship)"
+            />
+            <p-button
+                label="Cancel"
+                icon="pi pi-times-circle"
+                [text]="true"
+                severity="danger"
+                size="small"
+                (onClick)="onCancel(sponsorship._id)"
+                [loading]="isCancelling()"
+            />
+        </td>
+    </tr>
+
+    <p-dialog
+    header="Sponsorship Details"
+    [(visible)]="isDetailsDialogVisible"
+    [modal]="true"
+    [draggable]="false"
+    [resizable]="false"
+    [style]="{ width: '90vw', maxWidth: '600px' }"
+>
+    <div class="sponsorship-details" *ngIf="selectedSponsorship">
+        <div class="detail-section">
+            <h4>Sponsor Information</h4>
+            <p><strong>Name:</strong> {{ selectedSponsorship.sponsorName }}</p>
+            <p><strong>Email:</strong> {{ selectedSponsorship.sponsorEmail }}</p>
+            <p><strong>Status:</strong> 
+                <span class="status-badge" [ngClass]="'status-' + selectedSponsorship.status">
+                    {{ selectedSponsorship.status }}
+                </span>
+            </p>
+        </div>
+
+        <div class="detail-section">
+            <h4>Sponsorship Period</h4>
+            <p><strong>Start Date:</strong> {{ selectedSponsorship.startDate | date: 'mediumDate' }}</p>
+            <p><strong>End Date:</strong> {{ selectedSponsorship.endDate | date: 'mediumDate' }}</p>
+            <p><strong>Duration:</strong> {{ selectedSponsorship.sponsorshipDurationMonths }} month(s)</p>
+        </div>
+
+        <div class="detail-section">
+            <h4>Sponsored Wards ({{ selectedSponsorship.cart.length }})</h4>
+            <div class="wards-list">
+                @for (item of selectedSponsorship.cart; track item.ward._id) {
+                    <div class="ward-item">
+                        <div class="ward-info">
+                            <strong>{{ item.ward.wardName }}</strong>
+                            <small>{{ item.ward.localBodyName }} • {{ item.ward.districtName }}</small>
+                        </div>
+                        <div class="ward-cost">
+                            {{ item.costPerMonth | currency:'INR':'symbol':'1.0-0' }}/mo
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="detail-section">
+            <h4>Payment Summary</h4>
+            <p><strong>Total Amount:</strong> {{ selectedSponsorship.totalAmount | currency:'INR':'symbol':'1.2-2' }}</p>
+        </div>
+    </div>
+
+    <ng-template pTemplate="footer">
+        <p-button
+            label="Close"
+            severity="secondary"
+            (onClick)="isDetailsDialogVisible = false"
+        />
+    </ng-template>
+</p-dialog>
+</ng-template>
+
+                <ng-template pTemplate="emptymessage">
+                    <tr>
+                        <td colspan="10">
+                            <div class="weone-empty-state">
+                                <i class="pi pi-inbox"></i>
+                                <p>
+                                    No sponsorships found matching your filters
+                                </p>
+                            </div>
                         </td>
                     </tr>
                 </ng-template>

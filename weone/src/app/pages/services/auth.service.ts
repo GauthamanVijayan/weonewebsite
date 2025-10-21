@@ -2,41 +2,65 @@ import { Injectable, inject, signal } from '@angular/core';
 import { ConvexClient } from 'convex/browser';
 import { Observable, firstValueFrom, first } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
-import { toObservable } from '@angular/core/rxjs-interop'; // 🎯 NEW: Import the Observable interop helper
+import { toObservable } from '@angular/core/rxjs-interop';
+import { Router } from '@angular/router';
+
 interface AuthResult {
     success: boolean;
     message?: string;
     userId?: string;
 }
+
 interface UserProfile {
     firstName: string;
     email: string;
 }
 
-const userSignal = signal<UserProfile | null>({
-    firstName: 'Admin',
-    email: 'admin@weone.com'
-}); // 🎯 FIX 1: Provide a full initial value for safety
+const userSignal = signal<UserProfile | null>(null);
 const isSignedInSignal = signal(false);
 
 @Injectable({
     providedIn: 'root'
 })
 export class AuthService {
-    // --- Injections ---
-    private client: any = inject(ConvexClient); // Assuming ConvexClient is injected
+    private client: any = inject(ConvexClient);
+    private router = inject(Router);
 
-public user$ = toObservable(userSignal.asReadonly()); // 🎯 FIX 1: Convert Signal to Observable
-public isSignedIn$: Observable<boolean> = toObservable(isSignedInSignal.asReadonly()); // 🎯 FIX 1: Convert Signal to Observable    // Utility wrapper (from ConvexService logic, adapted here)
+    public user$ = toObservable(userSignal.asReadonly());
+    public isSignedIn$: Observable<boolean> = toObservable(
+        isSignedInSignal.asReadonly()
+    );
+
     private async callAuthFunction(name: string, args: any): Promise<any> {
-        
-       return (this.client as any).action(name, args);
+        return (this.client as any).action(name, args);
     }
 
-public async login(email: string, password: string): Promise<AuthResult> {
+    constructor() {
+        this.initializeAuth();
+    }
+
+    private async initializeAuth() {
+        const token = localStorage.getItem('CONVEX_AUTH_TOKEN');
+        console.log(token + 'convextoken');
+        if (token) {
+            // ✅ CRITICAL: Set auth callback that returns the token
+(this.client as any).setAuth(async () => token);
+            // Optionally restore user state from localStorage
+            const userDataStr = localStorage.getItem('USER_DATA');
+            if (userDataStr) {
+                try {
+                    const userData = JSON.parse(userDataStr);
+                    userSignal.set(userData);
+                    isSignedInSignal.set(true);
+                } catch (e) {
+                    console.error('Failed to parse user data:', e);
+                }
+            }
+        }
+    }
+
+    public async login(email: string, password: string): Promise<AuthResult> {
         try {
-            // 1. Call the backend mutation to verify credentials
-            // The result now contains { userId: Id<"users">, authId: string }
             const result = await this.callAuthFunction('auth:login', {
                 email,
                 password
@@ -44,29 +68,60 @@ public async login(email: string, password: string): Promise<AuthResult> {
 
             if (result && result.authId) {
                 const token = result.authId;
-                localStorage.setItem('CONVEX_AUTH_TOKEN', result.authId); 
-                (this.client as any).setAuth(async () => token);
-                
-                userSignal.set({ firstName: result.firstName || 'Manager', email }); 
+
+                // Store both token AND userId
+                localStorage.setItem('CONVEX_AUTH_TOKEN', token);
+                localStorage.setItem('CONVEX_USER_ID', result.userId); // ✅ Store user ID
+
+                // Set auth on client
+                this.client.setAuth(async () => token);
+
+                // Store full user data
+                const userData = {
+                    firstName: result.firstName || 'Manager',
+                    email: result.email || email,
+                    userId: result.userId // ✅ Include userId
+                };
+                localStorage.setItem('USER_DATA', JSON.stringify(userData));
+
+                userSignal.set(userData);
                 isSignedInSignal.set(true);
-                
-                return { success: true };
+
+                await new Promise((resolve) => setTimeout(resolve, 100));
+
+                return { success: true, userId: result.userId };
             }
+
             return { success: false, message: 'Invalid credentials.' };
         } catch (error: any) {
+            console.error('Login error:', error);
             return {
                 success: false,
                 message: error.message || 'Login failed.'
             };
         }
     }
-    // Rest of the methods can be simplified/removed since Clerk is gone
+
     public signOut(): void {
+        // 1. Clear localStorage
+        localStorage.removeItem('CONVEX_AUTH_TOKEN');
+        localStorage.removeItem('USER_DATA');
+
+        // 2. Clear Convex auth
+
+        // 3. Reset signals
         userSignal.set(null);
         isSignedInSignal.set(false);
+
+        // 4. Navigate to login
+        this.router.navigate(['/signin']);
     }
 
     public async getConvexToken(): Promise<string | null> {
-       return localStorage.getItem('CONVEX_AUTH_TOKEN');
+        return localStorage.getItem('CONVEX_AUTH_TOKEN');
     }
+
+    public getUserId(): string | null {
+    return localStorage.getItem('CONVEX_USER_ID');
+}
 }

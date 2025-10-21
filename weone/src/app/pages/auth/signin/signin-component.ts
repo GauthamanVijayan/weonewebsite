@@ -39,21 +39,23 @@ export class LoginComponent {
     this.errorMessage.set(null);
 
     try {
-      // Call the login method from your AuthService
-      const result = await this.authService.login(this.email(), this.password());
-      
-      if (result.success) {
-        // On successful login, navigate to the user's profile page
-        this.router.navigate(['/userProfile']);
-      } else {
-        this.errorMessage.set(result.message || 'An unknown error occurred.');
-      }
+        const result = await this.authService.login(this.email(), this.password());
+        
+        if (result.success) {
+            console.log('✅ Login successful, navigating...');
+            
+            // ✅ Wait a bit longer for auth to fully propagate
+            await new Promise(resolve => setTimeout(resolve, 200));
+            
+            this.router.navigate(['/userProfile']);
+        } else {
+            this.errorMessage.set(result.message || 'An unknown error occurred.');
+        }
     } catch (error: any) {
-      // Handle unexpected errors
-      console.error('Login failed:', error);
-      this.errorMessage.set(error.message || 'Failed to connect to the server.');
+        console.error('❌ Login failed:', error);
+        this.errorMessage.set(error.message || 'Failed to connect to the server.');
     } finally {
-      this.isLoading.set(false);
+        this.isLoading.set(false);
     }
-  }
+}
 }

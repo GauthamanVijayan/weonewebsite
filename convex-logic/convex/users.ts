@@ -5,10 +5,10 @@ import { v } from "convex/values";
 // Internal Query to securely read the user record
 export const getUserByEmailInternal = internalQuery({
     args: { email: v.string() },
-    handler: async (ctx: QueryCtx, { email }) => {
+    handler: async (ctx: QueryCtx, { email }: { email: string }) => {
         return await ctx.db
             .query("users")
-            .withIndex("by_email", q => q.eq("email", email))
+            .withIndex("by_email", (q: any) => q.eq("email", email))
             .unique();
     },
 });

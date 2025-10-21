@@ -9,7 +9,7 @@ import {
   internalAction,
   action,
 } from "./_generated/server";
-import { v, ConvexError } from "convex/values";
+import { v } from "convex/values";
 import { Id } from "./_generated/dataModel";
 import bcrypt from "bcryptjs";
 import { internal } from "./_generated/api";
@@ -26,15 +26,18 @@ interface LoginResult {
   userId: Id<"users">;
   authId: string;
   firstName: string;
+  email: string;
 }
 
 // --- Internal Mutation: Insert/Create User Record ---
 
-
 // --- Internal Action: Securely Verify Password (Called by login) ---
 export const _verifyPasswordInternal = internalAction({
   args: { password: v.string(), hash: v.string() },
-  handler: async (ctx, { password, hash }) => {
+  handler: async (
+    ctx: ActionCtx,
+    { password, hash }: { password: string; hash: string }
+  ) => {
     // Uses the bcrypt Node package
     return bcrypt.compare(password, hash);
   },
@@ -46,14 +49,14 @@ export const login = action({
   args: { email: v.string(), password: v.string() },
   handler: async (
     ctx: ActionCtx,
-    { email, password }
+    { email, password }: { email: string; password: string }
   ): Promise<LoginResult> => {
     // 1. Fetch user (Must use internal query from users.ts)
     const user = (await ctx.runQuery(internal.users.getUserByEmailInternal, {
       email,
     })) as UserDocument | null;
     if (!user) {
-      throw new ConvexError("Invalid email .");
+      throw new Error("Invalid email .");
     }
 
     // 2. Verify password (Action calling internal Action)
@@ -66,14 +69,15 @@ export const login = action({
     );
 
     if (!passwordMatch) {
-      throw new ConvexError("Invalid  password.");
+      throw new Error("Invalid  password.");
     }
 
     // 3. Login is successful.
     return {
       userId: user._id,
       authId: user.authId,
-      firstName: user.firstName, // Return user data
+      firstName: user['firstName'],
+      ["email"]: user['email'], // ✅ Add email
     };
   },
 });

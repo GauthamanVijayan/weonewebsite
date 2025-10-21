@@ -1,13 +1,13 @@
 // backend/convex/razorpay.utils.ts
 
 "use node"; 
-import { internalAction } from "./_generated/server";
+import { ActionCtx, internalAction } from "./_generated/server";
 import { v } from "convex/values";
 import crypto from "crypto";
 
 // Get the key that is shared across the Convex app
-const RAZORPAY_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET;
-
+const RAZORPAY_KEY_SECRET = process.env['RAZORPAY_KEY_SECRET'];
+type VerifySignatureArgs = { orderId: string; paymentId: string; signature: string };
 // 🎯 This is a secure, private utility function (internalAction)
 export const _verifySignatureInternal = internalAction({
   args: {
@@ -15,7 +15,7 @@ export const _verifySignatureInternal = internalAction({
     paymentId: v.string(),
     signature: v.string(),
   },
-  handler: async (ctx, { orderId, paymentId, signature }) => {
+  handler: async (ctx: ActionCtx, args: VerifySignatureArgs) => {
     if (!RAZORPAY_KEY_SECRET) {
       // Safely throw an error if the secret is missing
       throw new Error("Razorpay secret key is not configured for verification.");
@@ -23,9 +23,9 @@ export const _verifySignatureInternal = internalAction({
     
     // Perform the cryptographic signature check
     const shasum = crypto.createHmac("sha256", RAZORPAY_KEY_SECRET);
-    shasum.update(`${orderId}|${paymentId}`);
+    shasum.update(`${args.orderId}|${args.paymentId}`);
     const digest = shasum.digest("hex");
     
-    return digest === signature; // Returns boolean
+    return digest === args.signature; // Returns boolean
   },
 });

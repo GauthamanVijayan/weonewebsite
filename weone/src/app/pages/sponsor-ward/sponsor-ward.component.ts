@@ -463,20 +463,76 @@ export class SponsorWardComponent {
             });
         }
     }
+
+    isBulkQueued = computed(() => {
+    const today = new Date();
+    // Check if the calculated start date is more than one day in the future
+    return this.bulkSponsorshipStartDate() && this.bulkSponsorshipStartDate()!.getTime() > today.getTime() + 86400000;
+});
     // ==========================================
     // DIALOG HANDLERS
     // ==========================================
-    openVolunteerDialog(ward: Ward) {
-        this.selectedWardForSponsorship.set(ward);
+// in sponsor-ward.component.ts
+hasQueuedWardsInSelection = computed(() => {
+    return this.selectedWards().some(ward => ward.isSponsored);
+});
+
+openVolunteerDialog(ward: Ward) {
+    this.selectedWardForSponsorship.set(ward);
+    this.isVolunteerDialogVisible.set(true);
+    
+    console.log('🔍 Ward Sponsorship Details:', {
+        wardName: ward.wardName,
+        isSponsored: ward.isSponsored,
+        sponsoredUntil: ward.sponsoredUntil,
+        sponsoredExecutivesCount: ward.sponsoredExecutivesCount,
+        availableExecutives: ward.availableExecutives,
+        isPendingSponsorship: ward.isPendingSponsorship,
+        maxExecutives: this.getMaxExecutives(ward.localBodyType)
+    });
+    
+    // ✅ Check if ward has ANY sponsored executives (including pending with 3-day lock)
+    if (ward.isSponsored && ward.sponsoredUntil && ward.sponsoredUntil > 0) {
+        const currentEndDate = new Date(ward.sponsoredUntil);
+        const dayAfterEnd = new Date(currentEndDate);
+        dayAfterEnd.setDate(dayAfterEnd.getDate() + 1);
+        
+        const maxExecs = this.getMaxExecutives(ward.localBodyType);
+        const available = ward.availableExecutives || 0;
+        
+        if (available > 0) {
+            // Partial sponsorship - some slots available
+            this.sponsorshipStartDate.set(new Date()); // Can start today
+            
+            this.messageService.add({
+                severity: 'info',
+                summary: ward.isPendingSponsorship ? 'Pending Sponsorship (3-Day Lock)' : 'Partial Sponsorship',
+                detail: `${ward.sponsoredExecutivesCount} of ${maxExecs} executives are ${ward.isPendingSponsorship ? 'pending/locked' : 'sponsored'} until ${currentEndDate.toLocaleDateString()}. You can sponsor the remaining ${available} executive(s) immediately.`,
+                life: 7000
+            });
+            
+            // Set count to available slots
+            this.sponsoredExecutivesCount.set(Math.min(1, available));
+        } else {
+            // Fully sponsored - must queue
+            this.sponsorshipStartDate.set(dayAfterEnd);
+            
+            this.messageService.add({
+                severity: 'warn',
+                summary: ward.isPendingSponsorship ? 'Fully Locked (Pending Payment)' : 'Fully Sponsored',
+                detail: `All ${maxExecs} executives are ${ward.isPendingSponsorship ? 'locked (pending payment)' : 'sponsored'} until ${currentEndDate.toLocaleDateString()}. Your sponsorship will be queued and start on ${dayAfterEnd.toLocaleDateString()}.`,
+                life: 7000
+            });
+            
+            // Reset to 1 for queued sponsorship
+            this.sponsoredExecutivesCount.set(1);
+        }
+    } else {
+        // Not sponsored - can start today
+        this.sponsorshipStartDate.set(new Date());
         this.sponsoredExecutivesCount.set(1);
-        // --- Set default dates ---
-        const startDate = new Date();
-        const endDate = new Date();
-        this.sponsorshipStartDate.set(startDate);
-        this.sponsorshipMonths.set(1);
-        this.isVolunteerDialogVisible.set(true);
-        this.isVolunteerDialogVisible.set(true);
     }
+}
     addToCart() {
         const ward = this.selectedWardForSponsorship();
         const count = this.sponsoredExecutivesCount();
@@ -659,6 +715,74 @@ export class SponsorWardComponent {
         this.selectedWards.set([]);
     }
 
+    async addToCartBulk(): Promise<void> {
+    const wardsToAdd = this.selectedWards();
+    const count = this.sponsoredExecutivesCount(); // Assuming single count for all
+    const startDate = this.sponsorshipStartDate();
+    const endDate = this.sponsorshipEndDate();
+    
+    
+
+    if (wardsToAdd.length === 0) {
+        this.messageService.add({ severity: 'warn', summary: 'Selection Empty', detail: 'Please select at least one ward.', life: 3000 });
+        return;
+    }
+    if (count < 1 || !startDate || !endDate) {
+        this.messageService.add({ severity: 'error', summary: 'Missing Details', detail: 'Please set sponsorship count and dates.', life: 4000 });
+        return;
+    }
+
+    let successes = 0;
+    let conflicts = 0;
+
+    for (const ward of wardsToAdd) {
+        // NOTE: We must skip the dialog logic and execute the core cart logic
+        
+        const wardHierarchy = {
+            state: 'Kerala',
+            zone: ward.zoneName,
+            district: ward.districtName
+        };
+
+        const conflict = this.checkCartConflict(wardHierarchy, 'individual');
+        if (conflict.hasConflict) {
+            conflicts++;
+            continue; // Skip this ward, proceed to the next
+        }
+
+        const newItem: CartItem = {
+            ward,
+            executivesSponsored: count,
+            monthlyRate: 15000,
+            costPerMonth: count * 15000,
+            startDate,
+            endDate
+        };
+
+        this.upsertCartItem(newItem); // Execute the core logic
+        successes++;
+    }
+
+    if (successes > 0) {
+        this.messageService.add({
+            severity: 'success',
+            summary: 'Bulk Add Success',
+            detail: `${successes} ward(s) successfully added to cart.`,
+            life: 4000
+        });
+    }
+    if (conflicts > 0) {
+        this.messageService.add({
+            severity: 'warn',
+            summary: 'Skipped Wards',
+            detail: `${conflicts} ward(s) skipped due to bulk conflict or existing area sponsorship.`,
+            life: 6000
+        });
+    }
+
+    this.selectedWards.set([]); // Clear selection after adding
+}
+
     clearStateSelection() {
         if (this.bulkSelectionLevel() === 'state') {
             this.clearSelection();
@@ -694,206 +818,191 @@ export class SponsorWardComponent {
             this.clearSelection();
         }
     }
+availableExecutives = computed(() => {
+    const ward = this.selectedWardForSponsorship();
+    if (!ward) return 1;
 
-    addSelectedWardsToCart() {
-        const bulkData = this.bulkSponsorshipData();
-        const count = this.bulkSponsoredExecutivesCount();
-        const startDate = this.bulkSponsorshipStartDate();
-        const endDate = this.bulkSponsorshipEndDate();
+    // ✅ Use the pre-calculated value from backend
+    return ward.availableExecutives || this.maxExecutives();
+});
+  addSelectedWardsToCart() {
+    const bulkData = this.bulkSponsorshipData();
+    const count = this.bulkSponsoredExecutivesCount();
+    const startDate = this.bulkSponsorshipStartDate();
+    const endDate = this.bulkSponsorshipEndDate();
 
-        if (!startDate || !endDate || count < 1) {
+    if (!startDate || !endDate || count < 1) {
+        this.messageService.add({
+            severity: 'error',
+            summary: 'Missing Information',
+            detail: 'Please fill in all required fields',
+            life: 3000
+        });
+        return;
+    }
+
+    if (bulkData) {
+        console.log('📦 Adding bulk selection to cart:', bulkData);
+
+        // BUILD HIERARCHY DATA
+        const hierarchyData = this.buildHierarchyData(bulkData.level);
+
+        // CHECK FOR CONFLICTS
+        const conflict = this.checkCartConflict(hierarchyData, bulkData.level);
+
+        if (conflict.hasConflict) {
             this.messageService.add({
                 severity: 'error',
-                summary: 'Missing Information',
-                detail: 'Please fill in all required fields',
+                summary: 'Conflict Detected',
+                detail: conflict.conflictMessage,
+                life: 5000,
+                sticky: false
+            });
+            return;
+        }
+
+        // Check for exact duplicate
+        const bulkKey = `${bulkData.level}-${bulkData.identifier}`;
+        const existingBulkIndex = this.cartItems().findIndex(
+            (item) =>
+                item.isBulk &&
+                item.bulkLevel === bulkData.level &&
+                item.bulkIdentifier === bulkData.identifier
+        );
+
+        if (existingBulkIndex > -1) {
+            // ✅ CHECK FOR DATE OVERLAP WITH EXISTING BULK ITEM
+            const existingItem = this.cartItems()[existingBulkIndex];
+            const existingStart = existingItem.startDate.getTime();
+            const existingEnd = existingItem.endDate.getTime();
+            const newStart = startDate.getTime();
+            const newEnd = endDate.getTime();
+
+            const hasOverlap = (newStart <= existingEnd && newEnd >= existingStart);
+
+            if (hasOverlap) {
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Date Conflict',
+                    detail: `${bulkData.identifier} is already in cart with overlapping dates (${existingItem.startDate.toLocaleDateString()} to ${existingItem.endDate.toLocaleDateString()}). Please choose different dates or remove the existing item.`,
+                    life: 6000
+                });
+                return;
+            }
+        }
+
+        // ✅ CREATE BULK CART ITEM WITH CORRECT FIELDS
+        const bulkCartItem: CartItem = {
+            isBulk: true,
+            bulkLevel: bulkData.level,
+            bulkIdentifier: bulkData.identifier,
+            bulkWardCount: bulkData.wardCount,
+            executivesSponsored: count,
+            monthlyRate: 15000,
+            costPerMonth: bulkData.estimatedCost * count,
+            startDate,
+            endDate,
+            hierarchyData,
+            ward: {
+                _id: bulkKey,
+                wardName: `All Wards in ${bulkData.identifier}`,
+                localBodyId: bulkKey,
+                localBodyName: `${bulkData.wardCount} wards`,
+                localBodyType: 'P',
+                type: 'Rural',
+                districtName: hierarchyData.district || '',
+                zoneName: hierarchyData.zone || '',
+                // ✅ FIX: These represent DATABASE status, not cart status
+                isSponsored: false, // Bulk items don't have current sponsorship status
+                sponsoredUntil: 0,
+                sponsoredExecutivesCount: 0,
+                availableExecutives: 0,
+                isPendingSponsorship: false
+            }
+        };
+
+        this.cartItems.update((items) => [...items, bulkCartItem]);
+
+        this.messageService.add({
+            severity: 'success',
+            summary: 'Added to Cart',
+            detail: `${bulkData.wardCount} wards in ${bulkData.identifier} added successfully`,
+            life: 3000
+        });
+    } else {
+        // INDIVIDUAL WARDS
+        const wards = this.selectedWards();
+        if (wards.length === 0) {
+            this.messageService.add({
+                severity: 'warn',
+                summary: 'No Selection',
+                detail: 'Please select wards to add to cart',
                 life: 3000
             });
             return;
         }
 
-        if (bulkData) {
-            console.log('📦 Adding bulk selection to cart:', bulkData);
+        // ✅ CHECK FOR DATE OVERLAPS IN SELECTED WARDS
+        const overlapCheck = this.checkBulkOverlap(wards, startDate, endDate);
+        if (overlapCheck.hasOverlap) {
+            this.messageService.add({
+                severity: 'error',
+                summary: 'Date Conflicts',
+                detail: overlapCheck.message,
+                life: 6000
+            });
+            return;
+        }
 
-            // BUILD HIERARCHY DATA
-            const hierarchyData = this.buildHierarchyData(bulkData.level);
+        // Check if any individual ward conflicts with bulk selections
+        for (const ward of wards) {
+            const wardHierarchy = {
+                state: 'Kerala',
+                zone: ward.zoneName,
+                district: ward.districtName
+            };
 
-            // CHECK FOR CONFLICTS
-            const conflict = this.checkCartConflict(
-                hierarchyData,
-                bulkData.level
-            );
-
+            const conflict = this.checkCartConflict(wardHierarchy, 'individual');
             if (conflict.hasConflict) {
                 this.messageService.add({
                     severity: 'error',
                     summary: 'Conflict Detected',
-                    detail: conflict.conflictMessage,
-                    life: 5000,
-                    sticky: false
-                });
-                return; // BLOCK the addition
-            }
-
-            // Check for exact duplicate
-            const bulkKey = `${bulkData.level}-${bulkData.identifier}`;
-            const existingBulkIndex = this.cartItems().findIndex(
-                (item) =>
-                    item.isBulk &&
-                    item.bulkLevel === bulkData.level &&
-                    item.bulkIdentifier === bulkData.identifier
-            );
-
-            if (existingBulkIndex > -1) {
-                // UPDATE existing item
-                this.messageService.add({
-                    severity: 'warn',
-                    summary: 'Already in Cart',
-                    detail: `${bulkData.identifier} is already in cart. Updating details...`,
-                    life: 4000
-                });
-
-                this.cartItems.update((items) => {
-                    const updatedItems = [...items];
-                    updatedItems[existingBulkIndex] = {
-                        ...updatedItems[existingBulkIndex],
-                        executivesSponsored: count,
-                        costPerMonth: bulkData.estimatedCost * count,
-                        startDate,
-                        endDate,
-                        hierarchyData // Update hierarchy too
-                    };
-                    return updatedItems;
-                });
-
-                setTimeout(() => {
-                    this.messageService.add({
-                        severity: 'success',
-                        summary: 'Updated',
-                        detail: `Updated sponsorship details for ${bulkData.identifier}`,
-                        life: 3000
-                    });
-                }, 500);
-            } else {
-                // ADD new bulk item
-                const bulkCartItem: CartItem = {
-                    isBulk: true,
-                    bulkLevel: bulkData.level,
-                    bulkIdentifier: bulkData.identifier,
-                    bulkWardCount: bulkData.wardCount,
-                    executivesSponsored: count,
-                    monthlyRate: 15000,
-                    costPerMonth: bulkData.estimatedCost * count,
-                    startDate,
-                    endDate,
-                    hierarchyData, // INCLUDE HIERARCHY
-                    ward: {
-                        _id: bulkKey,
-                        wardName: `All Wards in ${bulkData.identifier}`,
-                        localBodyId: bulkKey,
-                        localBodyName: `${bulkData.wardCount} wards`,
-                        localBodyType: 'P',
-                        type: 'Rural',
-                        districtName: hierarchyData.district || '',
-                        zoneName: hierarchyData.zone || ''
-                    }
-                };
-
-                this.cartItems.update((items) => [...items, bulkCartItem]);
-
-                this.messageService.add({
-                    severity: 'success',
-                    summary: 'Added to Cart',
-                    detail: `${bulkData.wardCount} wards in ${bulkData.identifier} added successfully`,
-                    life: 3000
-                });
-            }
-        } else {
-            // INDIVIDUAL WARDS - Check against bulk selections
-            const wards = this.selectedWards();
-            if (wards.length === 0) {
-                this.messageService.add({
-                    severity: 'warn',
-                    summary: 'No Selection',
-                    detail: 'Please select wards to add to cart',
-                    life: 3000
+                    detail: `${ward.wardName}: ${conflict.conflictMessage}`,
+                    life: 5000
                 });
                 return;
             }
-
-            // Check if any individual ward conflicts with bulk selections
-            for (const ward of wards) {
-                const wardHierarchy = {
-                    state: 'Kerala',
-                    zone: ward.zoneName,
-                    district: ward.districtName
-                    // Note: We don't have subdistrict/localBody in Ward interface
-                    // You may need to add these fields to Ward interface
-                };
-
-                const conflict = this.checkCartConflict(
-                    wardHierarchy,
-                    'individual'
-                );
-                if (conflict.hasConflict) {
-                    this.messageService.add({
-                        severity: 'error',
-                        summary: 'Conflict Detected',
-                        detail: `${ward.wardName}: ${conflict.conflictMessage}`,
-                        life: 5000
-                    });
-                    return; // Block entire operation
-                }
-            }
-
-            // No conflicts, proceed with adding
-            let addedCount = 0;
-            let updatedCount = 0;
-
-            wards.forEach((ward) => {
-                const newItem: CartItem = {
-                    ward,
-                    executivesSponsored: count,
-                    monthlyRate: 15000,
-                    costPerMonth: count * 15000,
-                    startDate,
-                    endDate
-                };
-                const action = this.upsertCartItem(newItem);
-
-                if (action === 'added') {
-                    addedCount++;
-                } else {
-                    updatedCount++;
-                }
-            });
-
-            if (addedCount > 0 && updatedCount > 0) {
-                this.messageService.add({
-                    severity: 'success',
-                    summary: 'Cart Updated',
-                    detail: `${addedCount} added, ${updatedCount} updated`,
-                    life: 3000
-                });
-            } else if (addedCount > 0) {
-                this.messageService.add({
-                    severity: 'success',
-                    summary: 'Added to Cart',
-                    detail: `${addedCount} ward(s) added successfully`,
-                    life: 3000
-                });
-            } else if (updatedCount > 0) {
-                this.messageService.add({
-                    severity: 'warn',
-                    summary: 'Already in Cart',
-                    detail: `${updatedCount} ward(s) already in cart. Updated details.`,
-                    life: 4000
-                });
-            }
         }
 
-        this.isBulkSponsorDialogVisible.set(false);
-        this.clearSelection();
+        // No conflicts or overlaps, proceed with adding
+        let addedCount = 0;
+
+        wards.forEach((ward) => {
+            const newItem: CartItem = {
+                ward,
+                executivesSponsored: count,
+                monthlyRate: 15000,
+                costPerMonth: count * 15000,
+                startDate,
+                endDate
+            };
+            
+            // Add to cart
+            this.cartItems.update(items => [...items, newItem]);
+            addedCount++;
+        });
+
+        this.messageService.add({
+            severity: 'success',
+            summary: 'Added to Cart',
+            detail: `${addedCount} ward(s) added successfully`,
+            life: 3000
+        });
     }
+
+    this.isBulkSponsorDialogVisible.set(false);
+    this.clearSelection();
+}
 
     private upsertCartItem(newItem: CartItem): 'added' | 'updated' {
         // 👈 Change return type
@@ -1218,6 +1327,65 @@ async proceedToPayment() {
         return hierarchy;
     }
 
+    private checkWardOverlap(
+    wardId: string,
+    newStartDate: Date,
+    newEndDate: Date
+): { hasOverlap: boolean; message: string } {
+    const existingItem = this.cartItems().find(
+        (item) => !item.isBulk && item.ward._id === wardId
+    );
+
+    if (!existingItem) {
+        return { hasOverlap: false, message: '' };
+    }
+
+    const existingStart = existingItem.startDate.getTime();
+    const existingEnd = existingItem.endDate.getTime();
+    const newStart = newStartDate.getTime();
+    const newEnd = newEndDate.getTime();
+
+    // Check if dates overlap
+    const hasOverlap = (newStart <= existingEnd && newEnd >= existingStart);
+
+    if (hasOverlap) {
+        return {
+            hasOverlap: true,
+            message: `This ward is already in your cart with sponsorship from ${existingItem.startDate.toLocaleDateString()} to ${existingItem.endDate.toLocaleDateString()}. Please choose different dates or remove the existing item first.`
+        };
+    }
+
+    return { hasOverlap: false, message: '' };
+}
+
+/**
+ * Check if bulk selection has overlapping dates with existing cart items
+ */
+private checkBulkOverlap(
+    wards: Ward[],
+    newStartDate: Date,
+    newEndDate: Date
+): { hasOverlap: boolean; message: string; conflictingWards: string[] } {
+    const conflictingWards: string[] = [];
+
+    for (const ward of wards) {
+        const overlap = this.checkWardOverlap(ward._id, newStartDate, newEndDate);
+        if (overlap.hasOverlap) {
+            conflictingWards.push(ward.wardName);
+        }
+    }
+
+    if (conflictingWards.length > 0) {
+        return {
+            hasOverlap: true,
+            message: `${conflictingWards.length} ward(s) already in cart with overlapping dates: ${conflictingWards.slice(0, 3).join(', ')}${conflictingWards.length > 3 ? '...' : ''}`,
+            conflictingWards
+        };
+    }
+
+    return { hasOverlap: false, message: '', conflictingWards: [] };
+}
+
     
 }
 
@@ -1233,4 +1401,8 @@ function loadRazorpayScript(): Promise<void> {
        script.onerror = () => resolve();
         document.head.appendChild(script);
     });
+
+    
+
+    
 }

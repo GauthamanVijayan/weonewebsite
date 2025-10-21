@@ -106,9 +106,29 @@ export const insertImportBatch = internalMutation({
 export const getZones = query({
   handler: async (ctx: QueryCtx) => {
     const allWards = (await ctx.db.query("wards").collect()) as WardDocument[];
-    const uniqueZones = [
-      ...new Set(allWards.map((ward: WardDocument) => ward.zone)),
-    ];
+    
+    // ✅ Normalize zone names (capitalize first letter, lowercase rest)
+    const normalizeZone = (zone: string) => {
+      if (!zone) return '';
+      return zone.charAt(0).toUpperCase() + zone.slice(1).toLowerCase();
+    };
+    
+    // Create a map to handle case-insensitive uniqueness
+    const zoneMap = new Map<string, string>();
+    
+    allWards.forEach((ward: WardDocument) => {
+      const originalZone = ward.zone;
+      const normalizedZone = normalizeZone(originalZone);
+      
+      // Store the normalized version (this automatically deduplicates)
+      if (!zoneMap.has(normalizedZone)) {
+        zoneMap.set(normalizedZone, normalizedZone);
+      }
+    });
+    
+    // Convert map to array and sort
+    const uniqueZones = Array.from(zoneMap.values()).sort();
+    
     return uniqueZones.map((zoneName, index) => ({
       _id: `zone-${index}`,
       name: zoneName,
@@ -121,33 +141,71 @@ export const getDistrictsByZone = query({
   args: { zone: v.optional(v.string()) },
   handler: async (ctx: QueryCtx, { zone }: { zone?: string }) => {
     if (!zone) return [];
-    const wardsInZone = (await ctx.db
-      .query("wards")
-      .withIndex("by_zone", (q: any) => q.eq("zone", zone))
-      .collect()) as WardDocument[];
-    const uniqueDistricts = [
-      ...new Set(wardsInZone.map((ward: WardDocument) => ward.district)),
-    ];
+    
+    // ✅ Helper function
+    const normalizeText = (text: string) => {
+      if (!text) return '';
+      return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
+    };
+    
+    const normalizedZone = normalizeText(zone);
+    
+    // Fetch all wards and filter by normalized zone name
+    const allWards = (await ctx.db.query("wards").collect()) as WardDocument[];
+    
+    const wardsInZone = allWards.filter((ward: WardDocument) => 
+      normalizeText(ward.zone) === normalizedZone
+    );
+    
+    // Normalize district names and deduplicate
+    const districtMap = new Map<string, string>();
+    
+    wardsInZone.forEach((ward: WardDocument) => {
+      const normalizedDistrict = normalizeText(ward.district);
+      if (!districtMap.has(normalizedDistrict)) {
+        districtMap.set(normalizedDistrict, normalizedDistrict);
+      }
+    });
+    
+    const uniqueDistricts = Array.from(districtMap.values()).sort();
+    
     return uniqueDistricts.map((districtName, index) => ({
       _id: `district-${index}`,
       name: districtName,
-      zoneId: zone, // Uses the parameter 'zone' correctly
+      zoneId: zone,
     }));
   },
 });
-
 // NEW: Returns unique subdistricts for a given district
 export const getSubdistrictsByDistrict = query({
   args: { district: v.optional(v.string()) },
   handler: async (ctx: QueryCtx, { district }: { district?: string }) => {
     if (!district) return [];
-    const wardsInDistrict = (await ctx.db
-      .query("wards")
-      .withIndex("by_district", (q: any) => q.eq("district", district))
-      .collect()) as WardDocument[];
-    const uniqueSubdistricts = [
-      ...new Set(wardsInDistrict.map((ward: WardDocument) => ward.subdistrict)),
-    ];
+    
+    const normalizeText = (text: string) => {
+      if (!text) return '';
+      return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
+    };
+    
+    const normalizedDistrict = normalizeText(district);
+    
+    const allWards = (await ctx.db.query("wards").collect()) as WardDocument[];
+    
+    const wardsInDistrict = allWards.filter((ward: WardDocument) => 
+      normalizeText(ward.district) === normalizedDistrict
+    );
+    
+    // Normalize subdistrict names
+    const subdistrictMap = new Map<string, string>();
+    
+    wardsInDistrict.forEach((ward: WardDocument) => {
+      const normalizedSubdistrict = normalizeText(ward.subdistrict);
+      if (!subdistrictMap.has(normalizedSubdistrict)) {
+        subdistrictMap.set(normalizedSubdistrict, normalizedSubdistrict);
+      }
+    });
+    
+    const uniqueSubdistricts = Array.from(subdistrictMap.values()).sort();
 
     return uniqueSubdistricts.map((subdistrictName, index) => ({
       _id: `subdistrict-${index}`,
@@ -247,55 +305,113 @@ export const getWards = query({
     ctx: QueryCtx,
     { subdistrict, localBodyType, searchText }: GetWardsArgs
   ) => {
-    // 1. Don't run the query if a subdistrict isn't selected yet.
     if (!subdistrict) {
       return [];
-    } // 2. Start by fetching all wards for the selected subdistrict.
+    }
 
-    let wards = (await ctx.db // 🎯 FIX: Cast the result immediately for type propagation
-      .query("wards") // 🎯 FIX A: Parameter 'q' implicitly has an 'any' type.
-      .withIndex("by_subdistrict", (q: any) => q.eq("subdistrict", subdistrict)) // 🎯 FIX A: Parameter 'q' implicitly has an 'any' type.
-    .filter(
-    (q: any) =>
-        // 🎯 FIX: Return everything EXCEPT documents where isSponsored is TRUE.
-        // This includes documents where the field is false, undefined, or null.
-        q.neq(q.field("isSponsored"), true) 
-).collect()) as WardDocument[];
+    let wards = (await ctx.db
+      .query("wards")
+      .withIndex("by_subdistrict", (q: any) => q.eq("subdistrict", subdistrict))
+      .collect()) as WardDocument[];
 
-    // 3. Apply the Local Body Type filter on the backend.
+    // Apply filters
     if (localBodyType && localBodyType !== "All") {
-      // 🎯 FIX B: Parameter 'ward' implicitly has an 'any' type.
       wards = wards.filter(
         (ward: WardDocument) =>
           ward.localBodyType.charAt(0).toUpperCase() === localBodyType
       );
     }
-    // 4. Apply the Search filter on the backend.
+
     if (searchText) {
-      const search = searchText.toLowerCase(); // 🎯 FIX B: Parameter 'ward' implicitly has an 'any' type.
+      const search = searchText.toLowerCase();
       wards = wards.filter(
         (ward: WardDocument) =>
           ward.wardName.toLowerCase().includes(search) ||
           ward.localBodyName.toLowerCase().includes(search)
       );
     }
-    // 5. Map the final, filtered results to the frontend interface shape.
-    return wards.map((ward: WardDocument) => {
-      const typeCode = ward.localBodyType.charAt(0).toUpperCase() as
-        | "P"
-        | "M"
-        | "C";
-      return {
-        _id: ward._id.toString(),
-        wardName: ward.wardName,
-        localBodyId: ward.localBodyName,
-        localBodyName: ward.localBodyName,
-        localBodyType: typeCode,
-        type: (typeCode === "P" ? "Rural" : "Urban") as "Urban" | "Rural",
-        districtName: ward.district,
-        zoneName: ward.zone,
-      };
-    });
+
+    // ✅ NEW: Calculate sponsorship status for each ward
+    const currentTime = Date.now();
+    const threeDaysInMs = 3 * 24 * 60 * 60 * 1000; // 3 days in milliseconds
+
+    const wardsWithSponsorshipStatus = await Promise.all(
+      wards.map(async (ward: WardDocument) => {
+        // Get all sponsorships that include this ward
+        const allSponsorships = await ctx.db
+          .query("sponsorships")
+          .collect();
+
+        let totalSponsoredExecutives = 0;
+        let latestEndDate = 0;
+        let isPending = false;
+
+        allSponsorships.forEach((sponsorship: any) => {
+          // ✅ Check if sponsorship is active OR pending (with 3-day lock)
+          const isActiveLocked = 
+            sponsorship.status === "active" || 
+            (sponsorship.status === "pending" && 
+             sponsorship._creationTime && 
+             (currentTime - sponsorship._creationTime) < threeDaysInMs);
+
+          if (!isActiveLocked) return;
+
+          // Check if this sponsorship's cart contains our ward
+          sponsorship.cart?.forEach((cartItem: any) => {
+            const itemWard = cartItem.ward;
+            
+            // Match ward by name and local body
+            const isMatchingWard = 
+              itemWard?.wardName === ward.wardName &&
+              itemWard?.localBodyName === ward.localBodyName;
+
+            if (isMatchingWard) {
+              totalSponsoredExecutives += cartItem.executivesSponsored || 0;
+              
+              // Track the latest end date
+              let itemEndDate = 0;
+              if (cartItem.endDate) {
+                // Handle both ISO string and timestamp
+                itemEndDate = typeof cartItem.endDate === 'string' 
+                  ? new Date(cartItem.endDate).getTime()
+                  : cartItem.endDate;
+              }
+              
+              if (itemEndDate > latestEndDate) {
+                latestEndDate = itemEndDate;
+              }
+
+              if (sponsorship.status === "pending") {
+                isPending = true;
+              }
+            }
+          });
+        });
+
+        const typeCode = ward.localBodyType.charAt(0).toUpperCase() as "P" | "M" | "C";
+        
+        // Determine max executives for this ward
+        const maxExecutives = typeCode === 'C' ? 5 : typeCode === 'M' ? 3 : 1;
+
+        return {
+          _id: ward._id.toString(),
+          wardName: ward.wardName,
+          localBodyId: ward.localBodyName,
+          localBodyName: ward.localBodyName,
+          localBodyType: typeCode,
+          type: (typeCode === "P" ? "Rural" : "Urban") as "Urban" | "Rural",
+          districtName: ward.district,
+          zoneName: ward.zone,
+          isSponsored: totalSponsoredExecutives > 0,
+          sponsoredUntil: latestEndDate,
+          sponsoredExecutivesCount: totalSponsoredExecutives,
+          availableExecutives: Math.max(0, maxExecutives - totalSponsoredExecutives),
+          isPendingSponsorship: isPending,
+        };
+      })
+    );
+
+    return wardsWithSponsorshipStatus;
   },
 });
 
