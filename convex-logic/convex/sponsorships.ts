@@ -9,14 +9,14 @@ import {
   internalMutation,
 } from "./_generated/server";
 import { v } from "convex/values";
-import { api ,internal} from "./_generated/api";
+import { api, internal } from "./_generated/api";
 import { Id } from "./_generated/dataModel";
 import { action, ActionCtx } from "./_generated/server";
 // --- Type Definitions for Strict Mode Fixes ---
 
 // Define the shape of a Cart Item used in the mutation args
 type CartItem = {
-  ward: { _id: Id<"wards"> };
+  _id: Id<"wards">; // Must be the Ward's internal ID
   // Include any other required fields for a cart item object
   [key: string]: any;
 };
@@ -27,9 +27,7 @@ type CreateSponsorshipArgs = {
   sponsorEmail: string;
   totalAmount: number;
   cart: CartItem[];
-  // 🎯 NEW ARGUMENT: Duration in months (from frontend input)
   sponsorshipDurationMonths: number;
-  // 🎯 NEW OPTIONAL ARGUMENT: Single Ward ID if sponsoring the entire month for one ward
   singleSponsoredWardId?: Id<"wards">;
 };
 
@@ -43,11 +41,9 @@ export const createSponsorship = mutation({
   args: {
     sponsorName: v.string(),
     sponsorEmail: v.string(),
-    totalAmount: v.number(),
+    totalAmount: v.number(), // IMPORTANT: We use v.any() here but rely on TypeScript definition for safety
     cart: v.array(v.any()),
-    // 🎯 NEW ARGUMENT: Duration in months
     sponsorshipDurationMonths: v.number(),
-    // 🎯 NEW OPTIONAL ARGUMENT: Single Ward ID
     singleSponsoredWardId: v.optional(v.id("wards")),
   },
   handler: async (
@@ -55,13 +51,16 @@ export const createSponsorship = mutation({
     args: CreateSponsorshipArgs
   ): Promise<Id<"sponsorships">> => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new Error("You must be logged in to create a sponsorship.");
+    const identityFields: { userId?: string } = {};
+
+    if (identity) {
+      identityFields.userId = identity.subject;
     }
     const sponsorshipId = await ctx.db.insert("sponsorships", {
       ...args,
-      status: "pending",
-      userId: identity.subject,
+      status: "pending", // Payment hasn't happened yet
+      paymentDate: 0, // Set to 0 or null initially
+      ...identityFields,
     });
     return sponsorshipId;
   },
@@ -164,41 +163,82 @@ export const getMySponsorships = query({
   },
 });
 
-// backend/convex/sponsorships.ts (Add this function)
 
-// This function is called by the frontend after payment success.
-export const processPaymentSuccess = action({
+export const fulfillSponsorship = internalMutation({
+  args: {
+    sponsorshipId: v.id("sponsorships"), // Internal ID of the sponsorship
+    razorpayPaymentId: v.string(),
+    razorpayOrderId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const sponsorshipDoc = await ctx.db.get(args.sponsorshipId);
+
+    if (!sponsorshipDoc) {
+      console.error("Fulfillment failed: Sponsorship ID not found in DB.");
+      return;
+    }
+
+    await ctx.db.patch(args.sponsorshipId, {
+      status: "active", // Add a 'status' field to your sponsorships table
+      paymentId: args.razorpayPaymentId,
+      razorpayOrderId: args.razorpayOrderId,
+      paymentDate: Date.now(),
+    });
+
+    console.log(`Fulfillment complete for sponsorship: ${args.sponsorshipId}`);
+  },
+});
+
+export const _fulfillSponsorshipInternal = internalMutation({
   args: {
     sponsorshipId: v.id("sponsorships"),
-    paymentId: v.string(),
-    orderId: v.string(),
-    signature: v.string(), // CRITICAL for verification
-  }, // 🎯 FIX 1: Explicitly type the arguments and return type
-  handler: async (
-    ctx: ActionCtx,
-    args: {
-      sponsorshipId: Id<"sponsorships">;
-      paymentId: string;
-      orderId: string;
-      signature: string;
+    razorpayPaymentId: v.string(),
+    razorpayOrderId: v.string(),
+  },
+  handler: async (ctx: MutationCtx, args) => {
+    const sponsorshipId = args.sponsorshipId;
+
+    // 1. Fetch the sponsorship record
+    const sponsorship = await ctx.db.get(sponsorshipId);
+
+    if (!sponsorship || sponsorship.status !== "pending") {
+      // Error handling for already processed or missing sponsorship
+      console.error(
+        `Fulfillment skip: Sponsorship ${sponsorshipId} not found or not pending.`
+      );
+      return;
     }
-  ): Promise<any> => {
- 
 
-    // 🎯 FIX 2: Call the verification Action (must be created separately)
-  const isVerified = await ctx.runAction(internal.payment.verifyRazorpayPayment, {
-        orderId: args.orderId,
-        paymentId: args.paymentId,
-        signature: args.signature,
+    const now = Date.now();
+    const durationMs =
+      sponsorship.sponsorshipDurationMonths * 30 * 24 * 60 * 60 * 1000;
+    const endDate = now + durationMs;
+
+    // 2. Update the Sponsorship record
+    await ctx.db.patch(sponsorshipId, {
+      status: "active",
+      paymentId: args.razorpayPaymentId,
+      razorpayOrderId: args.razorpayOrderId,
+      paymentDate: now, // CRITICAL: Set the actual payment date here
+      startDate: now,
+      endDate: endDate,
+    });
+
+    // 3. Lock/Sponsor the Wards associated with the cart
+    const cart: CartItem[] = sponsorship.cart as CartItem[];
+
+    for (const item of cart) {
+      const wardId = item._id; // Assumes the top-level object in the cart array is the ward ID
+
+      // Apply the lock on the ward
+      await ctx.db.patch(wardId, {
+        isSponsored: true,
+        sponsoredUntil: endDate,
       });
+    }
 
-    if (!isVerified) {
-      throw new Error("Payment verification failed due to signature mismatch.");
-    } // 3. Call the existing processSponsorship mutation to finalize the state
-
- await ctx.runMutation(internal.sponsorships._processSponsorshipInternal, { 
-            sponsorshipId: args.sponsorshipId 
-        });
-   return { success: true };
+    console.log(
+      `Fulfillment complete and wards locked for sponsorship: ${sponsorshipId}`
+    );
   },
 });

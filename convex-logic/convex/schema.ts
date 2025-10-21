@@ -37,8 +37,11 @@ export default defineSchema({
     ),
     sponsorshipDurationMonths: v.number(),
     singleSponsoredWardId: v.optional(v.id("wards")),
+    paymentId:v.optional(v.string()),
+    razorpayOrderId:v.optional(v.string()),
     cart: v.array(v.any()),
-    userId: v.string(),
+    userId: v.optional(v.string()),
+    paymentDate:v.optional(v.number()),
     startDate: v.optional(v.number()), // NEW: Sponsorship start date
     endDate: v.optional(v.number()), // NEW: Sponsorship end date
   }).index("by_userId", ["userId"]),

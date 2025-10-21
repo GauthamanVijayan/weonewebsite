@@ -1,39 +1,38 @@
 // backend/convex/payment.ts
 
-"use node"; 
+"use node";
 
 import { action, ActionCtx } from "./_generated/server";
-import { v } from "convex/values";
-import Razorpay from 'razorpay'; 
+import { ConvexError, v } from "convex/values";
+import Razorpay from "razorpay";
 import { Id } from "./_generated/dataModel"; // Import Id for type safety
 import { internalAction } from "./_generated/server";
-import crypto from 'crypto';
+import { internal } from "./_generated/api";
+import crypto from "crypto";
 // Initialize Razorpay with the secret key from the environment
 let razorpay: Razorpay | null = null;
 const keyId = process.env.RAZORPAY_KEY_ID;
 const keySecret = process.env.RAZORPAY_KEY_SECRET;
 
-
 if (keyId && keySecret && keyId.length > 5 && !keyId.includes("YOUR_")) {
-    razorpay = new Razorpay({
-      key_id: keyId,      
-      key_secret: keySecret,
-      
-    });
+  razorpay = new Razorpay({
+    key_id: keyId,
+    key_secret: keySecret,
+  });
 } else {
-    // Log a warning if running locally without keys, but don't crash the analyzer
-    console.warn("RAZORPAY SDK NOT INITIALIZED: Missing or placeholder keys in environment.");
+  // Log a warning if running locally without keys, but don't crash the analyzer
+  console.warn(
+    "RAZORPAY SDK NOT INITIALIZED: Missing or placeholder keys in environment."
+  );
 }
 type CreateOrderArgs = {
-    sponsorshipId: Id<"sponsorships">;
-    amount: number; // Total amount in PAISA (Rupees * 100)
-    sponsorName: string;
-    sponsorEmail: string;
+  sponsorshipId: Id<"sponsorships">;
+  amount: number; // Total amount in PAISA (Rupees * 100)
+  sponsorName: string;
+  sponsorEmail: string;
 };
 
 export const createRazorpayOrder = action({
-    
-    
   args: {
     sponsorshipId: v.id("sponsorships"),
     amount: v.number(),
@@ -41,60 +40,127 @@ export const createRazorpayOrder = action({
     sponsorEmail: v.string(),
   },
   handler: async (ctx: ActionCtx, args: CreateOrderArgs) => {
-const MAX_INSTANT_PAYMENT_PAISE = 5000000;
-let paymentMethods: any = {};
+    const MAX_INSTANT_PAYMENT_PAISE = 5000000;
+    let paymentMethods: any = {};
 
     if (args.amount > MAX_INSTANT_PAYMENT_PAISE) {
-    paymentMethods = {
+      paymentMethods = {
         options: {
-            checkout: {
-                method: {
-                    card: 0, upi: 0, // Disable instant payment types
-                    netbanking: 0 
-                }
+          checkout: {
+            method: {
+              card: 0,
+              upi: 0, // Disable instant payment types
+              netbanking: 0,
             },
-            // Force user to see check/bank transfer options in the modal
-        }
-    };
-}
-    const orderOptions = {
-        amount: args.amount, // Required in paise
-        currency: "INR",
-        receipt: args.sponsorshipId.toString(), // Unique ID for tracking
-        notes: {
-            sponsorshipId: args.sponsorshipId.toString(),
-            sponsorEmail: args.sponsorEmail,
+          },
+          // Force user to see check/bank transfer options in the modal
         },
+      };
+    }
+    const orderOptions = {
+      amount: args.amount, // Required in paise
+      currency: "INR",
+      receipt: args.sponsorshipId.toString(), // Unique ID for tracking
+      notes: {
+        sponsorshipId: args.sponsorshipId.toString(),
+        sponsorEmail: args.sponsorEmail,
+      },
     };
 
     try {
-        // 2. Create the Order on Razorpay's server
-        const order = await razorpay?.orders.create(orderOptions);
+      // 2. Create the Order on Razorpay's server
+      const order = await razorpay?.orders.create(orderOptions);
 
-        // 3. Return the Order ID needed by the frontend to open the payment modal
-        return { orderId: order?.id, amount: order?.amount }; 
+      // 3. Return the Order ID needed by the frontend to open the payment modal
+      return { orderId: order?.id, amount: order?.amount };
     } catch (error) {
-        console.error("Razorpay Order Creation Failed:", error);
-        throw new Error("Failed to create payment order.");
+      console.error("Razorpay Order Creation Failed:", error);
+      throw new Error("Failed to create payment order.");
     }
   },
 });
 
-export const verifyRazorpayPayment = internalAction({
-    args: {
-        orderId: v.string(),
-        paymentId: v.string(),
-        signature: v.string(),
-    },
-    handler: async (ctx, { orderId, paymentId, signature }) => {
-        // This payload structure is what Razorpay uses for verification
-        const shasum = crypto.createHmac('sha256', process.env.RAZORPAY_KEY_SECRET!);
-        shasum.update(`${orderId}|${paymentId}`);
-        const digest = shasum.digest('hex');
+export const verifyRazorpayPayment = action({
+  args: {
+    orderId: v.string(),
+    paymentId: v.string(),
+    signature: v.string(),
+    sponsorshipId: v.id("sponsorships"), // Pass the Convex ID from the frontend
+  },
+  handler: async (ctx, { orderId, paymentId, signature, sponsorshipId }) => {
+    const RAZORPAY_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET;
+    if (!RAZORPAY_KEY_SECRET) {
+     throw new Error("Server config error");
+    }
+    const shasum = crypto.createHmac("sha256", RAZORPAY_KEY_SECRET);
+    shasum.update(`${orderId}|${paymentId}`);
+    const digest = shasum.digest("hex");
+    const isVerified = digest === signature;
 
-        // CRITICAL: Check if the calculated signature matches the signature received from Razorpay
-        const isVerified = digest === signature;
-        
-        return isVerified; 
-    },
+    if (isVerified) {
+      console.log(`✅ Payment Verified: Order ${orderId}`);
+
+      // 🔥 CRITICAL: Call the internal mutation to update the database
+      await ctx.runMutation(internal.sponsorships.fulfillSponsorship, {
+        sponsorshipId: sponsorshipId,
+        razorpayPaymentId: paymentId,
+        razorpayOrderId: orderId,
+      });
+
+      return {
+        verified: true,
+        message: "Payment successful and order fulfilled.",
+      };
+    } else {
+      console.error(`❌ Payment Verification Failed: Order ${orderId}`);
+      // TODO: Log failure details to a separate table
+      return {
+        verified: false,
+        message: "Verification failed due to signature mismatch.",
+      };
+    }
+  },
+});
+
+export const processPaymentSuccess = action({
+  args: {
+    sponsorshipId: v.id("sponsorships"),
+    paymentId: v.string(),
+    orderId: v.string(),
+    signature: v.string(), // CRITICAL for verification
+  },
+  handler: async (
+    ctx: ActionCtx,
+    args: {
+      sponsorshipId: Id<"sponsorships">;
+      paymentId: string;
+      orderId: string;
+      signature: string;
+    }
+  ): Promise<{ success: boolean }> => {
+    // 1. Call the verification Action (defined in your convex/payment.ts)
+    const isVerified = await ctx.runAction(
+      verifyRazorpayPayment as any,
+      {
+        orderId: args.orderId,
+        paymentId: args.paymentId,
+        signature: args.signature,
+        sponsorshipId: args.sponsorshipId
+      }
+    );
+
+    if (!isVerified) {
+      throw new ConvexError(
+        "Payment verification failed due to signature mismatch."
+      );
+    } // 2. CRITICAL: Call the NEW consolidated fulfillment mutation.
+
+    await ctx.runMutation(internal.sponsorships._fulfillSponsorshipInternal, {
+      sponsorshipId: args.sponsorshipId,
+      razorpayPaymentId: args.paymentId, // Pass payment details
+      razorpayOrderId: args.orderId,
+    });
+
+    return { success: true };
+  },
 });

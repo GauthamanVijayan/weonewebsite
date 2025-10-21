@@ -172,6 +172,8 @@ async loadLocalBodies(subdistrict: string, localBodyType: string) {
     clearWards() {
         this.wards.set([]);
     }
-
+public async getMySponsorshipHistory(): Promise<any[]> {
+    return (this.client as any).query('sponsorships:getMySponsorships', {});
+}
     
 }
