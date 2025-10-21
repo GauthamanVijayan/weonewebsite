@@ -230,8 +230,7 @@ export const _fulfillSponsorshipInternal = internalMutation({
     const cart: CartItem[] = sponsorship.cart as CartItem[];
 
     for (const item of cart) {
-      const wardId = item._id; // Assumes the top-level object in the cart array is the ward ID
-
+     const wardId = item.ward._id as Id<"wards">;
       // Apply the lock on the ward
       await ctx.db.patch(wardId, {
         isSponsored: true,
