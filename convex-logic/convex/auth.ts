@@ -53,7 +53,7 @@ export const login = action({
       email,
     })) as UserDocument | null;
     if (!user) {
-      throw new ConvexError("Invalid email or password.");
+      throw new ConvexError("Invalid email .");
     }
 
     // 2. Verify password (Action calling internal Action)
@@ -66,7 +66,7 @@ export const login = action({
     );
 
     if (!passwordMatch) {
-      throw new ConvexError("Invalid email or password.");
+      throw new ConvexError("Invalid  password.");
     }
 
     // 3. Login is successful.

@@ -44,7 +44,7 @@ export class LoginComponent {
       
       if (result.success) {
         // On successful login, navigate to the user's profile page
-        this.router.navigate(['/profile']);
+        this.router.navigate(['/userProfile']);
       } else {
         this.errorMessage.set(result.message || 'An unknown error occurred.');
       }
