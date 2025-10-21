@@ -23,14 +23,17 @@ return this.authService.getConvexToken();    }
 
     // 🎯 Wrapper for secure calls (mutations and queries)
     private async authenticatedCall(name: string, args: any): Promise<any> {
-        const token = await this.getAuthToken();
+        const token = await this.getAuthToken(); 
+    if (!token) {
+        throw new Error("Client not authenticated.");
+    }
         const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-        if (name.includes('get')) {
-            return this.client.query(name, args, { headers });
-        } else {
-            return this.client.mutation(name, args, { headers });
-        }
+    if (name.includes('get')) {
+        return (this.client as any).query(name, args); // No manual headers
+    } else {
+        return (this.client as any).mutation(name, args); // No manual headers
+    }
     }
 
     // ----------------------------------------------------

@@ -43,8 +43,9 @@ public async login(email: string, password: string): Promise<AuthResult> {
             });
 
             if (result && result.authId) {
-             
+                const token = result.authId;
                 localStorage.setItem('CONVEX_AUTH_TOKEN', result.authId); 
+                (this.client as any).setAuth(async () => token);
                 
                 userSignal.set({ firstName: result.firstName || 'Manager', email }); 
                 isSignedInSignal.set(true);
