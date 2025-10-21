@@ -139,11 +139,10 @@ export const processPaymentSuccess = action({
     }
   ): Promise<{ success: boolean }> => {
     // 1. Call the verification Action (defined in your convex/payment.ts)
-    const isVerified = await ctx.runAction(verifyRazorpayPayment as any, {
+    const isVerified = await ctx.runAction(internal.razorpayUtils._verifySignatureInternal, {
       orderId: args.orderId,
       paymentId: args.paymentId,
       signature: args.signature,
-      sponsorshipId: args.sponsorshipId,
     });
 
     if (!isVerified) {
@@ -152,9 +151,9 @@ export const processPaymentSuccess = action({
       );
     } // 2. CRITICAL: Call the NEW consolidated fulfillment mutation.
 
-    await ctx.runMutation(internal.sponsorships._fulfillSponsorshipInternal, {
+await ctx.runMutation(internal.sponsorships._fulfillSponsorshipInternal, {
       sponsorshipId: args.sponsorshipId,
-      razorpayPaymentId: args.paymentId, // Pass payment details
+      razorpayPaymentId: args.paymentId,
       razorpayOrderId: args.orderId,
     });
 
