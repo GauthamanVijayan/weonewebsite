@@ -30,7 +30,7 @@ public user$ = toObservable(userSignal.asReadonly()); // 🎯 FIX 1: Convert Sig
 public isSignedIn$: Observable<boolean> = toObservable(isSignedInSignal.asReadonly()); // 🎯 FIX 1: Convert Signal to Observable    // Utility wrapper (from ConvexService logic, adapted here)
     private async callAuthFunction(name: string, args: any): Promise<any> {
         
-        return this.client.mutation(name, args);
+       return (this.client as any).action(name, args);
     }
 
 public async login(email: string, password: string): Promise<AuthResult> {
