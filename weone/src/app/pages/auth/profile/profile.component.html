@@ -132,133 +132,137 @@
                 <ng-template pTemplate="header">
                     <tr>
                         <th>Sponsor Name</th>
-                        <th>Ward Name</th>
-                        <th>Zone</th>
-                        <th>District</th>
+                        <th>Ward/Area</th>
                         <th>Local Body</th>
                         <th>Amount</th>
+                        <th>Payment Date</th>
                         <th>Start Date</th>
                         <th>End Date</th>
                         <th>Status</th>
-                        <th>Action</th>
+                        <th>Actions</th>
                     </tr>
                 </ng-template>
 
-           <ng-template pTemplate="body" let-sponsorship>
-    <tr>
-        <td>{{ sponsorship.sponsorName }}</td>
-        
-        <!-- ✅ FIX: Show all wards or bulk description -->
-        <td>
-            @if (sponsorship.cart.length === 1) {
-                {{ sponsorship.cart[0]?.ward?.wardName || 'N/A' }}
-            } @else if (sponsorship.cart[0]?.isBulk) {
-                <strong>{{ sponsorship.cart[0].bulkWardCount }} wards</strong>
-                <br>
-                <small>{{ sponsorship.cart[0].bulkIdentifier }}</small>
-            } @else {
-                <strong>{{ sponsorship.cart.length }} wards</strong>
-                <br>
-                <small>Multiple locations</small>
-            }
-        </td>
-        
-        <td>
-            @if (sponsorship.cart.length === 1) {
-                {{ sponsorship.cart[0]?.ward?.localBodyName || 'N/A' }}
-            } @else if (sponsorship.cart[0]?.isBulk) {
-                {{ sponsorship.cart[0].bulkLevel | titlecase }} Level
-            } @else {
-                Multiple
-            }
-        </td>
-        
-        <td>{{ sponsorship.totalAmount | currency:'INR':'symbol':'1.2-2' }}</td>
-        <td>{{ sponsorship.endDate | date: 'mediumDate' }}</td>
-        
-        <td>
-            <p-button
-                label="View Details"
-                icon="pi pi-eye"
-                [text]="true"
-                size="small"
-                (onClick)="viewSponsorshipDetails(sponsorship)"
-            />
-            <p-button
-                label="Cancel"
-                icon="pi pi-times-circle"
-                [text]="true"
-                severity="danger"
-                size="small"
-                (onClick)="onCancel(sponsorship._id)"
-                [loading]="isCancelling()"
-            />
-        </td>
-    </tr>
+                <ng-template pTemplate="body" let-sponsorship>
+                    <tr>
+                        <!-- Sponsor Name -->
+                        <td>{{ sponsorship.sponsorName }}</td>
 
-    <p-dialog
-    header="Sponsorship Details"
-    [(visible)]="isDetailsDialogVisible"
-    [modal]="true"
-    [draggable]="false"
-    [resizable]="false"
-    [style]="{ width: '90vw', maxWidth: '600px' }"
->
-    <div class="sponsorship-details" *ngIf="selectedSponsorship">
-        <div class="detail-section">
-            <h4>Sponsor Information</h4>
-            <p><strong>Name:</strong> {{ selectedSponsorship.sponsorName }}</p>
-            <p><strong>Email:</strong> {{ selectedSponsorship.sponsorEmail }}</p>
-            <p><strong>Status:</strong> 
-                <span class="status-badge" [ngClass]="'status-' + selectedSponsorship.status">
-                    {{ selectedSponsorship.status }}
-                </span>
-            </p>
-        </div>
+                        <!-- Ward/Area Name -->
+                        <td>
+                            @if (
+                                sponsorship.cart.length === 1 &&
+                                !sponsorship.cart[0]?.isBulk
+                            ) {
+                                {{
+                                    sponsorship.cart[0]?.ward?.wardName || 'N/A'
+                                }}
+                            } @else if (sponsorship.cart[0]?.isBulk) {
+                                <strong
+                                    >{{
+                                        sponsorship.cart[0].bulkWardCount
+                                    }}
+                                    wards</strong
+                                >
+                                <br />
+                                <small>{{
+                                    sponsorship.cart[0].bulkIdentifier
+                                }}</small>
+                            } @else {
+                                <strong
+                                    >{{ sponsorship.cart.length }} wards</strong
+                                >
+                                <br />
+                                <small>Multiple locations</small>
+                            }
+                        </td>
 
-        <div class="detail-section">
-            <h4>Sponsorship Period</h4>
-            <p><strong>Start Date:</strong> {{ selectedSponsorship.startDate | date: 'mediumDate' }}</p>
-            <p><strong>End Date:</strong> {{ selectedSponsorship.endDate | date: 'mediumDate' }}</p>
-            <p><strong>Duration:</strong> {{ selectedSponsorship.sponsorshipDurationMonths }} month(s)</p>
-        </div>
+                        <!-- Local Body -->
+                        <td>
+                            @if (
+                                sponsorship.cart.length === 1 &&
+                                !sponsorship.cart[0]?.isBulk
+                            ) {
+                                {{
+                                    sponsorship.cart[0]?.ward?.localBodyName ||
+                                        'N/A'
+                                }}
+                            } @else if (sponsorship.cart[0]?.isBulk) {
+                                <span class="text-muted"
+                                    >{{
+                                        sponsorship.cart[0].bulkLevel
+                                            | titlecase
+                                    }}
+                                    Level</span
+                                >
+                            } @else {
+                                <span class="text-muted">Multiple</span>
+                            }
+                        </td>
 
-        <div class="detail-section">
-            <h4>Sponsored Wards ({{ selectedSponsorship.cart.length }})</h4>
-            <div class="wards-list">
-                @for (item of selectedSponsorship.cart; track item.ward._id) {
-                    <div class="ward-item">
-                        <div class="ward-info">
-                            <strong>{{ item.ward.wardName }}</strong>
-                            <small>{{ item.ward.localBodyName }} • {{ item.ward.districtName }}</small>
-                        </div>
-                        <div class="ward-cost">
-                            {{ item.costPerMonth | currency:'INR':'symbol':'1.0-0' }}/mo
-                        </div>
-                    </div>
-                }
-            </div>
-        </div>
+                        <!-- Amount -->
+                        <td>
+                            <strong>{{
+                                sponsorship.totalAmount
+                                    | currency: 'INR' : 'symbol' : '1.0-0'
+                            }}</strong>
+                        </td>
 
-        <div class="detail-section">
-            <h4>Payment Summary</h4>
-            <p><strong>Total Amount:</strong> {{ selectedSponsorship.totalAmount | currency:'INR':'symbol':'1.2-2' }}</p>
-        </div>
-    </div>
+                        <!-- Payment Date -->
+                        <td>
+                            {{ sponsorship.paymentDate | date: 'mediumDate' }}
+                        </td>
 
-    <ng-template pTemplate="footer">
-        <p-button
-            label="Close"
-            severity="secondary"
-            (onClick)="isDetailsDialogVisible = false"
-        />
-    </ng-template>
-</p-dialog>
-</ng-template>
+                        <!-- Start Date -->
+                        <td>
+                            {{ sponsorship.startDate | date: 'mediumDate' }}
+                        </td>
+
+                        <!-- End Date -->
+                        <td>
+                            {{ sponsorship.endDate | date: 'mediumDate' }}
+                        </td>
+
+                        <!-- Status -->
+                        <td>
+                            <span
+                                class="status-badge"
+                                [ngClass]="'status-' + sponsorship.status"
+                            >
+                                {{ sponsorship.status }}
+                            </span>
+                        </td>
+
+                        <!-- Actions -->
+                        <td>
+                            <div class="action-buttons">
+                                <p-button
+                                    label="View"
+                                    icon="pi pi-eye"
+                                    [text]="true"
+                                    size="small"
+                                    (onClick)="
+                                        viewSponsorshipDetails(sponsorship)
+                                    "
+                                />
+                                <p-button
+                                    label="Cancel"
+                                    icon="pi pi-times-circle"
+                                    [text]="true"
+                                    severity="danger"
+                                    size="small"
+                                    (onClick)="onCancel(sponsorship._id)"
+                                    [loading]="isCancelling()"
+                                    [disabled]="sponsorship.status !== 'active'"
+                                />
+                            </div>
+                        </td>
+                    </tr>
+                </ng-template>
 
                 <ng-template pTemplate="emptymessage">
                     <tr>
-                        <td colspan="10">
+                        <td colspan="9">
                             <div class="weone-empty-state">
                                 <i class="pi pi-inbox"></i>
                                 <p>
@@ -270,5 +274,164 @@
                 </ng-template>
             </p-table>
         </div>
+
+        <!-- Sponsorship Details Dialog -->
+        <p-dialog
+            header="Sponsorship Details"
+            [(visible)]="isDetailsDialogVisible"
+            [modal]="true"
+            [draggable]="false"
+            [resizable]="false"
+            [style]="{ width: '90vw', maxWidth: '650px' }"
+        >
+            <div class="sponsorship-details" *ngIf="selectedSponsorship">
+                <div class="detail-section">
+                    <h4>Sponsor Information</h4>
+                    <p>
+                        <strong>Name:</strong>
+                        {{ selectedSponsorship.sponsorName }}
+                    </p>
+                    <p>
+                        <strong>Email:</strong>
+                        {{ selectedSponsorship.sponsorEmail }}
+                    </p>
+                    <p>
+                        <strong>Payment Date:</strong>
+                        {{ selectedSponsorship.paymentDate | date: 'full' }}
+                    </p>
+                    <p>
+                        <strong>Status:</strong>
+                        <span
+                            class="status-badge"
+                            [ngClass]="'status-' + selectedSponsorship.status"
+                        >
+                            {{ selectedSponsorship.status }}
+                        </span>
+                    </p>
+                </div>
+
+                <div class="detail-section">
+                    <h4>Sponsorship Period</h4>
+                    <p>
+                        <strong>Start Date:</strong>
+                        {{ selectedSponsorship.startDate | date: 'mediumDate' }}
+                    </p>
+                    <p>
+                        <strong>End Date:</strong>
+                        {{ selectedSponsorship.endDate | date: 'mediumDate' }}
+                    </p>
+                    <p>
+                        <strong>Duration:</strong>
+                        {{
+                            selectedSponsorship.sponsorshipDurationMonths
+                        }}
+                        month(s)
+                    </p>
+                </div>
+
+                <div class="detail-section">
+                    <h4>
+                        Sponsored Items ({{ selectedSponsorship.cart.length }})
+                    </h4>
+                    <div class="wards-list">
+                        @for (
+                            item of selectedSponsorship.cart;
+                            track item.ward._id
+                        ) {
+                            <div class="ward-item">
+                                <div class="ward-info">
+                                    @if (item.isBulk) {
+                                        <strong
+                                            >{{ item.bulkWardCount }} wards in
+                                            {{ item.bulkIdentifier }}</strong
+                                        >
+                                        <small
+                                            >{{
+                                                item.bulkLevel | titlecase
+                                            }}
+                                            Level •
+                                            {{
+                                                item.executivesSponsored
+                                            }}
+                                            executive(s) per ward</small
+                                        >
+                                    } @else {
+                                        <strong>{{
+                                            item.ward.wardName
+                                        }}</strong>
+                                        <small>
+                                            {{ item.ward.localBodyName }} •
+                                            {{ item.ward.districtName }} •
+                                            {{
+                                                item.executivesSponsored
+                                            }}
+                                            executive(s)
+                                        </small>
+                                    }
+                                </div>
+                                <div class="ward-cost">
+                                    {{
+                                        item.costPerMonth
+                                            | currency
+                                                : 'INR'
+                                                : 'symbol'
+                                                : '1.0-0'
+                                    }}/mo
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <div class="detail-section">
+                    <h4>Payment Summary</h4>
+                    <div class="payment-summary">
+                        <div class="summary-row">
+                            <span>Subtotal:</span>
+                            <span>{{
+                                selectedSponsorship.totalAmount / 1.18
+                                    | currency: 'INR' : 'symbol' : '1.0-0'
+                            }}</span>
+                        </div>
+                        <div class="summary-row">
+                            <span>GST (18%):</span>
+                            <span>{{
+                                selectedSponsorship.totalAmount -
+                                    selectedSponsorship.totalAmount / 1.18
+                                    | currency: 'INR' : 'symbol' : '1.0-0'
+                            }}</span>
+                        </div>
+                        <div class="summary-row total">
+                            <strong>Total Amount:</strong>
+                            <strong>{{
+                                selectedSponsorship.totalAmount
+                                    | currency: 'INR' : 'symbol' : '1.0-0'
+                            }}</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <ng-template pTemplate="footer">
+                <p-button
+                    label="Close"
+                    icon="pi pi-times"
+                    severity="secondary"
+                    (onClick)="isDetailsDialogVisible = false"
+                />
+                @if (selectedSponsorship?.status === 'active') {
+                    <p-button
+                        label="Cancel Sponsorship"
+                        icon="pi pi-ban"
+                        severity="danger"
+                        (onClick)="
+                            onCancel(selectedSponsorship._id);
+                            isDetailsDialogVisible = false
+                        "
+                        [loading]="isCancelling()"
+                    />
+                }
+            </ng-template>
+        </p-dialog>
     </div>
 </section>

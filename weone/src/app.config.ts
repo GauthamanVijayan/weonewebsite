@@ -11,12 +11,14 @@ import { routes } from '@/apps.routes';
 import { environment } from '../src/environments/environment';
 
 import { ConvexClient } from 'convex/browser'; // 1. Import the actual ConvexClient
+import { MessageService } from 'primeng/api';
 
 export const appConfig: ApplicationConfig = {
     providers: [
         provideRouter(routes),
         provideAnimations(),
         provideHttpClient(),
+        MessageService,
   
      {
             provide: ConvexClient,

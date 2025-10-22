@@ -639,3 +639,93 @@ export const getDistrictSummary = query({
     };
   },
 });
+// Add this new query
+export const getSponsoredWardsSummary = query({
+  args: {
+    level: v.string(),
+    identifier: v.string(),
+  },
+  handler: async (ctx: QueryCtx, { level, identifier }: { level: string, identifier: string }) => {
+    const currentTime = Date.now();
+    const threeDaysInMs = 3 * 24 * 60 * 60 * 1000;
+
+    // Get all active/pending sponsorships
+    const allSponsorships = await ctx.db
+      .query("sponsorships")
+      .collect();
+
+    const activeSponsorships = allSponsorships.filter((s: any) => 
+      s.status === "active" || 
+      (s.status === "pending" && (currentTime - s._creationTime) < threeDaysInMs)
+    );
+
+    // Get wards based on level
+    let allWards: WardDocument[] = [];
+    
+    switch (level) {
+      case 'state':
+        allWards = await ctx.db.query("wards").collect() as WardDocument[];
+        break;
+      case 'zone':
+        allWards = (await ctx.db
+          .query("wards")
+          .withIndex("by_zone", (q: any) => q.eq("zone", identifier))
+          .collect()) as WardDocument[];
+        break;
+      case 'district':
+        allWards = (await ctx.db
+          .query("wards")
+          .withIndex("by_district", (q: any) => q.eq("district", identifier))
+          .collect()) as WardDocument[];
+        break;
+      default:
+        return { totalWards: 0, fullySponsoredWards: 0 };
+    }
+
+    // Count fully sponsored wards
+    let fullySponsoredCount = 0;
+
+    for (const ward of allWards) {
+      let totalSponsored = 0;
+      const maxExecs = ward.localBodyType.charAt(0).toUpperCase() === 'C' ? 5 : 
+                       ward.localBodyType.charAt(0).toUpperCase() === 'M' ? 3 : 1;
+
+      // Count sponsored executives for this ward
+      activeSponsorships.forEach((sponsorship: any) => {
+        sponsorship.cart?.forEach((cartItem: any) => {
+          const itemWard = cartItem.ward;
+          if (itemWard?.wardName === ward.wardName && 
+              itemWard?.localBodyName === ward.localBodyName) {
+            totalSponsored += cartItem.executivesSponsored || 0;
+          }
+        });
+      });
+
+      // Only count if ALL executives are sponsored
+      if (totalSponsored >= maxExecs) {
+        fullySponsoredCount++;
+      }
+    }
+
+    return {
+      totalWards: allWards.length,
+      fullySponsoredWards: fullySponsoredCount
+    };
+  },
+});
+
+export const getLocalBodyWardCount = query({
+  args: { localBodyName: v.string() },
+  handler: async (ctx: QueryCtx, { localBodyName }: { localBodyName: string }) => {
+    const wards = await ctx.db
+      .query("wards")
+      .filter((q: any) => q.eq(q.field("localBodyName"), localBodyName))
+      .collect();
+
+    return {
+      localBodyName,
+      totalWards: wards.length,
+      estimatedCost: wards.length * 15000
+    };
+  },
+});

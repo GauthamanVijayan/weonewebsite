@@ -8,6 +8,7 @@ import {
     effect
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { InputTextModule } from 'primeng/inputtext';
@@ -15,21 +16,29 @@ import { Select } from 'primeng/select';
 import { SelectButtonModule } from 'primeng/selectbutton';
 import { TableModule } from 'primeng/table';
 import { DatePickerModule, DatePicker } from 'primeng/datepicker';
+import { DialogModule } from 'primeng/dialog';
+import { MessageService } from 'primeng/api';
+import { ToastModule } from 'primeng/toast';
+
 import {
     Zone,
     District,
     LocalBody,
-    SponsorType,
     CartItem,
-    Ward
+    Ward,
+    BulkSponsorshipData
 } from '../interfaces/sponsor.interface';
-import { ConvexService } from '../services/sponsor.service';
+import { PaymentService } from '../services/payment.service';
+import { SponsorBusinessLogicService } from '../services/sponsor-business-logic.service';
+import { ValidationService } from '../services/validation.service';
 import { ScrollAnimateDirective } from '../shared/scroll-animate.directive';
-import { DialogModule } from 'primeng/dialog';
-import { MessageService } from 'primeng/api';
-import { ToastModule } from 'primeng/toast';
-import { Router } from '@angular/router';
-import { environment } from 'src/environments/environment';
+import {
+    LOCAL_BODY_TYPE_OPTIONS,
+    SPONSOR_CONFIG,
+    TOAST_MESSAGES,
+    ERROR_MESSAGES
+} from '../constants/sponsor.constants';
+import { SponsorService } from '../services/sponsor.service';
 
 @Component({
     selector: 'app-sponsor-ward',
@@ -55,127 +64,33 @@ import { environment } from 'src/environments/environment';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SponsorWardComponent {
-    // Inject Convex Service
+    // Services
+    sponsor = inject(SponsorService);
+    private paymentService = inject(PaymentService);
+    private businessLogic = inject(SponsorBusinessLogicService);
+    private validationService = inject(ValidationService);
     private messageService = inject(MessageService);
-    convex = inject(ConvexService);
-    private readonly RATE_PER_EXECUTIVE = 15000;
-    private router=inject(Router)
-    // ==========================================
-    // SIGNALS - Selection State
-    // ==========================================
-    selectedZone = signal<Zone | null>(null);
-    selectedDistrict = signal<District | null>(null);
-    selectedSubdistrict = signal<LocalBody | null>(null); // NEW
-    selectedWards = signal<Ward[]>([]);
-    selectedLocalBodyType = signal<'All' | 'P' | 'M' | 'C'>('All');
-    selectedLocalBody = signal<LocalBody | null>(null);
-    localBodyTypeOptions = signal([
-        { label: 'All Types', value: 'All' },
-        { label: 'Panchayat', value: 'P' },
-        { label: 'Municipality', value: 'M' },
-        { label: 'Corporation', value: 'C' }
+    private router = inject(Router);
+
+    // Constants
+    readonly RATE_PER_EXECUTIVE = SPONSOR_CONFIG.RATE_PER_EXECUTIVE;
+readonly localBodyTypeOptions = LOCAL_BODY_TYPE_OPTIONS as any;
+    readonly today = new Date();
+    readonly sponsorTypeOptions = signal([
+        { label: 'Individual', value: 'individual' as const },
+        { label: 'Company', value: 'company' as const }
     ]);
 
-    bulkSelectedExecutivesTotal = computed(() => {
-        const selectedCount = this.selectedWards().length;
-        // We assume the user wants 1 executive per ward initially if the dialog hasn't been opened.
-        return selectedCount * this.bulkSponsoredExecutivesCount();
-    });
-    bulkSelectionCost = computed(() => {
-        return this.bulkSelectedExecutivesTotal() * this.RATE_PER_EXECUTIVE;
-    });
-    cartExecutivesTotal = computed(() => {
-        return this.cartItems().reduce(
-            (sum, item) => sum + item.executivesSponsored,
-            0
-        );
-    });
-    bulkMaxExecutives = computed(() => {
-        const wards = this.selectedWards();
-        if (wards.length === 0) {
-            return 5; // Default to highest possible value when nothing is selected
-        }
-
-        // Get the maximum allowed executive count for every selected ward
-        const maxValues = wards.map((ward) =>
-            this.getMaxExecutives(ward.localBodyType as 'P' | 'M' | 'C')
-        );
-
-        // Return the minimum value from the resulting array (the most restrictive constraint)
-        return Math.min(...maxValues);
-    });
-    isBulkSponsorDialogVisible = signal(false);
-    bulkSponsoredExecutivesCount = signal(1);
-    bulkSponsorshipStartDate = signal<Date | null>(null);
-    bulkSponsorshipEndDate = computed<Date | null>(() => {
-        const startDate = this.bulkSponsorshipStartDate();
-        const months = this.bulkSponsorshipMonths();
-        if (!startDate || months < 1) return null;
-
-        const endDate = new Date(startDate);
-        endDate.setMonth(startDate.getMonth() + months);
-        return endDate;
-    }); // ==========================================
-    // COMPUTED - Data from Service
-    // ==========================================
-    zones = this.convex.zones;
-    zonesLoading = this.convex.zonesLoading;
-
-    districts = this.convex.districts;
-    subDistricts = this.convex.subdistricts;
-    districtsLoading = this.convex.districtsLoading;
-    subdistrictsLoading = this.convex.subdistrictsLoading;
-    // localBodies = this.convex.localBodies;
-    // localBodiesLoading = this.convex.localBodiesLoading;
-
-    wards = this.convex.wards;
-    wardsLoading = this.convex.wardsLoading;
+    // Selection State
+    selectedZone = signal<Zone | null>(null);
+    selectedDistrict = signal<District | null>(null);
+    selectedSubdistrict = signal<LocalBody | null>(null);
+    selectedLocalBody = signal<LocalBody | null>(null);
+    selectedLocalBodyType = signal<'All' | 'P' | 'M' | 'C'>('All');
+    selectedWards = signal<Ward[]>([]);
     searchText = signal('');
-    cartMessage = signal<string | null>(null);
-    cartMessageTimeout: any = null;
-    sponsorshipMonths = signal(1);
-    bulkSponsorshipMonths = signal(1);
 
-    stateSummary = signal<any>(null);
-    bulkSponsorshipData = signal<{
-        level:
-            | 'state'
-            | 'zone'
-            | 'district'
-            | 'type'
-            | 'subdistrict'
-            | 'localbody';
-        identifier: string;
-        wardCount: number;
-        estimatedCost: number;
-    } | null>(null);
-
-    // ==========================================
-    // SIGNALS - Sponsor Form
-    // ==========================================
-    sponsorType = signal<'individual' | 'company'>('individual');
-    sponsorName = signal('');
-    sponsorEmail = signal('');
-    today = new Date();
-
-    minEndDate = computed(() => {
-        const startDate = this.sponsorshipStartDate();
-        if (!startDate) return this.today;
-        // Set minimum end date to be 1 month after the start date
-        const minDate = new Date(startDate);
-        minDate.setMonth(minDate.getMonth() + 1);
-        return minDate;
-    });
-    bulkMinEndDate = computed(() => {
-        const startDate = this.bulkSponsorshipStartDate();
-        if (!startDate) return this.today;
-        const minDate = new Date(startDate);
-        minDate.setMonth(minDate.getMonth() + 1);
-        return minDate;
-    });
-    selectedState = signal<boolean>(false);
-
-    // NEW: Computed to check if "Select All" was used
+    // Bulk Selection State
     bulkSelectionLevel = signal<
         | 'state'
         | 'zone'
@@ -185,11 +100,123 @@ export class SponsorWardComponent {
         | 'localbody'
         | null
     >(null);
-    stateOrZoneSelected = computed(() => {
-        return (
-            this.bulkSelectionLevel() === 'state' ||
-            this.bulkSelectionLevel() === 'zone'
+    bulkSponsorshipData = signal<BulkSponsorshipData | null>(null);
+    bulkHasSponsoredWards = signal(false);
+    bulkSponsoredWardsCount = signal(0);
+    bulkTotalWardsCount = signal(0);
+    bulkSponsoredExecutivesCount = signal(1);
+    bulkSponsorshipStartDate = signal<Date | null>(null);
+    bulkSponsorshipMonths = signal(1);
+    isBulkSponsorDialogVisible = signal(false);
+
+    // Cart State
+    cartItems = signal<CartItem[]>([]);
+    cartMessage = signal<string | null>(null);
+    cartMessageTimeout: any = null;
+
+    // Sponsor Form State
+    sponsorType = signal<'individual' | 'company'>('individual');
+    sponsorName = signal('');
+    sponsorEmail = signal('');
+    isProcessing = signal(false);
+
+    // Individual Ward Sponsorship State
+    isVolunteerDialogVisible = signal(false);
+    selectedWardForSponsorship = signal<Ward | null>(null);
+    sponsoredExecutivesCount = signal(1);
+    sponsorshipStartDate = signal<Date | null>(null);
+    sponsorshipEndDate = signal<Date | null>(null);
+    sponsorshipMonths = signal(1);
+
+    // Computed Values
+    zones = this.sponsor.zones;
+    districts = this.sponsor.districts;
+    subDistricts = this.sponsor.subdistricts;
+    wards = this.sponsor.wards;
+    
+    zonesLoading = this.sponsor.zonesLoading;
+    districtsLoading = this.sponsor.districtsLoading;
+    subdistrictsLoading = this.sponsor.subdistrictsLoading;
+    wardsLoading = this.sponsor.wardsLoading;
+
+    filteredWards = computed(() => {
+        const search = this.searchText().toLowerCase();
+        const allWards = this.wards();
+        
+        if (!search) return allWards;
+        
+        return allWards.filter(ward =>
+            ward.wardName.toLowerCase().includes(search) ||
+            (ward.wardNumber && ward.wardNumber.toString().includes(search)) ||
+            ward.localBodyName.toLowerCase().includes(search)
         );
+    });
+
+    // Display computeds for bulk selection
+    displayedWardCount = computed(() => {
+        const data = this.bulkSponsorshipData();
+        return data ? data.wardCount : this.selectedWards().length;
+    });
+
+    estimatedCostDescription = computed(() => {
+        const data = this.bulkSponsorshipData();
+        if (!data) return '';
+        
+        if (data.hasSponsoredWards) {
+            return `Includes ${data.sponsoredWardsCount} sponsored/locked wards that will be queued.`;
+        }
+        return `All wards available for immediate sponsorship.`;
+    });
+
+    // Cart calculations
+    subtotal = computed(() => {
+        return this.cartItems().reduce((sum, item) => sum + item.monthlyRate, 0);
+    });
+
+    gst = computed(() => this.subtotal() * 0.18);
+    
+    total = computed(() => this.subtotal() + this.gst());
+    
+    walletBonus = computed(() => this.subtotal() * 3);
+
+    // Bulk calculations
+    bulkSelectedExecutivesTotal = computed(() => {
+        const selectedCount = this.selectedWards().length;
+        return selectedCount * this.bulkSponsoredExecutivesCount();
+    });
+
+    bulkSelectionCost = computed(() =>
+        this.businessLogic.calculateCostPerMonth(this.bulkSelectedExecutivesTotal())
+    );
+
+    bulkMaxExecutives = computed(() => {
+        const wards = this.selectedWards();
+        if (wards.length === 0) return SPONSOR_CONFIG.MAX_EXECUTIVES.C;
+        return this.businessLogic.calculateMinExecutives(wards);
+    });
+
+    bulkSponsorshipEndDate = computed<Date | null>(() => {
+        const startDate = this.bulkSponsorshipStartDate();
+        const months = this.bulkSponsorshipMonths();
+        if (!startDate || months < 1) return null;
+        return this.businessLogic.calculateEndDate(startDate, months);
+    });
+
+    // Individual ward calculations
+    maxExecutives = computed(() => {
+        const ward = this.selectedWardForSponsorship();
+        if (!ward) return SPONSOR_CONFIG.MAX_EXECUTIVES.C;
+        return this.businessLogic.getMaxExecutives(
+            ward.localBodyType as 'P' | 'M' | 'C'
+        );
+    });
+
+    // Dropdown disable state
+    areDropdownsDisabled = computed(() => this.bulkSelectionLevel() !== null);
+    
+    stateOrZoneSelected = computed(() => {
+        const level = this.bulkSelectionLevel();
+        return level === 'state' || level === 'zone';
     });
 
     districtOrAboveSelected = computed(() => {
@@ -197,1212 +224,741 @@ export class SponsorWardComponent {
         return level === 'state' || level === 'zone' || level === 'district';
     });
 
-    // NEW: Check if dropdowns should be disabled
-    areDropdownsDisabled = computed(() => {
-        return this.bulkSelectionLevel() !== null;
-    });
-    async selectAllWardsInState() {
-        const summary = await this.convex.client.query(
-            'wards:getStateSummary',
-            {}
-        );
-
-        this.bulkSelectionLevel.set('state');
-        this.bulkSponsorshipData.set({
-            level: 'state',
-            identifier: 'Kerala',
-            wardCount: summary.totalWards,
-            estimatedCost: summary.estimatedCost
-        });
-
-        this.selectedWards.set([]);
-    }
-
-    filteredWards = computed(() => {
-        const allWards = this.wards();
-        const search = this.searchText().toLowerCase();
-        const localBody = this.selectedLocalBody();
-
-        let wardsToDisplay = allWards;
-
-        // If a specific local body is selected, filter by it
-        if (localBody) {
-            wardsToDisplay = wardsToDisplay.filter(
-                (ward) => ward.localBodyName === localBody.name
-            );
-        }
-
-        // Apply search filter
-        if (search) {
-            wardsToDisplay = wardsToDisplay.filter(
-                (ward) =>
-                    ward.wardName.toLowerCase().includes(search) ||
-                    ward.localBodyName.toLowerCase().includes(search)
-            );
-        }
-
-        return wardsToDisplay;
-    });
-    constructor() {}
-    sponsorTypeOptions = signal<SponsorType[]>([
-        { label: 'Individual', value: 'individual' },
-        { label: 'Company', value: 'company' }
-    ]);
-
-    // ==========================================
-    // SIGNALS - Cart & Dialog
-    // ==========================================
-    cartItems = signal<CartItem[]>([]);
-    isVolunteerDialogVisible = signal(false);
-    selectedWardForSponsorship = signal<Ward | null>(null);
-    sponsoredExecutivesCount = signal(1);
-    sponsorshipStartDate = signal<Date | null>(null);
-    sponsorshipEndDate = computed<Date | null>(() => {
-        const startDate = this.sponsorshipStartDate();
-        const months = this.sponsorshipMonths();
-        if (!startDate || months < 1) return null;
-
-        const endDate = new Date(startDate);
-        // CRITICAL FIX: Add months to the date object
-        endDate.setMonth(startDate.getMonth() + months);
-        return endDate;
-    });
-    // ==========================================
-    // COMPUTED - Max Executives
-    // ==========================================
-    maxExecutives = computed(() => {
-        const ward = this.selectedWardForSponsorship();
-        if (!ward) return 1;
-
-        switch (ward.localBodyType) {
-            case 'C':
-                return 5;
-            case 'M':
-                return 3;
-            case 'P':
-                return 1;
-            default:
-                return 1;
-        }
-    });
-    selectAllByTypeLabel = computed(() => {
-        const type = this.selectedLocalBodyType();
-        if (type === 'All') return 'Select All by Type';
-        return `Select All ${this.getLocalBodyTypeLabel(type as any)}s`;
-    });
-    // Helper to get max executives for any ward
-    getMaxExecutives(localBodyType: 'P' | 'M' | 'C'): number {
-        switch (localBodyType) {
-            case 'C':
-                return 5;
-            case 'M':
-                return 3;
-            case 'P':
-                return 1;
-            default:
-                return 1;
-        }
-    }
-
-    onLocalBodyTypeChange() {
-        console.log('🔄 Type changed:', this.selectedLocalBodyType());
-
-        this.selectedLocalBody.set(null);
-        this.convex.clearWards();
-        this.convex.localBodies.set([]);
-
-        const subdistrict = this.selectedSubdistrict();
-        const type = this.selectedLocalBodyType();
-
-        if (!subdistrict) {
-            console.log('⚠️ No subdistrict selected');
-            return;
-        }
-
-        if (type !== 'All') {
-            // Load local bodies for the selected type
-            console.log('📥 Loading local bodies for type:', type);
-            this.convex.loadLocalBodies(subdistrict.name, type);
-
-            // Also load wards filtered by type
-            this.convex.loadWards({
-                subdistrict: subdistrict.name,
-                localBodyType: type,
-                searchText: this.searchText()
-            });
-        } else {
-            // Load all wards when type is 'All'
-            console.log('📥 Loading all wards');
-            this.convex.loadWards({
-                subdistrict: subdistrict.name,
-                localBodyType: 'All',
-                searchText: this.searchText()
-            });
-        }
-    }
-
-    onLocalBodyChange(event: { value: LocalBody | null }) {
-        console.log('🏛️ Local body changed:', event.value);
-
-        this.convex.clearWards();
-
-        const localBody = this.selectedLocalBody();
-        const subdistrict = this.selectedSubdistrict();
-
-        if (localBody && subdistrict) {
-            // Load only wards for this specific local body
-            this.convex.loadWards({
-                subdistrict: subdistrict.name,
-                localBodyType: localBody.type,
-                searchText: this.searchText()
-            });
-        }
-    }
-    onSelectionChange() {
-        // This logic ensures the bulk sponsored executives count does not exceed the limit
-        const currentBulkCount = this.bulkSponsoredExecutivesCount();
-        const maxAllowed = this.bulkMaxExecutives();
-
-        // If the currently set count exceeds the new, more restrictive max, reset it.
-        if (currentBulkCount > maxAllowed) {
-            this.bulkSponsoredExecutivesCount.set(maxAllowed);
-        }
-    }
-
-    clearCart() {
-        this.cartItems.set([]);
-    }
-    // ==========================================
-    // COMPUTED - Cart Calculations
-    // ==========================================
-    subtotal = computed(() => {
-        return this.cartItems().reduce((sum, item) => {
-            return sum + item.costPerMonth;
-        }, 0);
-    });
-
-    gst = computed(() => {
-        return Math.round(this.subtotal() * 0.18);
-    });
-
-    total = computed(() => {
-        return this.subtotal() + this.gst();
-    });
-
-    walletBonus = computed(() => {
-        return this.total() * 3;
-    });
-
+    // Form validation
     isFormValid = computed(() => {
         return (
-            this.sponsorName().trim() !== '' &&
-            this.sponsorEmail().trim() !== '' &&
+            this.sponsorName().trim().length > 0 &&
+            this.sponsorEmail().trim().length > 0 &&
+            this.validationService.isValidEmail(this.sponsorEmail()) &&
             this.cartItems().length > 0
         );
     });
 
-    // ==========================================
-    // SELECTION HANDLERS
-    // ==========================================
-    onZoneChange(event: { value: Zone | null }) {
+    // Select all label
+    selectAllByTypeLabel = computed(() => {
+        const type = this.selectedLocalBodyType();
+        if (type === 'All') return 'Select Type First';
+        const label = this.businessLogic.getLocalBodyTypeLabel(type);
+        return `Select All ${label}s`;
+    });
+
+    // Effects
+    constructor() {
+        // Watch for month changes in individual sponsorship
+        effect(() => {
+            const startDate = this.sponsorshipStartDate();
+            const months = this.sponsorshipMonths();
+            if (startDate && months >= 1) {
+                const endDate = this.businessLogic.calculateEndDate(startDate, months);
+                this.sponsorshipEndDate.set(endDate);
+            }
+        });
+
+        // Auto-set start date for fully sponsored wards
+        effect(() => {
+            const ward = this.selectedWardForSponsorship();
+            if (ward && ward.isSponsored && ward.availableExecutives === 0) {
+                // Ward is fully sponsored/locked - queue after expiry
+                const expiryDate = new Date(ward.sponsoredUntil);
+                expiryDate.setDate(expiryDate.getDate() + 1); // Day after expiry
+                this.sponsorshipStartDate.set(expiryDate);
+            } else if (ward) {
+                // Ward available - can start today or later
+                this.sponsorshipStartDate.set(new Date());
+            }
+        });
+    }
+
+    // Selection Handlers
+    onZoneChange(event: any) {
+        const zone = event.value;
+        this.selectedZone.set(zone);
         this.selectedDistrict.set(null);
         this.selectedSubdistrict.set(null);
-        this.selectedLocalBodyType.set('All');
         this.selectedLocalBody.set(null);
-
-        this.convex.clearDistricts();
-
-        if (event.value) {
-            this.convex.loadDistrictsByZone(event.value.name);
+        this.sponsor.clearDistricts();
+        
+        if (zone) {
+            this.sponsor.loadDistrictsByZone(zone.name);
         }
     }
-    selectAllWardsInLocalBody() {
-        const selectedLocalBody = this.selectedLocalBody();
-        if (!selectedLocalBody) return;
 
-        this.bulkSelectionLevel.set('localbody');
-
-        const wardsInLocalBody = this.filteredWards().filter(
-            (ward) => ward.localBodyName === selectedLocalBody.name
-        );
-
-        this.selectedWards.set(wardsInLocalBody);
-        this.onSelectionChange();
-    }
-    clearSelection() {
-        this.selectedWards.set([]);
-        this.bulkSelectionLevel.set(null);
-    }
-    onDistrictChange(event: { value: District | null }) {
+    onDistrictChange(event: any) {
+        const district = event.value;
+        this.selectedDistrict.set(district);
         this.selectedSubdistrict.set(null);
-        this.selectedLocalBodyType.set('All');
         this.selectedLocalBody.set(null);
-
-        this.convex.clearSubdistricts();
-
-        if (event.value) {
-            this.convex.loadSubdistrictsByDistrict(event.value.name);
+        this.sponsor.clearSubdistricts();
+        
+        if (district) {
+            this.sponsor.loadSubdistrictsByDistrict(district.name);
         }
     }
 
-    onSubdistrictChange(event: { value: LocalBody | null }) {
-        this.selectedLocalBodyType.set('All');
+    onSubdistrictChange(event: any) {
+        const subdistrict = event.value;
+        this.selectedSubdistrict.set(subdistrict);
         this.selectedLocalBody.set(null);
-
-        this.convex.clearWards();
-        this.convex.localBodies.set([]);
-
-        const subdistrict = this.selectedSubdistrict();
-
+        this.sponsor.clearWards();
+        
         if (subdistrict) {
-            // Load all wards when subdistrict is selected (type defaults to 'All')
-            this.convex.loadWards({
-                subdistrict: subdistrict.name,
-                localBodyType: 'All',
-                searchText: this.searchText()
-            });
+            this.loadWards();
         }
     }
 
-    isBulkQueued = computed(() => {
-    const today = new Date();
-    // Check if the calculated start date is more than one day in the future
-    return this.bulkSponsorshipStartDate() && this.bulkSponsorshipStartDate()!.getTime() > today.getTime() + 86400000;
-});
-    // ==========================================
-    // DIALOG HANDLERS
-    // ==========================================
-// in sponsor-ward.component.ts
-hasQueuedWardsInSelection = computed(() => {
-    return this.selectedWards().some(ward => ward.isSponsored);
-});
+    onLocalBodyTypeChange() {
+        this.selectedLocalBody.set(null);
+        
+        const subdistrict = this.selectedSubdistrict();
+        const type = this.selectedLocalBodyType();
+        
+        if (subdistrict && type !== 'All') {
+            this.sponsor.loadLocalBodies(subdistrict.name, type);
+        } else {
+            this.sponsor.clearLocalBodies();
+        }
+        
+        this.loadWards();
+    }
 
-openVolunteerDialog(ward: Ward) {
-    this.selectedWardForSponsorship.set(ward);
-    this.isVolunteerDialogVisible.set(true);
-    
-    console.log('🔍 Ward Sponsorship Details:', {
-        wardName: ward.wardName,
-        isSponsored: ward.isSponsored,
-        sponsoredUntil: ward.sponsoredUntil,
-        sponsoredExecutivesCount: ward.sponsoredExecutivesCount,
-        availableExecutives: ward.availableExecutives,
-        isPendingSponsorship: ward.isPendingSponsorship,
-        maxExecutives: this.getMaxExecutives(ward.localBodyType)
-    });
-    
-    // ✅ Check if ward has ANY sponsored executives (including pending with 3-day lock)
-    if (ward.isSponsored && ward.sponsoredUntil && ward.sponsoredUntil > 0) {
-        const currentEndDate = new Date(ward.sponsoredUntil);
-        const dayAfterEnd = new Date(currentEndDate);
-        dayAfterEnd.setDate(dayAfterEnd.getDate() + 1);
+    onLocalBodyChange(event: any) {
+        const localBody = event.value;
+        this.selectedLocalBody.set(localBody);
+        this.loadWards();
+    }
+
+    onSelectionChange() {
+        // Called when table selection changes
+        console.log('Selected wards:', this.selectedWards().length);
+    }
+
+    // Data Loading
+    loadWards() {
+        const subdistrict = this.selectedSubdistrict();
+        const localBodyType = this.selectedLocalBodyType();
         
-        const maxExecs = this.getMaxExecutives(ward.localBodyType);
-        const available = ward.availableExecutives || 0;
-        
-        if (available > 0) {
-            // Partial sponsorship - some slots available
-            this.sponsorshipStartDate.set(new Date()); // Can start today
+        if (!subdistrict) return;
+
+        this.sponsor.loadWards({
+            subdistrict: subdistrict.name,
+            localBodyType: localBodyType === 'All' ? '' : localBodyType,
+            searchText: this.searchText()
+        });
+    }
+
+    // Bulk Selection Methods
+    async selectAllWardsInState() {
+        try {
+            const summary = await this.sponsor.client.query(
+                'wards:getStateSummary',
+                {}
+            );
+
+            this.bulkSelectionLevel.set('state');
+            this.bulkSponsorshipData.set({
+                level: 'state',
+                identifier: 'Kerala',
+                wardCount: summary.totalWards,
+                estimatedCost: summary.estimatedCost,
+                hasSponsoredWards: summary.hasSponsoredWards || false,
+                sponsoredWardsCount: summary.sponsoredWardsCount || 0
+            });
+
+            this.bulkHasSponsoredWards.set(summary.hasSponsoredWards || false);
+            this.bulkSponsoredWardsCount.set(summary.sponsoredWardsCount || 0);
+            this.bulkTotalWardsCount.set(summary.totalWards);
+
+            this.selectedWards.set([]);
             
             this.messageService.add({
                 severity: 'info',
-                summary: ward.isPendingSponsorship ? 'Pending Sponsorship (3-Day Lock)' : 'Partial Sponsorship',
-                detail: `${ward.sponsoredExecutivesCount} of ${maxExecs} executives are ${ward.isPendingSponsorship ? 'pending/locked' : 'sponsored'} until ${currentEndDate.toLocaleDateString()}. You can sponsor the remaining ${available} executive(s) immediately.`,
-                life: 7000
-            });
-            
-            // Set count to available slots
-            this.sponsoredExecutivesCount.set(Math.min(1, available));
-        } else {
-            // Fully sponsored - must queue
-            this.sponsorshipStartDate.set(dayAfterEnd);
-            
-            this.messageService.add({
-                severity: 'warn',
-                summary: ward.isPendingSponsorship ? 'Fully Locked (Pending Payment)' : 'Fully Sponsored',
-                detail: `All ${maxExecs} executives are ${ward.isPendingSponsorship ? 'locked (pending payment)' : 'sponsored'} until ${currentEndDate.toLocaleDateString()}. Your sponsorship will be queued and start on ${dayAfterEnd.toLocaleDateString()}.`,
-                life: 7000
-            });
-            
-            // Reset to 1 for queued sponsorship
-            this.sponsoredExecutivesCount.set(1);
-        }
-    } else {
-        // Not sponsored - can start today
-        this.sponsorshipStartDate.set(new Date());
-        this.sponsoredExecutivesCount.set(1);
-    }
-}
-    addToCart() {
-        const ward = this.selectedWardForSponsorship();
-        const count = this.sponsoredExecutivesCount();
-        const startDate = this.sponsorshipStartDate();
-        const endDate = this.sponsorshipEndDate();
-
-        if (!ward || count < 1 || !startDate || !endDate) {
-            this.messageService.add({
-                severity: 'error',
-                summary: 'Missing Information',
-                detail: 'Please fill in all required fields',
+                summary: 'State Selected',
+                detail: `All ${summary.totalWards} wards in Kerala selected`,
                 life: 3000
             });
-            return;
+        } catch (error) {
+            console.error('Failed to select state:', error);
         }
-
-        // Check conflict with bulk selections
-        const wardHierarchy = {
-            state: 'Kerala',
-            zone: ward.zoneName,
-            district: ward.districtName
-        };
-
-        const conflict = this.checkCartConflict(wardHierarchy, 'individual');
-        if (conflict.hasConflict) {
-            this.messageService.add({
-                severity: 'error',
-                summary: 'Cannot Add Ward',
-                detail: conflict.conflictMessage,
-                life: 5000
-            });
-            return;
-        }
-
-        // Check if already in cart
-        const existingIndex = this.cartItems().findIndex(
-            (item) => !item.isBulk && item.ward._id === ward._id
-        );
-
-        const newItem: CartItem = {
-            ward,
-            executivesSponsored: count,
-            monthlyRate: 15000,
-            costPerMonth: count * 15000,
-            startDate,
-            endDate
-        };
-
-        const action = this.upsertCartItem(newItem);
-
-        if (existingIndex > -1) {
-            this.messageService.add({
-                severity: 'warn',
-                summary: 'Already in Cart',
-                detail: `${ward.wardName} was already in cart. Updated details.`,
-                life: 4000
-            });
-        } else {
-            this.messageService.add({
-                severity: 'success',
-                summary: 'Added to Cart',
-                detail: `${ward.wardName} added successfully`,
-                life: 3000
-            });
-        }
-
-        this.isVolunteerDialogVisible.set(false);
-    }
-
-    openBulkSponsorDialog() {
-        // Set default dates
-        const startDate = new Date();
-        const endDate = new Date();
-        endDate.setMonth(startDate.getMonth() + 1);
-        this.bulkSponsorshipStartDate.set(startDate);
-        this.bulkSponsoredExecutivesCount.set(1);
-        this.bulkSponsorshipMonths.set(1);
-        this.isBulkSponsorDialogVisible.set(true);
     }
 
     async selectAllWardsInZone() {
-        const selectedZone = this.selectedZone();
-        if (!selectedZone) return;
+        const zone = this.selectedZone();
+        if (!zone) {
+            this.messageService.add({
+                severity: 'warn',
+                summary: 'No Zone Selected',
+                detail: 'Please select a zone first',
+                life: 3000
+            });
+            return;
+        }
 
-        const summary = await this.convex.client.query('wards:getZoneSummary', {
-            zone: selectedZone.name
-        });
+        try {
+            const summary = await this.sponsor.client.query(
+                'wards:getZoneSummary',
+                { zone: zone.name }
+            );
 
-        this.bulkSelectionLevel.set('zone');
-        this.bulkSponsorshipData.set({
-            level: 'zone',
-            identifier: selectedZone.name,
-            wardCount: summary.totalWards,
-            estimatedCost: summary.estimatedCost
-        });
+            this.bulkSelectionLevel.set('zone');
+            this.bulkSponsorshipData.set({
+                level: 'zone',
+                identifier: zone.name,
+                wardCount: summary.totalWards,
+                estimatedCost: summary.estimatedCost,
+                hasSponsoredWards: summary.hasSponsoredWards || false,
+                sponsoredWardsCount: summary.sponsoredWardsCount || 0
+            });
 
-        this.selectedWards.set([]);
+            this.bulkHasSponsoredWards.set(summary.hasSponsoredWards || false);
+            this.bulkSponsoredWardsCount.set(summary.sponsoredWardsCount || 0);
+            this.bulkTotalWardsCount.set(summary.totalWards);
+
+            this.selectedWards.set([]);
+            
+            this.messageService.add({
+                severity: 'info',
+                summary: 'Zone Selected',
+                detail: `All ${summary.totalWards} wards in ${zone.name} selected`,
+                life: 3000
+            });
+        } catch (error) {
+            console.error('Failed to select zone:', error);
+        }
     }
 
     async selectAllWardsInDistrict() {
-        const selectedDistrict = this.selectedDistrict();
-        if (!selectedDistrict) return;
+        const district = this.selectedDistrict();
+        if (!district) {
+            this.messageService.add({
+                severity: 'warn',
+                summary: 'No District Selected',
+                detail: 'Please select a district first',
+                life: 3000
+            });
+            return;
+        }
 
-        const summary = await this.convex.client.query(
-            'wards:getDistrictSummary',
-            {
-                district: selectedDistrict.name
-            }
+        try {
+            const summary = await this.sponsor.client.query(
+                'wards:getDistrictSummary',
+                { district: district.name }
+            );
+
+            this.bulkSelectionLevel.set('district');
+            this.bulkSponsorshipData.set({
+                level: 'district',
+                identifier: district.name,
+                wardCount: summary.totalWards,
+                estimatedCost: summary.estimatedCost,
+                hasSponsoredWards: summary.hasSponsoredWards || false,
+                sponsoredWardsCount: summary.sponsoredWardsCount || 0
+            });
+
+            this.bulkHasSponsoredWards.set(summary.hasSponsoredWards || false);
+            this.bulkSponsoredWardsCount.set(summary.sponsoredWardsCount || 0);
+            this.bulkTotalWardsCount.set(summary.totalWards);
+
+            this.selectedWards.set([]);
+            
+            this.messageService.add({
+                severity: 'info',
+                summary: 'District Selected',
+                detail: `All ${summary.totalWards} wards in ${district.name} selected`,
+                life: 3000
+            });
+        } catch (error) {
+            console.error('Failed to select district:', error);
+        }
+    }
+
+  
+
+ // 1. For Subdistrict - NO SUMMARY EXISTS, use getWardsBySubdistrict
+async selectAllWardsInSubdistrict() {
+    const subdistrict = this.selectedSubdistrict();
+    if (!subdistrict) return;
+
+    try {
+        const wards = await this.sponsor.client.query(
+            'wards:getWardsBySubdistrict',
+            { subdistrict: subdistrict.name }
         );
 
-        this.bulkSelectionLevel.set('district');
+        this.bulkSelectionLevel.set('subdistrict');
         this.bulkSponsorshipData.set({
-            level: 'district',
-            identifier: selectedDistrict.name,
-            wardCount: summary.totalWards,
-            estimatedCost: summary.estimatedCost
+            level: 'subdistrict',
+            identifier: subdistrict.name,
+            wardCount: wards.length,
+            estimatedCost: wards.length * 15000,
+            hasSponsoredWards: false,
+            sponsoredWardsCount: 0
         });
 
+        this.bulkHasSponsoredWards.set(false);
+        this.bulkSponsoredWardsCount.set(0);
+        this.bulkTotalWardsCount.set(wards.length);
+
         this.selectedWards.set([]);
+    } catch (error) {
+        console.error('Failed to select subdistrict:', error);
     }
+}
 
-    displayedWardCount = computed(() => {
-        const bulkData = this.bulkSponsorshipData();
-        if (bulkData) {
-            return bulkData.wardCount;
-        }
-        return this.selectedWards().length;
-    });
+// 2. For Type - CORRECT QUERY EXISTS
+async selectAllWardsByType() {
+    const subdistrict = this.selectedSubdistrict();
+    const type = this.selectedLocalBodyType();
+    
+    if (!subdistrict || type === 'All') return;
 
-    displayedEstimatedCost = computed(() => {
-        const bulkData = this.bulkSponsorshipData();
-        if (bulkData) {
-            return bulkData.estimatedCost * this.bulkSponsoredExecutivesCount();
-        }
-        return this.bulkSelectionCost();
-    });
-
-    estimatedCostDescription = computed(() => {
-        const level = this.bulkSelectionLevel();
-        const execCount = this.bulkSponsoredExecutivesCount();
-
-        if (level) {
-            return `Based on ${execCount} executive${execCount > 1 ? 's' : ''} per ward (₹15,000/executive/month). Actual cost varies: Panchayat=1, Municipality=3, Corporation=5 executives.`;
-        }
-        return '';
-    });
-    async selectAllWardsInSubdistrict() {
-        const selectedSubdistrict = this.selectedSubdistrict();
-        if (!selectedSubdistrict) return;
-
-        this.bulkSelectionLevel.set('subdistrict');
-
-        // Can load actual wards (under 8K limit)
-        this.selectedWards.set(this.filteredWards());
-        this.onSelectionChange();
-    }
-
-    async selectAllWardsByType() {
-        const selectedSubdistrict = this.selectedSubdistrict();
-        const selectedType = this.selectedLocalBodyType();
-
-        if (!selectedSubdistrict || selectedType === 'All') return;
-
-        const summary = await this.convex.client.query(
+    try {
+        const summary = await this.sponsor.client.query(
             'wards:getWardsSummaryBySubdistrictAndType',
-            {
-                subdistrict: selectedSubdistrict.name,
-                localBodyType: selectedType
-            }
+            { subdistrict: subdistrict.name, localBodyType: type }  // ✅ Changed 'type' to 'localBodyType'
         );
 
         this.bulkSelectionLevel.set('type');
         this.bulkSponsorshipData.set({
             level: 'type',
-            identifier: `${selectedSubdistrict.name} - ${this.getLocalBodyTypeLabel(selectedType as any)}`,
+            identifier: `${subdistrict.name} - ${this.businessLogic.getLocalBodyTypeLabel(type)}`,
             wardCount: summary.totalWards,
-            estimatedCost: summary.estimatedCost
+            estimatedCost: summary.estimatedCost,
+            hasSponsoredWards: false,
+            sponsoredWardsCount: 0
         });
 
+        this.bulkHasSponsoredWards.set(false);
+        this.bulkSponsoredWardsCount.set(0);
+        this.bulkTotalWardsCount.set(summary.totalWards);
+
+        this.selectedWards.set([]);
+    } catch (error) {
+        console.error('Failed to select by type:', error);
+    }
+}
+
+async selectAllWardsInLocalBody() {
+    const localBody = this.selectedLocalBody();
+    if (!localBody) return;
+
+    try {
+        // ✅ Use getLocalBodyWardCount with localBodyName
+        const summary = await this.sponsor.client.query(
+            'wards:getLocalBodyWardCount',
+            { localBodyName: localBody.name }  // ✅ Correct field name
+        );
+
+        this.bulkSelectionLevel.set('localbody');
+        this.bulkSponsorshipData.set({
+            level: 'localbody',
+            identifier: localBody.name,
+            wardCount: summary.totalWards,
+            estimatedCost: summary.estimatedCost,
+            hasSponsoredWards: false,
+            sponsoredWardsCount: 0
+        });
+
+        this.bulkHasSponsoredWards.set(false);
+        this.bulkSponsoredWardsCount.set(0);
+        this.bulkTotalWardsCount.set(summary.totalWards);
+
+        this.selectedWards.set([]);
+    } catch (error) {
+        console.error('Failed to select local body:', error);
+    }
+}
+    // Clear selection methods
+    clearStateSelection() {
+        this.bulkSelectionLevel.set(null);
+        this.bulkSponsorshipData.set(null);
+        this.bulkHasSponsoredWards.set(false);
+        this.bulkSponsoredWardsCount.set(0);
+        this.bulkTotalWardsCount.set(0);
         this.selectedWards.set([]);
     }
 
-    async addToCartBulk(): Promise<void> {
-    const wardsToAdd = this.selectedWards();
-    const count = this.sponsoredExecutivesCount(); // Assuming single count for all
-    const startDate = this.sponsorshipStartDate();
-    const endDate = this.sponsorshipEndDate();
-    
-    
-
-    if (wardsToAdd.length === 0) {
-        this.messageService.add({ severity: 'warn', summary: 'Selection Empty', detail: 'Please select at least one ward.', life: 3000 });
-        return;
-    }
-    if (count < 1 || !startDate || !endDate) {
-        this.messageService.add({ severity: 'error', summary: 'Missing Details', detail: 'Please set sponsorship count and dates.', life: 4000 });
-        return;
-    }
-
-    let successes = 0;
-    let conflicts = 0;
-
-    for (const ward of wardsToAdd) {
-        // NOTE: We must skip the dialog logic and execute the core cart logic
-        
-        const wardHierarchy = {
-            state: 'Kerala',
-            zone: ward.zoneName,
-            district: ward.districtName
-        };
-
-        const conflict = this.checkCartConflict(wardHierarchy, 'individual');
-        if (conflict.hasConflict) {
-            conflicts++;
-            continue; // Skip this ward, proceed to the next
-        }
-
-        const newItem: CartItem = {
-            ward,
-            executivesSponsored: count,
-            monthlyRate: 15000,
-            costPerMonth: count * 15000,
-            startDate,
-            endDate
-        };
-
-        this.upsertCartItem(newItem); // Execute the core logic
-        successes++;
-    }
-
-    if (successes > 0) {
-        this.messageService.add({
-            severity: 'success',
-            summary: 'Bulk Add Success',
-            detail: `${successes} ward(s) successfully added to cart.`,
-            life: 4000
-        });
-    }
-    if (conflicts > 0) {
-        this.messageService.add({
-            severity: 'warn',
-            summary: 'Skipped Wards',
-            detail: `${conflicts} ward(s) skipped due to bulk conflict or existing area sponsorship.`,
-            life: 6000
-        });
-    }
-
-    this.selectedWards.set([]); // Clear selection after adding
-}
-
-    clearStateSelection() {
-        if (this.bulkSelectionLevel() === 'state') {
-            this.clearSelection();
-        }
-    }
-
     clearZoneSelection() {
-        if (this.bulkSelectionLevel() === 'zone') {
-            this.clearSelection();
-        }
+        this.clearStateSelection();
     }
 
     clearDistrictSelection() {
-        if (this.bulkSelectionLevel() === 'district') {
-            this.clearSelection();
-        }
+        this.clearStateSelection();
     }
 
     clearSubdistrictSelection() {
-        if (this.bulkSelectionLevel() === 'subdistrict') {
-            this.clearSelection();
-        }
+        this.clearStateSelection();
     }
 
     clearTypeSelection() {
-        if (this.bulkSelectionLevel() === 'type') {
-            this.clearSelection();
-        }
+        this.clearStateSelection();
     }
 
     clearLocalBodySelection() {
-        if (this.bulkSelectionLevel() === 'localbody') {
-            this.clearSelection();
-        }
-    }
-availableExecutives = computed(() => {
-    const ward = this.selectedWardForSponsorship();
-    if (!ward) return 1;
-
-    // ✅ Use the pre-calculated value from backend
-    return ward.availableExecutives || this.maxExecutives();
-});
-  addSelectedWardsToCart() {
-    const bulkData = this.bulkSponsorshipData();
-    const count = this.bulkSponsoredExecutivesCount();
-    const startDate = this.bulkSponsorshipStartDate();
-    const endDate = this.bulkSponsorshipEndDate();
-
-    if (!startDate || !endDate || count < 1) {
-        this.messageService.add({
-            severity: 'error',
-            summary: 'Missing Information',
-            detail: 'Please fill in all required fields',
-            life: 3000
-        });
-        return;
+        this.clearStateSelection();
     }
 
-    if (bulkData) {
-        console.log('📦 Adding bulk selection to cart:', bulkData);
+    clearBulkSelection() {
+        this.clearStateSelection();
+    }
 
-        // BUILD HIERARCHY DATA
-        const hierarchyData = this.buildHierarchyData(bulkData.level);
+    // Individual Ward Sponsorship
+    openVolunteerDialog(ward: Ward) {
+        this.selectedWardForSponsorship.set(ward);
+        this.sponsoredExecutivesCount.set(1);
+        this.sponsorshipMonths.set(1);
+        this.isVolunteerDialogVisible.set(true);
+    }
 
-        // CHECK FOR CONFLICTS
-        const conflict = this.checkCartConflict(hierarchyData, bulkData.level);
+    addToCart() {
+        const ward = this.selectedWardForSponsorship();
+        const startDate = this.sponsorshipStartDate();
+        const endDate = this.sponsorshipEndDate();
+        const executivesCount = this.sponsoredExecutivesCount();
 
-        if (conflict.hasConflict) {
+        if (!ward || !startDate || !endDate) {
             this.messageService.add({
-                severity: 'error',
-                summary: 'Conflict Detected',
-                detail: conflict.conflictMessage,
-                life: 5000,
-                sticky: false
+                ...TOAST_MESSAGES.VALIDATION_ERROR,
+                detail: ERROR_MESSAGES.INVALID_DATES
             });
             return;
         }
 
-        // Check for exact duplicate
-        const bulkKey = `${bulkData.level}-${bulkData.identifier}`;
-        const existingBulkIndex = this.cartItems().findIndex(
-            (item) =>
-                item.isBulk &&
-                item.bulkLevel === bulkData.level &&
-                item.bulkIdentifier === bulkData.identifier
-        );
+        // Validate
+        const validation = this.validationService.validateWardSponsorship({
+            executivesSponsored: executivesCount,
+            maxExecutives: ward.availableExecutives > 0 ? ward.availableExecutives : this.maxExecutives(),
+            startDate,
+            endDate
+        });
 
-        if (existingBulkIndex > -1) {
-            // ✅ CHECK FOR DATE OVERLAP WITH EXISTING BULK ITEM
-            const existingItem = this.cartItems()[existingBulkIndex];
-            const existingStart = existingItem.startDate.getTime();
-            const existingEnd = existingItem.endDate.getTime();
-            const newStart = startDate.getTime();
-            const newEnd = endDate.getTime();
-
-            const hasOverlap = (newStart <= existingEnd && newEnd >= existingStart);
-
-            if (hasOverlap) {
-                this.messageService.add({
-                    severity: 'error',
-                    summary: 'Date Conflict',
-                    detail: `${bulkData.identifier} is already in cart with overlapping dates (${existingItem.startDate.toLocaleDateString()} to ${existingItem.endDate.toLocaleDateString()}). Please choose different dates or remove the existing item.`,
-                    life: 6000
-                });
-                return;
-            }
+        if (!validation.isValid) {
+            this.messageService.add({
+                ...TOAST_MESSAGES.VALIDATION_ERROR,
+                detail: validation.errors.join('. ')
+            });
+            return;
         }
 
-        // ✅ CREATE BULK CART ITEM WITH CORRECT FIELDS
-        const bulkCartItem: CartItem = {
+        // Check for overlap
+        const overlapCheck = this.businessLogic.checkWardOverlap(
+            ward._id,
+            startDate,
+            endDate,
+            this.cartItems()
+        );
+
+        if (overlapCheck.hasOverlap) {
+            this.messageService.add({
+                ...TOAST_MESSAGES.CONFLICT_ERROR,
+                detail: overlapCheck.message
+            });
+            return;
+        }
+
+        // Add to cart
+        const cartItem: CartItem = {
+            id: this.businessLogic.generateCartItemId(),
+            ward: ward,
+            executivesSponsored: executivesCount,
+            monthlyRate: this.businessLogic.getMonthlyRate(),
+            costPerMonth: this.businessLogic.calculateCostPerMonth(executivesCount),
+            startDate: startDate,
+            endDate: endDate,
+            isBulk: false
+        };
+
+        this.cartItems.update(items => [...items, cartItem]);
+        
+        const isQueued = ward.availableExecutives === 0;
+        this.messageService.add({
+            ...TOAST_MESSAGES.CART_ADDED,
+            detail: isQueued 
+                ? `${ward.wardName} queued in cart (starts after current sponsorship)`
+                : `${ward.wardName} added to cart`
+        });
+
+        this.isVolunteerDialogVisible.set(false);
+    }
+
+    // Bulk Sponsorship
+    openBulkSponsorDialog() {
+        const wards = this.selectedWards();
+        const bulkData = this.bulkSponsorshipData();
+
+        if (wards.length === 0 && !bulkData) {
+            this.messageService.add({
+                severity: 'warn',
+                summary: 'No Selection',
+                detail: 'Please select wards or use bulk selection',
+                life: 3000
+            });
+            return;
+        }
+
+        this.bulkSponsoredExecutivesCount.set(1);
+        this.bulkSponsorshipStartDate.set(new Date());
+        this.bulkSponsorshipMonths.set(1);
+        this.isBulkSponsorDialogVisible.set(true);
+    }
+
+    addSelectedWardsToCart() {
+        const startDate = this.bulkSponsorshipStartDate();
+        const endDate = this.bulkSponsorshipEndDate();
+        const executivesCount = this.bulkSponsoredExecutivesCount();
+        const bulkData = this.bulkSponsorshipData();
+
+        if (!startDate || !endDate) {
+            this.messageService.add({
+                ...TOAST_MESSAGES.VALIDATION_ERROR,
+                detail: ERROR_MESSAGES.INVALID_DATES
+            });
+            return;
+        }
+
+        // Validate
+        const validation = this.validationService.validateBulkSponsorship({
+            selectedWards: bulkData ? [bulkData] : this.selectedWards(),
+            executivesCount,
+            maxExecutives: this.bulkMaxExecutives(),
+            startDate,
+            endDate
+        });
+
+        if (!validation.isValid) {
+            this.messageService.add({
+                ...TOAST_MESSAGES.VALIDATION_ERROR,
+                detail: validation.errors.join('. ')
+            });
+            return;
+        }
+
+        if (bulkData) {
+            this.addBulkSelectionToCart(bulkData, executivesCount, startDate, endDate);
+        } else {
+            this.addMultipleWardsToCart(this.selectedWards(), executivesCount, startDate, endDate);
+        }
+
+        this.isBulkSponsorDialogVisible.set(false);
+        this.selectedWards.set([]);
+        this.clearBulkSelection();
+    }
+
+    private addBulkSelectionToCart(
+        bulkData: BulkSponsorshipData,
+        executivesCount: number,
+        startDate: Date,
+        endDate: Date
+    ) {
+        const hierarchyData = this.businessLogic.buildHierarchyData(
+            bulkData.level as any,
+            {
+                zone: this.selectedZone(),
+                district: this.selectedDistrict(),
+                subdistrict: this.selectedSubdistrict(),
+                localBodyType: this.selectedLocalBodyType(),
+                localBody: this.selectedLocalBody()
+            }
+        );
+
+        const conflictCheck = this.businessLogic.checkHierarchyConflict(
+            bulkData.level,
+            hierarchyData,
+            this.cartItems()
+        );
+
+        if (conflictCheck.hasConflict) {
+            this.messageService.add({
+                ...TOAST_MESSAGES.CONFLICT_ERROR,
+                detail: conflictCheck.conflictMessage
+            });
+            return;
+        }
+
+        const monthlyRate = this.businessLogic.getMonthlyRate();
+        const costPerMonth = this.businessLogic.calculateCostPerMonth(
+            bulkData.wardCount * executivesCount
+        );
+
+        const cartItem: CartItem = {
+            id: this.businessLogic.generateCartItemId(),
             isBulk: true,
             bulkLevel: bulkData.level,
             bulkIdentifier: bulkData.identifier,
             bulkWardCount: bulkData.wardCount,
-            executivesSponsored: count,
-            monthlyRate: 15000,
-            costPerMonth: bulkData.estimatedCost * count,
+            hierarchyData: hierarchyData,
+            executivesSponsored: bulkData.wardCount * executivesCount,
+            monthlyRate: monthlyRate,
+            costPerMonth: costPerMonth,
+            startDate: startDate,
+            endDate: endDate,
+            displayName: `${bulkData.level}: ${bulkData.identifier} (${bulkData.wardCount} wards)`
+        };
+
+        this.cartItems.update(items => [...items, cartItem]);
+        
+        const queueInfo = bulkData.hasSponsoredWards 
+            ? ` (${bulkData.sponsoredWardsCount} wards queued)`
+            : '';
+        
+        this.messageService.add({
+            ...TOAST_MESSAGES.CART_ADDED,
+            detail: `Bulk selection added to cart${queueInfo}`
+        });
+    }
+
+    private addMultipleWardsToCart(
+        wards: Ward[],
+        executivesCount: number,
+        startDate: Date,
+        endDate: Date
+    ) {
+        const overlapCheck = this.businessLogic.checkBulkOverlap(
+            wards,
             startDate,
             endDate,
-            hierarchyData,
-            ward: {
-                _id: bulkKey,
-                wardName: `All Wards in ${bulkData.identifier}`,
-                localBodyId: bulkKey,
-                localBodyName: `${bulkData.wardCount} wards`,
-                localBodyType: 'P',
-                type: 'Rural',
-                districtName: hierarchyData.district || '',
-                zoneName: hierarchyData.zone || '',
-                // ✅ FIX: These represent DATABASE status, not cart status
-                isSponsored: false, // Bulk items don't have current sponsorship status
-                sponsoredUntil: 0,
-                sponsoredExecutivesCount: 0,
-                availableExecutives: 0,
-                isPendingSponsorship: false
-            }
-        };
-
-        this.cartItems.update((items) => [...items, bulkCartItem]);
-
-        this.messageService.add({
-            severity: 'success',
-            summary: 'Added to Cart',
-            detail: `${bulkData.wardCount} wards in ${bulkData.identifier} added successfully`,
-            life: 3000
-        });
-    } else {
-        // INDIVIDUAL WARDS
-        const wards = this.selectedWards();
-        if (wards.length === 0) {
-            this.messageService.add({
-                severity: 'warn',
-                summary: 'No Selection',
-                detail: 'Please select wards to add to cart',
-                life: 3000
-            });
-            return;
-        }
-
-        // ✅ CHECK FOR DATE OVERLAPS IN SELECTED WARDS
-        const overlapCheck = this.checkBulkOverlap(wards, startDate, endDate);
-        if (overlapCheck.hasOverlap) {
-            this.messageService.add({
-                severity: 'error',
-                summary: 'Date Conflicts',
-                detail: overlapCheck.message,
-                life: 6000
-            });
-            return;
-        }
-
-        // Check if any individual ward conflicts with bulk selections
-        for (const ward of wards) {
-            const wardHierarchy = {
-                state: 'Kerala',
-                zone: ward.zoneName,
-                district: ward.districtName
-            };
-
-            const conflict = this.checkCartConflict(wardHierarchy, 'individual');
-            if (conflict.hasConflict) {
-                this.messageService.add({
-                    severity: 'error',
-                    summary: 'Conflict Detected',
-                    detail: `${ward.wardName}: ${conflict.conflictMessage}`,
-                    life: 5000
-                });
-                return;
-            }
-        }
-
-        // No conflicts or overlaps, proceed with adding
-        let addedCount = 0;
-
-        wards.forEach((ward) => {
-            const newItem: CartItem = {
-                ward,
-                executivesSponsored: count,
-                monthlyRate: 15000,
-                costPerMonth: count * 15000,
-                startDate,
-                endDate
-            };
-            
-            // Add to cart
-            this.cartItems.update(items => [...items, newItem]);
-            addedCount++;
-        });
-
-        this.messageService.add({
-            severity: 'success',
-            summary: 'Added to Cart',
-            detail: `${addedCount} ward(s) added successfully`,
-            life: 3000
-        });
-    }
-
-    this.isBulkSponsorDialogVisible.set(false);
-    this.clearSelection();
-}
-
-    private upsertCartItem(newItem: CartItem): 'added' | 'updated' {
-        // 👈 Change return type
-        let action: 'added' | 'updated' = 'added';
-
-        this.cartItems.update((currentItems) => {
-            const existingIndex = currentItems.findIndex(
-                (item) => item.ward._id === newItem.ward._id
-            );
-
-            if (existingIndex > -1) {
-                // Update existing item
-                const updatedItems = [...currentItems];
-                updatedItems[existingIndex] = newItem;
-                action = 'updated'; // 👈 Set flag
-                return updatedItems;
-            } else {
-                // Add new item
-                return [...currentItems, newItem];
-            }
-        });
-        return action; // 👈 Return the action taken
-    }
-    removeFromCart(wardId: string) {
-        const item = this.cartItems().find((i) => i.ward._id === wardId);
-
-        this.cartItems.update((items) =>
-            items.filter((item) => item.ward._id !== wardId)
+            this.cartItems()
         );
 
-        if (item) {
+        if (overlapCheck.hasOverlap) {
             this.messageService.add({
-                severity: 'info',
-                summary: 'Removed',
-                detail: item.isBulk
-                    ? `Removed ${item.bulkWardCount} wards from ${item.bulkIdentifier}`
-                    : `Removed ${item.ward.wardName}`,
-                life: 3000
+                ...TOAST_MESSAGES.CONFLICT_ERROR,
+                detail: overlapCheck.message
             });
+            return;
         }
+
+        const monthlyRate = this.businessLogic.getMonthlyRate();
+
+        const newCartItems = wards.map(ward => ({
+            id: this.businessLogic.generateCartItemId(),
+            ward: ward,
+            executivesSponsored: executivesCount,
+            monthlyRate: monthlyRate,
+            costPerMonth: this.businessLogic.calculateCostPerMonth(executivesCount),
+            startDate: startDate,
+            endDate: endDate,
+            isBulk: false
+        }));
+
+        this.cartItems.update(items => [...items, ...newCartItems]);
+        
+        this.messageService.add({
+            ...TOAST_MESSAGES.CART_ADDED,
+            detail: `${wards.length} wards added to cart`
+        });
     }
 
-    // ==========================================
-    // PAYMENT HANDLER
-    // ==========================================
-async proceedToPayment() {
-    if (!this.isFormValid()) {
-        alert("Please ensure your name, email, and cart are filled out.");
-        return;
+    // Cart Management
+removeFromCart(itemId: string) {
+    this.cartItems.update(items => 
+        items.filter(item => {
+            // Handle both individual and bulk items
+            if (item.isBulk) {
+                return item.id !== itemId;
+            }
+            return item.ward?._id !== itemId;
+        })
+    );
+    
+    this.messageService.add({
+        ...TOAST_MESSAGES.CART_REMOVED,
+        detail: 'Item removed from cart'
+    });
+}
+    clearCart() {
+        this.cartItems.set([]);
+        this.messageService.add({
+            severity: 'info',
+            summary: 'Cart Cleared',
+            detail: 'All items removed from cart',
+            life: 2000
+        });
     }
-    
-    // 1. Prepare Data
-    const totalAmountPaise = this.total() * 100; // Total cost in Rupees, converted to PAISA (critical)
-    const sponsorInfo = { name: this.sponsorName(), email: this.sponsorEmail() };
 
-    const finalCartItems = this.cartItems().map(item => ({
-        // Spread all existing properties (ward, executivesSponsored, monthlyRate, etc.)
-        ...item, 
-        // Convert Date objects to ISO string format, which Convex supports
-        startDate: item.startDate.toISOString(),
-        endDate: item.endDate.toISOString(),
-    }));
-    
-    try {
-        // 2. Create Pending Sponsorship Record in Convex (Mutation)
-        // Note: You must ensure this method exists and returns the sponsorshipId
-        const sponsorshipId = await (this.convex as any).createSponsorship({
-            sponsorName: sponsorInfo.name,
-            sponsorEmail: sponsorInfo.email,
-            totalAmount: this.total(), // Store total amount in Rupees
-            cart: finalCartItems,
-            sponsorshipDurationMonths: this.sponsorshipMonths() 
+    // Payment & Submission
+    async proceedToPayment() {
+        const validation = this.validationService.validateSponsorForm({
+            sponsorName: this.sponsorName(),
+            sponsorEmail: this.sponsorEmail(),
+            cartItems: this.cartItems()
         });
 
-        // 3. Get the Razorpay Order ID (Convex Action)
-        const { orderId, keyId } = await (this.convex as any).createRazorpayOrder({
-        sponsorshipId, 
-        amount: totalAmountPaise, 
-        sponsorName: sponsorInfo.name, 
-        sponsorEmail: sponsorInfo.email
-    });
-
-        // 4. Load the Razorpay Checkout Script (if not already loaded)
-        await loadRazorpayScript();
-        
-        if (!(window as any).Razorpay) {
-            throw new Error("Payment gateway failed to load.");
+        if (!validation.isValid) {
+            this.messageService.add({
+                ...TOAST_MESSAGES.VALIDATION_ERROR,
+                detail: validation.errors.join('. ')
+            });
+            return;
         }
-        
-        // 5. Configure and Open the Razorpay Modal
-        const options = {
-            key: keyId, // Public Key ID from environment
-            amount: totalAmountPaise,         // Amount in PAISA
-            currency: "INR",
-            name: "WeOne Digital Sponsorship",
-            description: `Sponsorship for ${this.cartItems().length} Ward(s)`,
-            order_id: orderId, // The Order ID from the Convex Action
+
+        this.isProcessing.set(true);
+
+        try {
+            const sponsorshipId = await this.sponsor.createSponsorship({
+                sponsorName: this.sponsorName(),
+                sponsorEmail: this.sponsorEmail(),
+                totalAmount: this.total(),
+                cart: this.cartItems(),
+                sponsorshipDurationMonths: SPONSOR_CONFIG.DEFAULT_SPONSORSHIP_MONTHS
+            });
+
+            const order = await this.paymentService.createOrder({
+                sponsorshipId,
+                amount: this.paymentService.formatAmountToPaise(this.total()),
+                sponsorName: this.sponsorName(),
+                sponsorEmail: this.sponsorEmail()
+            });
+
+            await this.paymentService.openPaymentModal(
+                order.id,
+                order.amount,
+                this.sponsorName(),
+                this.sponsorEmail(),
+                (response) => this.handlePaymentSuccess(sponsorshipId, response),
+                () => this.handlePaymentDismiss()
+            );
+        } catch (error) {
+            console.error('Sponsorship submission failed:', error);
+            this.isProcessing.set(false);
+        }
+    }
+
+    private async handlePaymentSuccess(sponsorshipId: string, response: any) {
+        try {
+            await this.paymentService.processPaymentSuccess({
+                sponsorshipId,
+                paymentId: response.razorpay_payment_id,
+                orderId: response.razorpay_order_id,
+                signature: response.razorpay_signature
+            });
+
+            this.clearCart();
+            this.sponsorName.set('');
+            this.sponsorEmail.set('');
             
-            // 6. Handle Success Callback
-            handler: async (response: any) => {
-                // Call the secure Convex Action to verify payment and process the sponsorship
-                await (this.convex as any).processPaymentSuccess({
-                    sponsorshipId: sponsorshipId, 
-                    paymentId: response.razorpay_payment_id, 
-                    orderId: response.razorpay_order_id, 
-                    signature: response.razorpay_signature,
-                });
-                
-                // Final success: Redirect user
-                this.router.navigate(['/thank-you']); 
-            },
-            prefill: sponsorInfo,
-            theme: { color: "#2AABEE" }
-        };
-
-        const rzp = new (window as any).Razorpay(options);
-        rzp.open();
-
-    } catch (error) {
-        console.error("Payment Process Failed:", error);
-        alert("Payment processing failed. Please check your network and console.");
-    }
-}
-    
-    getLocalBodyTypeLabel(type: 'P' | 'M' | 'C'): string {
-        switch (type) {
-            case 'P':
-                return 'Panchayat';
-            case 'M':
-                return 'Municipality';
-            case 'C':
-                return 'Corporation';
-            default:
-                return '';
-        }
-    }
-    private checkCartConflict(
-        newHierarchy: any,
-        newLevel: string
-    ): {
-        hasConflict: boolean;
-        conflictMessage: string;
-        conflictingItem?: CartItem;
-    } {
-        const existingItems = this.cartItems();
-
-        for (const item of existingItems) {
-            // Skip non-bulk items for hierarchy check
-            if (!item.isBulk) continue;
-
-            const existingHierarchy = item.hierarchyData;
-            if (!existingHierarchy) continue;
-
-            // STATE level conflict - blocks everything
-            if (item.bulkLevel === 'state') {
-                return {
-                    hasConflict: true,
-                    conflictMessage: `Cannot add ${newLevel} selection. Entire state (Kerala) is already in cart.`,
-                    conflictingItem: item
-                };
-            }
-
-            // NEW item is STATE - conflicts with anything
-            if (newLevel === 'state') {
-                return {
-                    hasConflict: true,
-                    conflictMessage: `Cannot add entire state. Cart already contains ${item.bulkLevel} level selection (${item.bulkIdentifier}).`,
-                    conflictingItem: item
-                };
-            }
-
-            // ZONE level conflicts
-            if (
-                item.bulkLevel === 'zone' &&
-                existingHierarchy.zone === newHierarchy.zone
-            ) {
-                return {
-                    hasConflict: true,
-                    conflictMessage: `Cannot add ${newLevel} selection. Zone "${existingHierarchy.zone}" is already in cart.`,
-                    conflictingItem: item
-                };
-            }
-
-            if (
-                newLevel === 'zone' &&
-                newHierarchy.zone === existingHierarchy.zone
-            ) {
-                return {
-                    hasConflict: true,
-                    conflictMessage: `Cannot add zone "${newHierarchy.zone}". Cart already contains ${item.bulkLevel} level selection from this zone.`,
-                    conflictingItem: item
-                };
-            }
-
-            // DISTRICT level conflicts
-            if (
-                item.bulkLevel === 'district' &&
-                existingHierarchy.district === newHierarchy.district
-            ) {
-                return {
-                    hasConflict: true,
-                    conflictMessage: `Cannot add ${newLevel} selection. District "${existingHierarchy.district}" is already in cart.`,
-                    conflictingItem: item
-                };
-            }
-
-            if (
-                newLevel === 'district' &&
-                newHierarchy.district === existingHierarchy.district
-            ) {
-                return {
-                    hasConflict: true,
-                    conflictMessage: `Cannot add district "${newHierarchy.district}". Cart already contains ${item.bulkLevel} level selection from this district.`,
-                    conflictingItem: item
-                };
-            }
-
-            // SUBDISTRICT level conflicts
-            if (
-                item.bulkLevel === 'subdistrict' &&
-                existingHierarchy.subdistrict === newHierarchy.subdistrict
-            ) {
-                return {
-                    hasConflict: true,
-                    conflictMessage: `Cannot add ${newLevel} selection. Subdistrict "${existingHierarchy.subdistrict}" is already in cart.`,
-                    conflictingItem: item
-                };
-            }
-
-            if (
-                newLevel === 'subdistrict' &&
-                newHierarchy.subdistrict === existingHierarchy.subdistrict
-            ) {
-                return {
-                    hasConflict: true,
-                    conflictMessage: `Cannot add subdistrict "${newHierarchy.subdistrict}". Cart already contains ${item.bulkLevel} level selection from this subdistrict.`,
-                    conflictingItem: item
-                };
-            }
-
-            // TYPE level conflicts (same subdistrict + same type)
-            if (
-                item.bulkLevel === 'type' &&
-                existingHierarchy.subdistrict === newHierarchy.subdistrict &&
-                existingHierarchy.localBodyType === newHierarchy.localBodyType
-            ) {
-                return {
-                    hasConflict: true,
-                    conflictMessage: `Cannot add ${newLevel} selection. ${this.getLocalBodyTypeLabel(existingHierarchy.localBodyType as any)}s in ${existingHierarchy.subdistrict} are already in cart.`,
-                    conflictingItem: item
-                };
-            }
-
-            // LOCAL BODY conflicts (exact match on subdistrict + type + name)
-            if (
-                item.bulkLevel === 'localbody' &&
-                existingHierarchy.subdistrict === newHierarchy.subdistrict &&
-                existingHierarchy.localBodyType ===
-                    newHierarchy.localBodyType &&
-                existingHierarchy.localBodyName === newHierarchy.localBodyName
-            ) {
-                return {
-                    hasConflict: true,
-                    conflictMessage: `Cannot add. Local body "${existingHierarchy.localBodyName}" in ${existingHierarchy.subdistrict} is already in cart.`,
-                    conflictingItem: item
-                };
-            }
-        }
-
-        return { hasConflict: false, conflictMessage: '' };
-    }
-    private buildHierarchyData(level: string): any {
-        const hierarchy: any = {
-            state: 'Kerala' // Always Kerala for this app
-        };
-
-        if (level === 'state') {
-            return hierarchy;
-        }
-
-        const zone = this.selectedZone();
-        if (zone) {
-            hierarchy.zone = zone.name;
-        }
-
-        if (level === 'zone') {
-            return hierarchy;
-        }
-
-        const district = this.selectedDistrict();
-        if (district) {
-            hierarchy.district = district.name;
-        }
-
-        if (level === 'district') {
-            return hierarchy;
-        }
-
-        const subdistrict = this.selectedSubdistrict();
-        if (subdistrict) {
-            hierarchy.subdistrict = subdistrict.name;
-        }
-
-        if (level === 'subdistrict') {
-            return hierarchy;
-        }
-
-        const type = this.selectedLocalBodyType();
-        if (type && type !== 'All') {
-            hierarchy.localBodyType = type;
-        }
-
-        if (level === 'type') {
-            return hierarchy;
-        }
-
-        const localBody = this.selectedLocalBody();
-        if (localBody) {
-            hierarchy.localBodyName = localBody.name;
-        }
-
-        return hierarchy;
-    }
-
-    private checkWardOverlap(
-    wardId: string,
-    newStartDate: Date,
-    newEndDate: Date
-): { hasOverlap: boolean; message: string } {
-    const existingItem = this.cartItems().find(
-        (item) => !item.isBulk && item.ward._id === wardId
-    );
-
-    if (!existingItem) {
-        return { hasOverlap: false, message: '' };
-    }
-
-    const existingStart = existingItem.startDate.getTime();
-    const existingEnd = existingItem.endDate.getTime();
-    const newStart = newStartDate.getTime();
-    const newEnd = newEndDate.getTime();
-
-    // Check if dates overlap
-    const hasOverlap = (newStart <= existingEnd && newEnd >= existingStart);
-
-    if (hasOverlap) {
-        return {
-            hasOverlap: true,
-            message: `This ward is already in your cart with sponsorship from ${existingItem.startDate.toLocaleDateString()} to ${existingItem.endDate.toLocaleDateString()}. Please choose different dates or remove the existing item first.`
-        };
-    }
-
-    return { hasOverlap: false, message: '' };
-}
-
-/**
- * Check if bulk selection has overlapping dates with existing cart items
- */
-private checkBulkOverlap(
-    wards: Ward[],
-    newStartDate: Date,
-    newEndDate: Date
-): { hasOverlap: boolean; message: string; conflictingWards: string[] } {
-    const conflictingWards: string[] = [];
-
-    for (const ward of wards) {
-        const overlap = this.checkWardOverlap(ward._id, newStartDate, newEndDate);
-        if (overlap.hasOverlap) {
-            conflictingWards.push(ward.wardName);
+            this.router.navigate(['/sponsorship-success']);
+        } catch (error) {
+            console.error('Payment verification failed:', error);
+        } finally {
+            this.isProcessing.set(false);
         }
     }
 
-    if (conflictingWards.length > 0) {
-        return {
-            hasOverlap: true,
-            message: `${conflictingWards.length} ward(s) already in cart with overlapping dates: ${conflictingWards.slice(0, 3).join(', ')}${conflictingWards.length > 3 ? '...' : ''}`,
-            conflictingWards
-        };
+    private handlePaymentDismiss() {
+        this.paymentService.handlePaymentCancellation();
+        this.isProcessing.set(false);
     }
 
-    return { hasOverlap: false, message: '', conflictingWards: [] };
-}
+    // Helper Methods
+    getLocalBodyTypeLabel(type: 'P' | 'M' | 'C' | 'All'): string {
+        return this.businessLogic.getLocalBodyTypeLabel(type);
+    }
 
-    
-}
+    getMaxExecutives(type: 'P' | 'M' | 'C' | 'All'): number {
+        return this.businessLogic.getMaxExecutives(type);
+    }
 
-function loadRazorpayScript(): Promise<void> {
-    const src = 'https://checkout.razorpay.com/v1/checkout.js';
-    return new Promise((resolve) => {
-        if (typeof (window as any).Razorpay !== 'undefined') {
-            return resolve();
-        }
-        const script = document.createElement('script');
-        script.src = src;
-        script.onload = () => resolve();
-       script.onerror = () => resolve();
-        document.head.appendChild(script);
-    });
-
-    
-
-    
+    formatCurrency(amount: number): string {
+        return this.businessLogic.formatCurrency(amount);
+    }
 }

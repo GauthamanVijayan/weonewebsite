@@ -12,14 +12,16 @@ import {
     CartItem
 } from '../interfaces/sponsor.interface';
 import { AuthService } from './auth.service';
+import { MessageService } from 'primeng/api';
 
 
 @Injectable({
     providedIn: 'root'
 })
-export class ConvexService {
+export class SponsorService {
     public client = inject(ConvexClient); // Loading states
     private authService = inject(AuthService);
+    private messageService=inject(MessageService)
 
     zonesLoading = signal(false);
     districtsLoading = signal(false);
@@ -56,7 +58,9 @@ public async createSponsorship(args: {
     }): Promise<any> {
         return(this.client as any).action('payment:createRazorpayOrder', args);
     }
-
+clearLocalBodies(): void {
+    this.localBodies.set([]);
+}
 public async processPaymentSuccess(args: {
         sponsorshipId: string;
         paymentId: string;
@@ -175,6 +179,51 @@ async loadLocalBodies(subdistrict: string, localBodyType: string) {
     }
 public async getMySponsorshipHistory(): Promise<any[]> {
     return (this.client as any).query('sponsorships:getMySponsorships', {});
+}
+
+showError(message: string): void {
+    this.messageService.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: message,
+        life: 5000
+    });
+}
+
+/**
+ * Show success toast
+ */
+showSuccess(message: string): void {
+    this.messageService.add({
+        severity: 'success',
+        summary: 'Success',
+        detail: message,
+        life: 3000
+    });
+}
+
+/**
+ * Show info toast
+ */
+showInfo(message: string): void {
+    this.messageService.add({
+        severity: 'info',
+        summary: 'Info',
+        detail: message,
+        life: 3000
+    });
+}
+
+/**
+ * Show warning toast
+ */
+showWarning(message: string): void {
+    this.messageService.add({
+        severity: 'warn',
+        summary: 'Warning',
+        detail: message,
+        life: 4000
+    });
 }
     
 }

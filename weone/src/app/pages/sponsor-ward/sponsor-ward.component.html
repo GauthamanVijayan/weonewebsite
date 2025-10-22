@@ -427,7 +427,7 @@
                             >
                             <p-select
                                 inputId="localBodyType"
-                                [options]="localBodyTypeOptions()"
+                                [options]="localBodyTypeOptions"
                                 [(ngModel)]="selectedLocalBodyType"
                                 (onChange)="onLocalBodyTypeChange()"
                                 [disabled]="
@@ -487,7 +487,7 @@
                             >
                             <p-select
                                 inputId="localBodyName"
-                                [options]="convex.localBodies()"
+                                [options]="sponsor.localBodies()"
                                 placeholder="Select Local Body"
                                 i18n-placeholder
                                 optionLabel="name"
@@ -496,10 +496,10 @@
                                 [disabled]="
                                     !selectedSubdistrict() ||
                                     selectedLocalBodyType() === 'All' ||
-                                    convex.localBodiesLoading() ||
+                                    sponsor.localBodiesLoading() ||
                                     areDropdownsDisabled()
                                 "
-                                [loading]="convex.localBodiesLoading()"
+                                [loading]="sponsor.localBodiesLoading()"
                                 [style]="{ width: '100%' }"
                                 appendTo="body"
                             />
@@ -766,7 +766,7 @@
                                 *ngFor="let item of cartItems()"
                             >
                                 <div class="weone-cart-item-details">
-                                    <span>{{ item.ward.wardName }}</span>
+                                    <span>{{ item.ward?.wardName }}</span>
                                     <small>
                                         Execs: {{ item.executivesSponsored }} |
                                         {{
@@ -779,12 +779,12 @@
                                     </small>
                                 </div>
                                 <p-button
-                                    icon="pi pi-times"
-                                    severity="danger"
-                                    size="small"
-                                    [text]="true"
-                                    (onClick)="removeFromCart(item.ward._id)"
-                                />
+    icon="pi pi-times"
+    severity="danger"
+    size="small"
+    [text]="true"
+    (onClick)="removeFromCart(item.id)"
+/>
                             </div>
                         </div>
 
@@ -863,55 +863,107 @@
     [resizable]="false"
 >
     <div class="weone-dialog-content">
-        <!-- ✅ SIMPLE: Just show if currently sponsored -->
-        @if (selectedWardForSponsorship()?.isSponsored) {
-            <div class="p-message p-message-warn" style="margin-bottom: 1rem">
-                <div class="p-message-wrapper">
-                    <span
-                        class="p-message-icon pi pi-exclamation-triangle"
-                    ></span>
-                    <div class="p-message-text">
-                        This ward is currently sponsored until
-                        <strong>{{
-                            selectedWardForSponsorship()?.sponsoredUntil
-                                | date: 'mediumDate'
-                        }}</strong
-                        >. Your sponsorship will start after this date.
+        <!-- ✅ Show different warnings based on availability -->
+        @if (selectedWardForSponsorship()?.isSponsored === true && (selectedWardForSponsorship()?.sponsoredUntil ?? 0) > 0) {
+            @if ((selectedWardForSponsorship()?.availableExecutives ?? 0) > 0) {
+                <!-- Partial sponsorship - some slots available -->
+                <div class="p-message p-message-info" style="margin-bottom: 1rem">
+                    <div class="p-message-wrapper">
+                        <span class="p-message-icon pi pi-info-circle"></span>
+                        <div class="p-message-text">
+                            @if (selectedWardForSponsorship()?.isPendingSponsorship === true) {
+                                <strong>⏳ Partial Lock (Pending Payment)</strong><br>
+                                {{ selectedWardForSponsorship()?.sponsoredExecutivesCount ?? 0 }} of 
+                                {{ maxExecutives() }} executives are <strong>locked</strong> (payment pending, 3-day hold) until
+                                <strong>{{ selectedWardForSponsorship()!.sponsoredUntil | date: 'mediumDate' }}</strong>.
+                            } @else {
+                                <strong>Partially Sponsored</strong><br>
+                                {{ selectedWardForSponsorship()?.sponsoredExecutivesCount ?? 0 }} of 
+                                {{ maxExecutives() }} executives are currently <strong>sponsored</strong> until
+                                <strong>{{ selectedWardForSponsorship()!.sponsoredUntil | date: 'mediumDate' }}</strong>.
+                            }
+                            <br>
+                            <strong class="text-green-600">
+                                ✓ {{ selectedWardForSponsorship()?.availableExecutives ?? 0 }} executive(s) available
+                            </strong> for immediate sponsorship.
+                        </div>
                     </div>
                 </div>
-            </div>
+            } @else {
+                <!-- Fully sponsored/locked - must queue -->
+                <div class="p-message p-message-warn" style="margin-bottom: 1rem">
+                    <div class="p-message-wrapper">
+                        <span class="p-message-icon pi pi-exclamation-triangle"></span>
+                        <div class="p-message-text">
+                            @if (selectedWardForSponsorship()?.isPendingSponsorship === true) {
+                                <strong>🔒 Fully Locked (Pending Payment)</strong><br>
+                                All {{ maxExecutives() }} executives are <strong>locked</strong> (payment pending, 3-day hold) until
+                                <strong>{{ selectedWardForSponsorship()!.sponsoredUntil | date: 'mediumDate' }}</strong>.
+                            } @else {
+                                <strong>Fully Sponsored</strong><br>
+                                All {{ maxExecutives() }} executives are currently <strong>sponsored</strong> until
+                                <strong>{{ selectedWardForSponsorship()!.sponsoredUntil | date: 'mediumDate' }}</strong>.
+                            }
+                            <br>
+                            Your sponsorship will be <strong>queued</strong> and start after this date.
+                        </div>
+                    </div>
+                </div>
+            }
         }
 
         <div class="weone-ward-summary">
             <div class="weone-ward-summary-item">
                 <span class="weone-label">Local Body Type:</span>
                 <span class="weone-badge weone-badge-lsgd">{{
-                    getLocalBodyTypeLabel(
-                        selectedWardForSponsorship()?.localBodyType!
-                    )
+                    getLocalBodyTypeLabel(selectedWardForSponsorship()?.localBodyType!)
                 }}</span>
             </div>
             <div class="weone-ward-summary-item">
                 <span class="weone-label">Max Executives:</span>
                 <span class="weone-value">{{ maxExecutives() }}</span>
             </div>
+            
+            <!-- ✅ Show sponsored/locked count and available slots -->
+            @if (selectedWardForSponsorship()?.isSponsored === true) {
+                <div class="weone-ward-summary-item">
+                    <span class="weone-label">
+                        {{ selectedWardForSponsorship()?.isPendingSponsorship === true ? 'Locked' : 'Sponsored' }}:
+                    </span>
+                    <span class="weone-value text-orange-600">
+                        {{ selectedWardForSponsorship()?.sponsoredExecutivesCount ?? 0 }} executive(s)
+                    </span>
+                </div>
+                <div class="weone-ward-summary-item">
+                    <span class="weone-label">Available to Sponsor:</span>
+                    <span class="weone-value" 
+                          [class.text-green-600]="(selectedWardForSponsorship()?.availableExecutives ?? 0) > 0"
+                          [class.text-red-600]="(selectedWardForSponsorship()?.availableExecutives ?? 0) === 0">
+                        {{ selectedWardForSponsorship()?.availableExecutives ?? 0 }} executive(s)
+                    </span>
+                </div>
+            }
         </div>
 
         <div class="weone-dialog-form">
             <div class="weone-form-group">
-                <label for="executiveCount"
-                    >Number of Executives to Sponsor</label
-                >
+                <label for="executiveCount">Number of Executives to Sponsor</label>
                 <p-inputNumber
                     inputId="executiveCount"
                     [(ngModel)]="sponsoredExecutivesCount"
                     [min]="1"
-                    [max]="maxExecutives()"
+                    [max]="(selectedWardForSponsorship()?.availableExecutives ?? 0) > 0 ? (selectedWardForSponsorship()?.availableExecutives ?? maxExecutives()) : maxExecutives()"
                     [showButtons]="true"
                     buttonLayout="horizontal"
                     incrementButtonIcon="pi pi-plus"
                     decrementButtonIcon="pi pi-minus"
                 />
+                @if ((selectedWardForSponsorship()?.availableExecutives ?? 0) > 0 && (selectedWardForSponsorship()?.availableExecutives ?? 0) < maxExecutives()) {
+                    <small class="text-orange-600">
+                        <i class="pi pi-info-circle"></i>
+                        Limited to {{ selectedWardForSponsorship()?.availableExecutives ?? 0 }} available executive(s)
+                    </small>
+                }
             </div>
 
             <div class="weone-date-picker-group">
@@ -923,14 +975,17 @@
                         [minDate]="today"
                         dateFormat="dd/mm/yy"
                         appendTo="body"
-                        [readonlyInput]="
-                            selectedWardForSponsorship()?.isSponsored
-                        "
+                        [readonlyInput]="(selectedWardForSponsorship()?.availableExecutives ?? 0) === 0"
                     />
-                    @if (selectedWardForSponsorship()?.isSponsored) {
+                    @if ((selectedWardForSponsorship()?.availableExecutives ?? 0) === 0) {
                         <small class="text-blue-600">
                             <i class="pi pi-info-circle"></i>
-                            Auto-set to day after current sponsorship ends
+                            Auto-set to day after {{ selectedWardForSponsorship()?.isPendingSponsorship === true ? 'lock expires' : 'current sponsorship ends' }}
+                        </small>
+                    } @else if (selectedWardForSponsorship()?.isSponsored === true && (selectedWardForSponsorship()?.availableExecutives ?? 0) > 0) {
+                        <small class="text-green-600">
+                            <i class="pi pi-check-circle"></i>
+                            Can start immediately - {{ selectedWardForSponsorship()?.availableExecutives ?? 0 }} slot(s) available
                         </small>
                     }
                 </div>
@@ -951,9 +1006,7 @@
 
             <div class="weone-form-group">
                 <label>Sponsorship Ends On:</label>
-                <span class="weone-value">{{
-                    sponsorshipEndDate() | date: 'mediumDate'
-                }}</span>
+                <span class="weone-value">{{ sponsorshipEndDate() | date: 'mediumDate' }}</span>
             </div>
         </div>
     </div>
@@ -966,11 +1019,7 @@
             (onClick)="isVolunteerDialogVisible.set(false)"
         />
         <p-button
-            [label]="
-                selectedWardForSponsorship()?.isSponsored
-                    ? 'Queue Sponsorship'
-                    : 'Add to Cart'
-            "
+            [label]="(selectedWardForSponsorship()?.availableExecutives ?? 0) === 0 ? 'Queue Sponsorship' : 'Add to Cart'"
             icon="pi pi-shopping-cart"
             (onClick)="addToCart()"
             [disabled]="!sponsorshipStartDate() || !sponsorshipEndDate()"
@@ -993,8 +1042,7 @@
                     Sponsoring
                     <strong>{{ displayedWardCount() }} wards</strong> at
                     <strong>{{ bulkSponsorshipData()!.level }}</strong> level in
-                    <strong>{{ bulkSponsorshipData()!.identifier }}</strong
-                    >.
+                    <strong>{{ bulkSponsorshipData()!.identifier }}</strong>.
                 </p>
                 <p class="weone-bulk-note">
                     <i class="pi pi-info-circle"></i>
@@ -1006,21 +1054,35 @@
                     You have selected
                     <strong>{{ selectedWards().length }} ward(s)</strong> to
                     sponsor. Maximum executives allowed:
-                    <strong>{{ bulkMaxExecutives() }}</strong
-                    >.
+                    <strong>{{ bulkMaxExecutives() }}</strong>.
                 </p>
             }
         </div>
 
-        <!-- ✅ SIMPLE: Just show if any are queued -->
-        @if (hasQueuedWardsInSelection()) {
-            <div class="p-message p-message-info" style="margin-top: 1rem">
+        <!-- ✅ Use new signal instead of computed -->
+        @if (bulkHasSponsoredWards()) {
+            <div class="p-message p-message-warn" style="margin-top: 1rem">
                 <div class="p-message-wrapper">
-                    <span class="p-message-icon pi pi-clock"></span>
+                    <span class="p-message-icon pi pi-exclamation-triangle"></span>
                     <div class="p-message-text">
-                        Some selected wards are currently sponsored. Your
-                        sponsorship for these wards will start after their
-                        current sponsorship ends.
+                        <strong>⚠️ Sponsored/Locked Wards Detected</strong><br>
+                        <strong>{{ bulkSponsoredWardsCount() }}</strong> of 
+                        <strong>{{ bulkTotalWardsCount() }}</strong> wards in this selection
+                        {{ bulkSponsoredWardsCount() === 1 ? 'is' : 'are' }} currently sponsored or locked.
+                        <br>
+                        Your sponsorship for {{ bulkSponsoredWardsCount() === 1 ? 'this ward' : 'these wards' }} 
+                        will be <strong>queued</strong> and start after the current sponsorship ends.
+                    </div>
+                </div>
+            </div>
+        } @else {
+            <!-- All wards available -->
+            <div class="p-message p-message-success" style="margin-top: 1rem">
+                <div class="p-message-wrapper">
+                    <span class="p-message-icon pi pi-check-circle"></span>
+                    <div class="p-message-text">
+                        <strong>✓ All Wards Available</strong><br>
+                        All {{ bulkTotalWardsCount() }} wards in this selection are available for immediate sponsorship.
                     </div>
                 </div>
             </div>
@@ -1028,7 +1090,7 @@
 
         <div class="weone-dialog-form">
             <div class="weone-form-group">
-                <label for="bulkExecutiveCount"> Executives per Ward </label>
+                <label for="bulkExecutiveCount">Executives per Ward</label>
                 <p-inputNumber
                     inputId="bulkExecutiveCount"
                     [(ngModel)]="bulkSponsoredExecutivesCount"

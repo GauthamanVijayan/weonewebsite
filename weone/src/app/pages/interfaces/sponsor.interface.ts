@@ -1,40 +1,43 @@
 export interface Zone {
-  _id: string;
-  name: string;
+    _id: string;
+    name: string;
 }
 
 export interface District {
-  _id: string;
-  name: string;
-  zoneId: string;
-  zoneName?: string;
+    _id: string;
+    name: string;
+    zoneId: string;
+    zoneName?: string;
 }
 
 export interface LocalBody {
-  _id: string;
-  name: string;
-  type: 'P' | 'M' | 'C';
-  districtId: string;
-  districtName?: string;
+    _id: string;
+    name: string;
+    type: 'P' | 'M' | 'C';
+    districtId: string;
+    districtName?: string;
 }
 
 export interface Ward {
     _id: string;
     wardName: string;
+    wardNumber?: string;
     localBodyId: string;
     localBodyName: string;
     localBodyType: 'P' | 'M' | 'C';
     type: 'Urban' | 'Rural';
     districtName: string;
     zoneName: string;
-    isSponsored: boolean; // ✅ Now properly calculated
-    sponsoredUntil: number; // ✅ Latest end date of all sponsorships
-    sponsoredExecutivesCount: number; // ✅ Total executives sponsored
-    availableExecutives: number; // ✅ Remaining slots
-    isPendingSponsorship?: boolean; // ✅ Has pending sponsorship (3-day lock)
+    isSponsored: boolean;
+    sponsoredUntil: number; // Timestamp
+    sponsoredExecutivesCount: number;
+    availableExecutives: number;
+    isPendingSponsorship?: boolean;
 }
+
 export interface CartItem {
-    ward: Ward;
+    id: string;
+    ward?: Ward; // Optional for bulk items
     executivesSponsored: number;
     monthlyRate: number;
     costPerMonth: number;
@@ -46,8 +49,9 @@ export interface CartItem {
     bulkLevel?: 'state' | 'zone' | 'district' | 'subdistrict' | 'type' | 'localbody';
     bulkIdentifier?: string;
     bulkWardCount?: number;
+    displayName?: string; // For bulk items
     
-    // NEW: Hierarchy tracking for conflict detection
+    // Hierarchy tracking for conflict detection
     hierarchyData?: {
         state?: string;
         zone?: string;
@@ -59,6 +63,15 @@ export interface CartItem {
 }
 
 export interface SponsorType {
-  label: string;
-  value: 'individual' | 'company';
+    label: string;
+    value: 'individual' | 'company';
+}
+
+export interface BulkSponsorshipData {
+    level: 'state' | 'zone' | 'district' | 'subdistrict' | 'type' | 'localbody';
+    identifier: string;
+    wardCount: number;
+    estimatedCost: number;
+    hasSponsoredWards?: boolean;
+    sponsoredWardsCount?: number;
 }
